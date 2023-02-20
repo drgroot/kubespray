@@ -1,0 +1,81 @@
+all:
+  hosts:
+    master:
+      ansible_host: 142.44.163.197
+      ansible_user: ubuntu
+      ip: 10.99.0.1
+      access_ip: 10.99.0.1
+      wg_index: 0
+    vps-16236e1c: 
+      ansible_host: 142.44.163.21
+      ansible_user: ubuntu
+      ip: 10.99.0.2
+      access_ip: 10.99.0.2
+      wg_index: 2
+    vps-2480c0d4: 
+      ansible_host: 51.79.87.117
+      ansible_user: ubuntu
+      ip: 10.99.0.3
+      access_ip: 10.99.0.3
+      wg_index: 3
+    vps-71534b72: 
+      ansible_host: 51.79.85.129
+      ansible_user: ubuntu
+      ip: 10.99.0.4
+      access_ip: 10.99.0.4
+      wg_index: 4
+    vps-f45eeddc: 
+      ansible_host: 51.79.84.120
+      ansible_user: ubuntu
+      ip: 10.99.0.5
+      access_ip: 10.99.0.5
+      wg_index: 5
+    ns557394:
+      ansible_host: 54.39.52.81
+      ansible_user: ubuntu
+      ip: 10.99.0.6
+      access_ip: 10.99.0.6
+      wg_index: 6
+      name: ns557394
+      node_labels:
+        storage: exists
+    vps-506698f6:
+      ansible_host: 142.44.163.250
+      ansible_user: ubuntu
+      ip: 10.99.0.7
+      access_ip: 10.99.0.7
+      wg_index: 7
+    kube0:
+      ansible_host: 192.168.4.126
+      ansible_user: ubuntu
+      ip: 10.99.0.8
+      access_ip: 10.99.0.8
+      wg_index: 8
+      node_labels:
+        onpremise: exists
+  children:
+    kube_control_plane:
+      hosts:
+        master:
+    kube_node:
+      hosts:
+        master:
+        vps-506698f6:
+        vps-16236e1c:
+        vps-2480c0d4:
+        vps-71534b72:
+        vps-f45eeddc:
+        ns557394:
+        kube0:
+    etcd:
+      hosts:
+        master:
+    k8s_cluster:
+      children:
+        kube_control_plane:
+        kube_node:
+    calico_rr:
+      hosts: {}
+    cloud_storage:
+      hosts:
+        ns557394: 

@@ -1,0 +1,29 @@
+spec:
+  project: myproject
+  destination:
+    server: https://kubernetes.default.svc
+    project: bootstrap
+  
+  source:
+    url: https://github.com/drgroot/kubespray.git
+    revision: HEAD
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: true
+
+templateSource:
+  path: charts/helm
+  repoURL: https://github.com/drgroot/kubespray.git
+  targetRevision: HEAD
+
+ingress:
+  namespace: networking-ingress
+  version: 4.0.6
+  sslSecret: namespace/myssl-secret
+  nodeIps: []
+
+keda:
+  version: 2.8.1

@@ -1,0 +1,30 @@
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy-job:
+    runs-on: self-hosted
+    environment:
+      name: upgrade.prod
+      url: https://git.yusufali.ca
+    steps:
+      - name: clean ssh hosts
+        run: rm -rf ~/.ssh
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: install packages
+        run: pip install -r requirements.txt
+
+      - name: deploy changes
+        run: ansible-playbook -i inventory/sample/hosts.yaml kubespray/upgrade-cluster.yml -b -v --private-key /inventory/id_rsa

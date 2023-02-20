@@ -1,0 +1,40 @@
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  scale-nodes:
+    runs-on: self-hosted
+    environment:
+      name: scale.prod
+      url: https://git.yusufali.ca
+    steps:
+      - name: clean ssh hosts
+        run: rm -rf ~/.ssh
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: install packages
+        run: pip install -r requirements.txt
+
+      - name: deploy addional configs
+        run: ansible-playbook -i inventory/sample/hosts.yaml additional.yml -b -v --private-key /inventory/id_rsa
+
+      - name: deploy changes
+        run: ansible-playbook -i inventory/sample/hosts.yaml kubespray/scale.yml -b -v --private-key /inventory/id_rsa
+
+      - name: run post install
+        run: ansible-playbook -i inventory/sample/hosts.yaml post_install.yml -b -v --private-key /inventory/id_rsa
+      
+      - name: copy artifacts
+        run: |
+          cp inventory/sample/hosts.yaml /inventory/mycluster/.
