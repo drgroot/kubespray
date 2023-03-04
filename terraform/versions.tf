@@ -16,7 +16,7 @@ locals {
       semvar = "~5"
     }
 
-    ingress    = "4.5.2"
+    ingress    = "4.0.6"
     keda       = "2.9.3"
     nfs_provisioner = "4.0.17"
   }
