@@ -94,3 +94,11 @@ resource "drone_secret" "repo_secret" {
   value                 =local.repository_secret[count.index].value
   allow_on_pull_request = (!contains(local.allow_on_pull_request,local.repository_secret[count.index].key))
 }
+
+resource "drone_orgsecret" "org_secret" {
+  count = length(local.organization_secret)
+  namespace            = local.organization_secret[count.index].name
+  name                  = local.organization_secret[count.index].key
+  value                 =local.organization_secret[count.index].value
+  allow_on_pull_request = (!contains(local.allow_on_pull_request,local.organization_secret[count.index].key))
+}
