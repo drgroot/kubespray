@@ -6,10 +6,10 @@ resource "kubernetes_secret" "gitea" {
 
   data = {
     GITEA__database__DB_TYPE = "postgres"
-    GITEA__database__HOST    = "${data.vault_generic_secret.postgres.data.hostname}:${data.vault_generic_secret.postgres.data.port}"
-    GITEA__database__NAME    = "onedev"
-    GITEA__database__USER    = "gitlab"
-    GITEA__database__PASSWD  = data.vault_generic_secret.postgres.data.gitlab_password
+    GITEA__database__HOST    = "${kubernetes_service_v1.database["postgres"].metadata[0].name}.default.cluster.local:${kubernetes_service_v1.database["postgres"].spec[0].port[0].port}"
+    GITEA__database__NAME    = "gitea"
+    GITEA__database__USER    = random_string.database_username.result
+    GITEA__database__PASSWD  = random_password.database_password.result
 
     GITEA__service__DISABLE_REGISTRATION    = "true"
     GITEA__service__DEFAULT_USER_VISIBILITY = "limited"

@@ -16,6 +16,12 @@ locals {
       semvar = "~5"
     }
 
+    databases={
+      postgres = "13.6"
+      mysql = "5.7.38"
+      mariadb = "10.7.3"
+    }
+
     ingress    = "4.0.6"
     keda       = "2.9.3"
     longhorn   = "1.4.1"
