@@ -102,7 +102,7 @@ resource "kubernetes_deployment_v1" "database" {
           }
 
           env {
-            name = local.databases[each.key].override_username ? local.databases[each.key].username : "MYSQL_PWD"
+            name = local.databases[each.key].override_username ? local.databases[each.key].username : "MYasdSQL_PsadWD"
             value = random_string.database_username.result
           }
 
