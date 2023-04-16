@@ -2,10 +2,6 @@ data "vault_generic_secret" "drone" {
   path = "external-infra/DRONE"
 }
 
-data "vault_generic_secret" "postgres" {
-  path = "external-infra/DATABASE_POSTGRES"
-}
-
 resource "kubernetes_secret" "drone" {
   metadata {
     name      = "drone-secret"
@@ -23,7 +19,7 @@ resource "kubernetes_secret" "drone" {
     DRONE_SERVER_HOST         = join(".",["drone",data.cloudflare_zones.domain.zones[0].name])
     DRONE_SERVER_PROTO        = "https"
     DRONE_DATABASE_DRIVER     = "postgres"
-    DRONE_DATABASE_DATASOURCE = "postgres://gitlab:${data.vault_generic_secret.postgres.data.gitlab_password}@${data.vault_generic_secret.postgres.data.hostname}:${data.vault_generic_secret.postgres.data.port}/drone?sslmode=disable"
+    DRONE_DATABASE_DATASOURCE = "postgres://${random_string.database_username.result}:${random_password.database_password.result}@${kubernetes_service_v1.database["postgres"].metadata[0].name}.default.cluster.local:${kubernetes_service_v1.database["postgres"].spec[0].port[0].port}/drone?sslmode=disable"
     DRONE_REGISTRATION_CLOSED = "false"
 
     DRONE_RPC_SECRET = data.vault_generic_secret.drone.data.DRONE_RPC_SECRET
