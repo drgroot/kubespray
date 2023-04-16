@@ -8,7 +8,19 @@
           - fuse
           - nfs-common
           - ufw
+          - open-iscsi
+          - jq
         state: latest
+    - name: install kubectl
+      ansible.builtin.get_url:
+        url: https://dl.k8s.io/release/v1.27.1/bin/linux/amd64/kubectl
+        dest: /usr/local/bin/kubectl
+        mode: 0555
+    - name: enable iscsid
+      ansible.builtin.service:
+        name: iscsid
+        state: started
+        enabled: true
 
 - name: Install nfs storage software
   hosts: cloud_storage

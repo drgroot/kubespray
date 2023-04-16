@@ -110,6 +110,9 @@ resource "kubernetes_manifest" "application" {
 
           keda:
             version: ${local.versions.keda}
+          
+          longhorn:
+            version: ${local.versions.longhorn}
           EOF
         }
       }
