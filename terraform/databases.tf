@@ -5,7 +5,7 @@ resource "random_string" "database_username" {
 
 resource "random_password" "database_password" {
   length = 16
-  special = true
+  special = false
 }
 
 locals {
@@ -164,7 +164,7 @@ resource "vault_generic_secret" "database" {
 
   path = "kubernetes/DATABASE_${upper(each.key)}"
   data_json = jsonencode({
-    hostname = "${kubernetes_service_v1.database[each.key].metadata[0].name}.default.cluster.local"
+    hostname = "${kubernetes_service_v1.database[each.key].metadata[0].name}.default.svc.cluster.local"
     password = random_password.database_password.result
     port = kubernetes_service_v1.database[each.key].spec[0].port[0].port
     username = local.databases[each.key].override_username ? random_string.database_username.result : local.databases[each.key].username
