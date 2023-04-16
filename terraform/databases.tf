@@ -65,6 +65,11 @@ resource "kubernetes_deployment_v1" "database" {
 
   spec {
     replicas = 1
+
+    strategy {
+      type = "Recreate"
+    }
+
     selector {
       match_labels = {
         app = "database-${each.key}"
