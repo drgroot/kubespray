@@ -72,6 +72,11 @@ variable "STORAGE_MOUNT" {
   sensitive = true
 }
 
+variable "STORAGE_BACKUP" {
+  type = string
+  sensitive = true
+}
+
 variable "MINIO_ACCESS_KEY" {
   type = string
   sensitive = true

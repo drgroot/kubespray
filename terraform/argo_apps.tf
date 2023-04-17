@@ -113,6 +113,7 @@ resource "kubernetes_manifest" "application" {
           
           longhorn:
             version: ${local.versions.longhorn}
+            backupTarget: ${var.STORAGE_HOSTNAME}:${var.STORAGE_BACKUP}
           EOF
         }
       }

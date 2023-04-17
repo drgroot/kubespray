@@ -23,3 +23,7 @@ spec:
     targetRevision: {{ .Values.longhorn.version }}
     helm:
       releaseName: longhorn
+      values: |-
+        defaultSettings:
+          backupTarget: nfs://{{ .Values.longhorn.backupTarget }}
+          restoreVolumeRecurringJobs: true
