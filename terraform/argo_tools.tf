@@ -74,7 +74,7 @@ resource "kubernetes_manifest" "application_tools" {
                 requests:
                   cpu: 2
                   memory: 4Gi
-              className: nfs-cloud-syncthing
+              className: nfs-onpremise-dynamic
               volumes:
                 - mountPath: /var/lib/gitea
                   subPath: data

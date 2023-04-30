@@ -77,16 +77,6 @@ variable "STORAGE_BACKUP" {
   sensitive = true
 }
 
-variable "MINIO_ACCESS_KEY" {
-  type = string
-  sensitive = true
-}
-
-variable "MINIO_SECRET_KEY" {
-  type = string
-  sensitive = true
-}
-
 locals {
   nodes = yamldecode(file(var.HOSTS_FILE)).all.hosts
   public_nodes = [for x in local.nodes: x if lookup(lookup(x,"node_labels",{}), "onpremise", false) == false]

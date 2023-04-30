@@ -15,27 +15,8 @@ resource "vault_generic_secret" "secrets" {
   })
 }
 
-resource "vault_generic_secret" "minio" {
-  path = "kubernetes/MINIO" 
-  data_json = jsonencode({
-    AWS_S3_ENDPOINT = "http://${var.STORAGE_HOSTNAME}:9000"
-    AWS_ACCESS_KEY_ID = minio_iam_user.user["terraform"].name
-    AWS_SECRET_ACCESS_KEY = minio_iam_user.user["terraform"].secret
-    AWS_REGION = "us-east-1"
-  })
-}
-
 resource "vault_generic_secret" "generic" {
   for_each = {
-    S3 = {
-      for bucket in keys(local.buckets) :
-      bucket => jsonencode({
-        S3_ENDPOINT = "http://${var.STORAGE_HOSTNAME}:9000"
-        S3_BUCKET   = bucket
-        S3_ACCESS   = minio_iam_user.user[bucket].name
-        S3_SECRET   = minio_iam_user.user[bucket].secret
-      })
-    },
     DOCKER = merge(
       kubernetes_secret.docker_credentials["default"].data,
       {
@@ -47,16 +28,6 @@ resource "vault_generic_secret" "generic" {
       username  = random_password.registryusername.result
       NPM_TOKEN = random_password.registrypassword.result
       NPM_HOST  = join(".",["npm",data.cloudflare_zones.domain.zones[0].name])
-    },
-    RCLONE = {
-      for bucket in keys(local.buckets) : "s3-${bucket}" => <<-EOF
-[${bucket}]
-type = s3
-provider = Minio
-access_key_id = ${minio_iam_user.user[bucket].name}
-secret_access_key = ${minio_iam_user.user[bucket].secret}
-endpoint = http://${var.STORAGE_HOSTNAME}:9000
-      EOF
     }
   }
 
