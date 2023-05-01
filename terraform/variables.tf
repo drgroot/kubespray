@@ -77,6 +77,11 @@ variable "STORAGE_BACKUP" {
   sensitive = true
 }
 
+variable "STORAGE_MEDIA" {
+  type = string
+  sensitive = true
+}
+
 locals {
   nodes = yamldecode(file(var.HOSTS_FILE)).all.hosts
   public_nodes = [for x in local.nodes: x if lookup(lookup(x,"node_labels",{}), "onpremise", false) == false]
