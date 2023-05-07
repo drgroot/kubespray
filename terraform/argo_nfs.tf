@@ -69,7 +69,7 @@ resource "kubernetes_manifest" "application_nfs" {
                 - name: jellyfin
                   backup: true
                   fixed: true
-                - name: photos
+                - name: media
                   backup: true
                   fixed: true
                 - name: documents
@@ -87,14 +87,9 @@ resource "kubernetes_manifest" "application_nfs" {
               hostname: 10.99.0.${local.storage_node.wg_index}
               mount_path: /var/lib/mounts
               folders:
-                - name: dynamic
-                  backup: true
                 - name: syncthing
                   syncthing: true
                   backup: true
-                - name: media
-                  google: true
-                  fixed: true
                 - name: downloads
                   fixed: true
           
