@@ -66,9 +66,6 @@ resource "kubernetes_manifest" "application_nfs" {
               hostname: ${var.STORAGE_HOSTNAME}
               mount_path: ${var.STORAGE_MEDIA}
               folders:
-                - name: jellyfin
-                  backup: true
-                  fixed: true
                 - name: media
                   backup: true
                   fixed: true
