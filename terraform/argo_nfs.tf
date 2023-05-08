@@ -84,9 +84,6 @@ resource "kubernetes_manifest" "application_nfs" {
               hostname: 10.99.0.${local.storage_node.wg_index}
               mount_path: /var/lib/mounts
               folders:
-                - name: syncthing
-                  syncthing: true
-                  backup: true
                 - name: downloads
                   fixed: true
           
