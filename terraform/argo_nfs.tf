@@ -100,7 +100,7 @@ resource "kubernetes_manifest" "application_nfs" {
                   - name: EXCLUDE_FILE
                     value: /scripts/backup_exclude.txt
                   - name: RCLONE_REMOTE
-                    value: google_crypt:/backups
+                    value: google:/backups
                   - name: BACKUP_PATH
                     value: /source
                 args:
