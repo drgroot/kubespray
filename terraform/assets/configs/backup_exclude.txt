@@ -1,4 +1,0 @@
-Cache
-CachedData
-.cache
-#snapshot

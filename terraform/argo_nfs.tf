@@ -8,8 +8,12 @@ resource "kubernetes_namespace" "nfs" {
   }
 }
 
-data "vault_generic_secret" "rclone" {
+resource "vault_generic_secret" "rclone" {
   path = "external-infra/RCLONE"
+
+  data_json = jsonencode({
+    "rclone.conf" = file(var.RCLONE_FILE)
+  })
 }
 
 resource "kubernetes_secret" "rclone_secret" {
@@ -18,20 +22,7 @@ resource "kubernetes_secret" "rclone_secret" {
     namespace = kubernetes_namespace.nfs.metadata[0].name
   }
 
-  data = data.vault_generic_secret.rclone.data
-}
-
-resource "kubernetes_secret" "backup_script" {
-  metadata {
-    name      = "rclone-backup-scripts"
-    namespace = kubernetes_namespace.nfs.metadata[0].name
-  }
-
-  data = {
-    "upload.py"          = file("${path.module}/assets/scripts/upload.py")
-    "googleSync.py"      = file("${path.module}/assets/scripts/googleSync.py")
-    "backup_exclude.txt" = file("${path.module}/assets/configs/backup_exclude.txt")
-  }
+  data = vault_generic_secret.rclone.data
 }
 
 resource "kubernetes_manifest" "application_nfs" {
@@ -67,73 +58,26 @@ resource "kubernetes_manifest" "application_nfs" {
               mount_path: ${var.STORAGE_MEDIA}
               folders:
                 - name: media
-                  backup: true
                   fixed: true
                 - name: documents
-                  backup: true
                   fixed: true
             - name: onpremise
               hostname: ${var.STORAGE_HOSTNAME}
               mount_path: ${var.STORAGE_MOUNT}
               folders:
                 - name: backups
-                  backup: true
                 - name: dynamic
-                  backup: true
             - name: cloud
               hostname: 10.99.0.${local.storage_node.wg_index}
               mount_path: /var/lib/mounts
               folders:
-                - name: syncthing
-                  syncthing: true
-                  backup: true
                 - name: downloads
                   fixed: true
           
           tasks:
             secrets:
               rclone: ${kubernetes_secret.rclone_secret.metadata[0].name}
-              scripts: ${kubernetes_secret.backup_script.metadata[0].name}
-            configs:
-              - name: backup
-                env:
-                  - name: EXCLUDE_FILE
-                    value: /scripts/backup_exclude.txt
-                  - name: RCLONE_REMOTE
-                    value: google:/backups
-                  - name: BACKUP_PATH
-                    value: /source
-                args:
-                  - /scripts/upload.py
-              - name: google
-                env:
-                  - name: RCLONE_REMOTE
-                    value: google:/data
-                  - name: UPLOAD_MAX_AMOUNT
-                    value: "750"
-                  - name: BACKUP_PATH
-                    value: /source
-                args:
-                  - /scripts/googleSync.py
-              - name: syncthing
-                env:
-                  - name: EXCLUDE_FILE
-                    value: /scripts/backup_exclude.txt
-                  - name: RCLONE_REMOTE
-                    value: /onpremise
-                  - name: BACKUP_PATH
-                    value: /source
-                args:
-                  - /scripts/upload.py
-                volumeMounts:
-                  - name: onpremise
-                    mountPath: /onpremise
-                    subPath: syncthing
-                volumes:
-                  - name: onpremise
-                    nfs:
-                      server: ${var.STORAGE_HOSTNAME}
-                      path: ${var.STORAGE_MOUNT}
+            configs: []
 
             versions:
               nfs_provisioner: ${local.versions.nfs_provisioner}

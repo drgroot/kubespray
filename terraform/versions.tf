@@ -23,8 +23,8 @@ locals {
     }
 
     ingress    = "4.0.6"
-    keda       = "2.9.3"
-    longhorn   = "1.4.1"
-    nfs_provisioner = "4.0.17"
+    keda       = "2.10.1"
+    longhorn   = "1.4.2"
+    nfs_provisioner = "4.0.18"
   }
 }

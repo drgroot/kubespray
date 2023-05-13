@@ -20,7 +20,7 @@ resource "vault_generic_secret" "generic" {
     DOCKER = merge(
       kubernetes_secret.docker_credentials["default"].data,
       {
-        PUBLIC_REGISTRY_URL  = data.vault_generic_secret.docker.data.username
+        PUBLIC_REGISTRY_URL  = vault_generic_secret.docker.data.username
         PRIVATE_REGISTRY_URL = join(".",["registry",data.cloudflare_zones.domain.zones[0].name])
       }
     ),
@@ -33,4 +33,19 @@ resource "vault_generic_secret" "generic" {
 
   path      = "kubernetes/${each.key}"
   data_json = jsonencode(each.value)
+}
+
+resource "vault_generic_secret" "email" {
+  path = "external-infra/SMTP"
+  data_json = jsonencode({
+    MAIL_FROM_DOMAIN = var.MAIL_FROM_DOMAIN
+    MAIL_FROM_EMAIL = join("@", [var.MAIL_FROM_USER, var.MAIL_FROM_DOMAIN])
+    MAIL_FROM_USER   = var.MAIL_FROM_USER
+    SMTP_EXPLICIT_TLS = var.SMTP_EXPLICIT_TLS
+    SMTP_HOST         = var.SMTP_HOST
+    SMTP_PASSWORD     = var.SMTP_PASSWORD
+    SMTP_PORT         = var.SMTP_PORT
+    SMTP_USERNAME     = var.SMTP_USERNAME
+    SMTP_SSL          = var.SMTP_SSL
+  })
 }

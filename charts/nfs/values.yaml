@@ -60,9 +60,6 @@ templateSource:
   targetRevision: HEAD
 
 versions:
-  nfs_server: 
-    image: itsthenetwork/nfs-server-alpine
-    tag: "12"
   nfs_provisioner: "4.0.17"
   syncthing:
     semvar: "~1"
