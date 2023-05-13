@@ -46,7 +46,7 @@ all:
       access_ip: 10.99.0.7
       wg_index: 7
     kube0:
-      ansible_host: 192.168.4.126
+      ansible_host: 192.168.2.132
       ansible_user: ubuntu
       ip: 10.99.0.8
       access_ip: 10.99.0.8
