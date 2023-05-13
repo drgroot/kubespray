@@ -1,5 +1,9 @@
-data "vault_generic_secret" "docker" {
+resource "vault_generic_secret" "docker" {
   path = "external-infra/DOCKER"
+  data_json = jsonencode({
+    username = var.DOCKER_USERNAME
+    password = var.DOCKER_PASSWORD
+  })
 }
 
 resource "random_password" "registryusername" {
@@ -76,7 +80,7 @@ resource "kubernetes_secret" "docker_credentials" {
           auth = "${base64encode("${random_password.registryusername.result}:${random_password.registrypassword.result}")}"
         },
         "https://index.docker.io/v1/" : {
-          "auth" : "${base64encode("${data.vault_generic_secret.docker.data.username}:${data.vault_generic_secret.docker.data.password}")}"
+          "auth" : "${base64encode("${vault_generic_secret.docker.data.username}:${vault_generic_secret.docker.data.password}")}"
         }
       }
     })

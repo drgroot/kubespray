@@ -1,5 +1,8 @@
-data "vault_generic_secret" "drone" {
+resource "vault_generic_secret" "drone" {
   path = "external-infra/DRONE"
+  data_json = jsonencode({
+    DRONE_TOKEN = var.DRONE_TOKEN
+  })
 }
 
 resource "kubernetes_secret" "drone" {
@@ -10,8 +13,8 @@ resource "kubernetes_secret" "drone" {
 
   data = {
     DRONE_GITEA_SERVER        = "https://${join(".",["git",data.cloudflare_zones.domain.zones[0].name])}"
-    DRONE_GITEA_CLIENT_ID     = data.vault_generic_secret.drone.data.DRONE_GITEA_CLIENT_ID
-    DRONE_GITEA_CLIENT_SECRET = data.vault_generic_secret.drone.data.DRONE_GITEA_CLIENT_SECRET
+    DRONE_GITEA_CLIENT_ID     = var.DRONE_GITEA_CLIENT_ID
+    DRONE_GITEA_CLIENT_SECRET = var.DRONE_GITEA_CLIENT_SECRET
     DRONE_GITEA_SKIP_VERIFY   = "true"
 
     DRONE_GIT_ALWAYS_AUTH = "true"
@@ -22,7 +25,7 @@ resource "kubernetes_secret" "drone" {
     DRONE_DATABASE_DATASOURCE = "postgres://${vault_generic_secret.database["postgres"].data.username}:${vault_generic_secret.database["postgres"].data.password}@${vault_generic_secret.database["postgres"].data.hostname}:${vault_generic_secret.database["postgres"].data.port}/drone?sslmode=disable"
     DRONE_REGISTRATION_CLOSED = "false"
 
-    DRONE_RPC_SECRET = data.vault_generic_secret.drone.data.DRONE_RPC_SECRET
+    DRONE_RPC_SECRET = var.DRONE_RPC_SECRET
   }
 }
 
