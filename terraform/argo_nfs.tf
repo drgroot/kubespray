@@ -67,12 +67,6 @@ resource "kubernetes_manifest" "application_nfs" {
               folders:
                 - name: backups
                 - name: dynamic
-            - name: cloud
-              hostname: 10.99.0.${local.storage_node.wg_index}
-              mount_path: /var/lib/mounts
-              folders:
-                - name: downloads
-                  fixed: true
           
           tasks:
             secrets:
