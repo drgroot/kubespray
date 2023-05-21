@@ -85,5 +85,4 @@ variable "STORAGE_MEDIA" {
 locals {
   nodes = yamldecode(file(var.HOSTS_FILE)).all.hosts
   public_nodes = [for x in local.nodes: x if lookup(lookup(x,"node_labels",{}), "onpremise", false) == false]
-  storage_node = [for x in local.public_nodes: x if lookup(lookup(x,"node_labels",{}), "storage", false) != false][0]
 }
