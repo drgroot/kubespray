@@ -18,7 +18,7 @@ locals {
 
     databases={
       postgres = "13.6"
-      mysql = "5.7.38"
+      # mysql = "5.7.38"
       mariadb = "10.7.3"
     }
 
