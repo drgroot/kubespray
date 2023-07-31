@@ -28,15 +28,11 @@ variable "DRONE_TOKEN" {
   sensitive = true
 }
 
-variable "MAIL_FROM_DOMAIN" {
+variable "SMTP_FROM_DOMAIN" {
   type = string
   sensitive = true
 }
-variable "MAIL_FROM_USER" {
-  type = string
-  sensitive = true
-}
-variable "SMTP_EXPLICIT_TLS" {
+variable "SMTP_FROM_USER" {
   type = string
   sensitive = true
 }
@@ -56,7 +52,7 @@ variable "SMTP_USERNAME" {
   type = string
   sensitive = true
 }
-variable "SMTP_SSL" {
+variable "SMTP_SECURITY" {
   type = string
   sensitive = true
 }
