@@ -37,14 +37,13 @@ resource "vault_generic_secret" "generic" {
 resource "vault_generic_secret" "email" {
   path = "external-infra/SMTP"
   data_json = jsonencode({
-    MAIL_FROM_DOMAIN = var.MAIL_FROM_DOMAIN
-    MAIL_FROM_EMAIL = join("@", [var.MAIL_FROM_USER, var.MAIL_FROM_DOMAIN])
-    MAIL_FROM_USER   = var.MAIL_FROM_USER
-    SMTP_EXPLICIT_TLS = var.SMTP_EXPLICIT_TLS
+    SMTP_FROM_DOMAIN = var.SMTP_FROM_DOMAIN
+    SMTP_FROM_EMAIL = join("@", [var.SMTP_FROM_USER, var.SMTP_FROM_DOMAIN])
+    SMTP_FROM_USER   = var.SMTP_FROM_USER
     SMTP_HOST         = var.SMTP_HOST
     SMTP_PASSWORD     = var.SMTP_PASSWORD
     SMTP_PORT         = var.SMTP_PORT
     SMTP_USERNAME     = var.SMTP_USERNAME
-    SMTP_SSL          = var.SMTP_SSL
+    SMTP_SECURITY     = var.SMTP_SECURITY
   })
 }
