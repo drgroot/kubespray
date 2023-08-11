@@ -49,7 +49,6 @@
         - 30370
         - 30371
         - 32400
-        - 32401
       notify:
         - reload ufw
 
@@ -79,7 +78,7 @@
     - name: Allow all access from RFC1918 networks to this host
       ufw:
         rule: allow
-        src: '{{ item }}'
+        src: "{{ item }}"
       loop:
         - 10.0.0.0/8
         - 172.16.0.0/12
@@ -93,7 +92,7 @@
         policy: deny
       notify:
         - reload ufw
-    
+
     - name: set firewall default policy
       ufw: state=enabled
       become: true
