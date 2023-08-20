@@ -9,7 +9,6 @@ bin_dir: /usr/local/bin
 ## but don't know about that address themselves.
 # access_ip: 1.1.1.1
 
-
 ## External LB example config
 ## apiserver_loadbalancer_domain_name: "elb.some.domain"
 # loadbalancer_apiserver:
@@ -42,8 +41,7 @@ disable_host_nameservers: false
 
 ## Upstream dns servers
 upstream_dns_servers:
-  - 8.8.8.8
-  - 8.8.4.4
+  - 192.168.2.100
 
 ## There are some changes specific to the cloud providers
 ## for instance we need to encapsulate packets with some network plugins

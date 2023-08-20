@@ -72,7 +72,7 @@ variable "STORAGE_MOUNT" {
   sensitive = true
 }
 
-variable "STORAGE_BACKUP" {
+variable "STORAGE_DOWNLOADS" {
   type = string
   sensitive = true
 }
@@ -84,5 +84,5 @@ variable "STORAGE_MEDIA" {
 
 locals {
   nodes = yamldecode(file(var.HOSTS_FILE)).all.hosts
-  public_nodes = [for x in local.nodes: x if lookup(lookup(x,"node_labels",{}), "onpremise", false) == false]
+  all_nodes = [for x in local.nodes: x if lookup(lookup(x,"node_labels",{}), "onpremise", false) == false]
 }

@@ -59,26 +59,26 @@ locals {
             type = contains(keys(x),"repository") ? "repository" : "organization"
           },
         ]: [],
-        flag == "npm" ? [
-          {
-            key = "NPM_HOST",
-            value = data.vault_generic_secret.NPM.data["NPM_HOST"]
-            name = contains(keys(x),"repository") ? x.repository :x.organization
-            type = contains(keys(x),"repository") ? "repository" : "organization"
-          },
-          {
-            key = "NPM_PASSWORD",
-            value = data.vault_generic_secret.NPM.data["NPM_TOKEN"]
-            name = contains(keys(x),"repository") ? x.repository :x.organization
-            type = contains(keys(x),"repository") ? "repository" : "organization"
-          },
-          {
-            key = "NPM_USERNAME",
-            value = data.vault_generic_secret.NPM.data["username"]
-            name = contains(keys(x),"repository") ? x.repository :x.organization
-            type = contains(keys(x),"repository") ? "repository" : "organization"
-          },
-        ]: [],
+        # flag == "npm" ? [
+        #   {
+        #     key = "NPM_HOST",
+        #     value = data.vault_generic_secret.NPM.data["NPM_HOST"]
+        #     name = contains(keys(x),"repository") ? x.repository :x.organization
+        #     type = contains(keys(x),"repository") ? "repository" : "organization"
+        #   },
+        #   {
+        #     key = "NPM_PASSWORD",
+        #     value = data.vault_generic_secret.NPM.data["NPM_TOKEN"]
+        #     name = contains(keys(x),"repository") ? x.repository :x.organization
+        #     type = contains(keys(x),"repository") ? "repository" : "organization"
+        #   },
+        #   {
+        #     key = "NPM_USERNAME",
+        #     value = data.vault_generic_secret.NPM.data["username"]
+        #     name = contains(keys(x),"repository") ? x.repository :x.organization
+        #     type = contains(keys(x),"repository") ? "repository" : "organization"
+        #   },
+        # ]: [],
       ])
     ])
   ])

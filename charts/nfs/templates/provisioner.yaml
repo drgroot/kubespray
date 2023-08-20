@@ -19,6 +19,8 @@ spec:
     helm:
       releaseName: {{ include "nfs.fullname" $ }}-{{ $server.name }}-{{ $folder.name }}
       values: |-
+        image:
+          repository: yusufali/nfs-subdir-external-provisioner
         nfs:
           server: {{ $server.hostname }}
           path: {{ $server.mount_path }}

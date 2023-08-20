@@ -53,6 +53,7 @@ resource "kubernetes_persistent_volume_claim" "database_pvc" {
         storage = "15Gi"
       }
     }
+    storage_class_name = "nfs-onpremise-dynamic"
   }
 }
 
@@ -94,7 +95,7 @@ resource "kubernetes_deployment_v1" "database" {
           volume_mount {
             name = "data"
             mount_path = local.databases[each.key].volume_mount
-            sub_path = "data"
+            sub_path = each.key
           }
 
           resources {

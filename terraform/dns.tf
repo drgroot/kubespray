@@ -23,26 +23,6 @@ locals {
     )
 }
 
-resource "cloudflare_record" "kubemain" {
-  zone_id = data.cloudflare_zones.domain.zones[0].id
-  name    = "kube"
-  value   = local.public_nodes[0].ansible_host
-  type    = "A"
-  ttl     = 1
-  proxied = false
-}
-
-resource "cloudflare_record" "roundrobin" {
-  count = length(local.public_nodes)
-
-  zone_id = data.cloudflare_zones.domain.zones[0].id
-  name    = "server"
-  value   = local.public_nodes[count.index].ansible_host
-  type    = "A"
-  ttl     = 1
-  proxied = false
-}
-
 resource "cloudflare_record" "mail" {
   for_each = {
     "aspmx.l.google.com" : "1",
@@ -64,7 +44,7 @@ resource "cloudflare_record" "subdomains" {
 
   zone_id = data.cloudflare_zones.domain.zones[0].id
   name    = local.all_cnames[count.index]
-  value   = "server.${data.cloudflare_zones.domain.zones[0].name}"
+  value   = "mordorhome.${data.cloudflare_zones.domain.zones[0].name}"
   type    = "CNAME"
   proxied = false
   ttl     = 1

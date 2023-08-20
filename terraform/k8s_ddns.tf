@@ -24,20 +24,6 @@ resource "kubernetes_deployment_v1" "ddns" {
       }
 
       spec {
-        affinity {
-          node_affinity {
-            required_during_scheduling_ignored_during_execution {
-              node_selector_term {
-                match_expressions {
-                  key = "onpremise"
-                  operator = "Exists"
-                  values = []
-                }
-              }  
-            }  
-          }  
-        }
-
         container {
           image = "hotio/cloudflareddns"
           image_pull_policy = "Always"

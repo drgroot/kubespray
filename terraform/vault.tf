@@ -4,7 +4,7 @@ resource "vault_generic_secret" "secrets" {
       CA_KEY_ALGORITHM   = "RSA"
       CA_PRIVATE_KEY_PEM = file(var.CA_KEY)
       CA_CERT_PEM        = file(var.CA_CERT)
-      master_ip          = local.public_nodes[0].ip
+      master_ip          = local.all_nodes[0].ip
       ADMINCONF          = file(var.ADMIN_CONF)
 
       ssl_tls_crt  = join("", [acme_certificate.certificate.certificate_pem, acme_certificate.certificate.issuer_pem])

@@ -6,6 +6,7 @@ resource "kubernetes_secret" "gitea" {
 
   data = {
     GITEA__database__DB_TYPE = "postgres"
+    GITEA__webhook__ALLOWED_HOST_LIST="*"
     GITEA__database__HOST    = "${vault_generic_secret.database["postgres"].data.hostname}:${vault_generic_secret.database["postgres"].data.port}"
     GITEA__database__NAME    = "gitea"
     GITEA__database__USER    = vault_generic_secret.database["postgres"].data.username

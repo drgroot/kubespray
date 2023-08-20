@@ -105,15 +105,9 @@ resource "kubernetes_manifest" "application" {
             version: ${local.versions.ingress}
             namespace: ${kubernetes_namespace.networking.metadata[0].name}
             sslSecret: ${kubernetes_secret.ssl.metadata[0].namespace}/${kubernetes_secret.ssl.metadata[0].name}
-            nodeIps: 
-              ${join("\n    ",[for x in local.public_nodes: join("", ["- ", x.ansible_host])])}
 
           keda:
             version: ${local.versions.keda}
-          
-          longhorn:
-            version: ${local.versions.longhorn}
-            backupTarget: ${var.STORAGE_HOSTNAME}:${var.STORAGE_BACKUP}
           EOF
         }
       }

@@ -34,10 +34,7 @@ resource "kubernetes_manifest" "application_tools" {
               url: ${join(".",["drone",data.cloudflare_zones.domain.zones[0].name])}
               secrets: 
                 - ${kubernetes_secret.drone.metadata[0].name}
-              resources:
-                requests:
-                  cpu: 500m
-                  memory: 512Mi
+              resources: {}
               ports:
                 - port: 80
             - name: drone-runner
@@ -49,10 +46,7 @@ resource "kubernetes_manifest" "application_tools" {
                 semvar: "latest"
               ports:
                 - port: 3000
-              resources:
-                requests:
-                  cpu: 250m
-                  memory: 512Mi
+              resources: {}
               secrets:
                 - drone-runner
             - name: gitea
@@ -70,10 +64,7 @@ resource "kubernetes_manifest" "application_tools" {
               securityContext:
                 runAsGroup: 1000
                 runAsUser: 1000
-              resources:
-                requests:
-                  cpu: 2
-                  memory: 4Gi
+              resources: {}
               className: nfs-onpremise-dynamic
               volumes:
                 - mountPath: /var/lib/gitea
@@ -99,10 +90,7 @@ resource "kubernetes_manifest" "application_tools" {
               securityContext:
                 runAsGroup: 1000
                 runAsUser: 1000
-              resources:
-                requests:
-                  cpu: 500m
-                  memory: 1Gi
+              resources: {}
               volumes:
                 - mountPath: /var/lib/registry
               extraVolumes:
@@ -112,42 +100,6 @@ resource "kubernetes_manifest" "application_tools" {
               extraVolumeMounts:
                 - name: htpasswd
                   mountPath: /auth
-            - name: verdaccio
-              image:
-                name: ${local.versions.verdaccio.name}
-                semvar: ${local.versions.verdaccio.semvar}
-                tag: ${local.versions.verdaccio.tag}
-              url: ${join(".",["npm",data.cloudflare_zones.domain.zones[0].name])}
-              secrets:
-                - ${kubernetes_secret.verdaccio.metadata[0].name}
-              ports:
-                - port: 4873
-              className: nfs-onpremise-dynamic
-              ingress:
-                annotations:
-                  nginx.ingress.kubernetes.io/client-body-buffer-size: 500m
-                  nginx.ingress.kubernetes.io/proxy-body-size: 500m
-                  nginx.ingress.kubernetes.io/ssl-redirect: "true"
-              securityContext:
-                runAsGroup: 1000
-                runAsUser: 1000
-              env:
-                - name: VERDACCIO_PORT
-                  value: '4873'
-              resources:
-                requests:
-                  cpu: 250m
-                  memory: 512Mi
-              volumes:
-                - mountPath: /verdaccio/storage/data
-              extraVolumes:
-                - name: htpasswd
-                  secret:
-                    secretName: ${kubernetes_secret.verdaccio.metadata[0].name}
-              extraVolumeMounts:
-                - name: htpasswd
-                  mountPath: /verdaccio/conf
-                  readOnly: true
           EOF
         }
       }
