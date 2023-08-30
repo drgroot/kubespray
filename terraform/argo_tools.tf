@@ -71,6 +71,36 @@ resource "kubernetes_manifest" "application_tools" {
                   subPath: data
                 - mountPath: /etc/gitea
                   subPath: config
+            - name: coder
+              image:
+                name: "ghcr.io/coder/coder"
+                semvar: "~v2.x.x"
+                tag: 2.1.4
+              url: "${join(".",["coder",data.cloudflare_zones.domain.zones[0].name])}"
+              extraIngress: 
+                - host: "${join(".",["*.coder",data.cloudflare_zones.domain.zones[0].name])}"
+                  paths:
+                    - path: /
+                      pathType: Prefix
+              env:
+                - name: CODER_TAILSCALE
+                  value: "true"
+                - name: CODER_ACCESS_URL
+                  value: "https://coder.yusufali.ca"
+                - name: CODER_ADDRESS
+                  value: "0.0.0.0:7080"
+              secrets:
+                - ${kubernetes_secret.coder.metadata[0].name}
+              ports:
+                - port: 7080
+              ingress:
+                annotations:
+                  nginx.ingress.kubernetes.io/client-body-buffer-size: 500m
+                  nginx.ingress.kubernetes.io/proxy-body-size: 500m
+                  nginx.ingress.kubernetes.io/ssl-redirect: "true"
+              resources: {}
+              namespace: ${kubernetes_namespace.coder.metadata[0].name}
+              serviceAccountName: ${kubernetes_service_account_v1.coder.metadata[0].name}
             - name: registry
               image:
                 name: registry

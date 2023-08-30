@@ -71,6 +71,7 @@ resource "acme_certificate" "certificate" {
   subject_alternative_names = concat(
     [
       "*.${data.cloudflare_zones.domain.zones[0].name}",
+      "*.coder.${data.cloudflare_zones.domain.zones[0].name}",
     ],
     [
       for x in local.namespace_cnames : "${x}.${data.cloudflare_zones.domain.zones[0].name}" if length(split(".", x)) > 1
