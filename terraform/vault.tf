@@ -7,10 +7,10 @@ resource "vault_generic_secret" "secrets" {
       master_ip          = local.all_nodes[0].ip
       ADMINCONF          = file(var.ADMIN_CONF)
 
-      ssl_tls_crt  = join("", [acme_certificate.certificate.certificate_pem, acme_certificate.certificate.issuer_pem])
-      ssl_tls_key = acme_certificate.certificate.private_key_pem
-      ssl_certificate_p12 = acme_certificate.certificate.certificate_p12
-      ssl_certificate_p12_password = random_password.certificate_password.result
+      # ssl_tls_crt  = join("", [acme_certificate.certificate.certificate_pem, acme_certificate.certificate.issuer_pem])
+      # ssl_tls_key = acme_certificate.certificate.private_key_pem
+      # ssl_certificate_p12 = acme_certificate.certificate.certificate_p12
+      # ssl_certificate_p12_password = random_password.certificate_password.result
   })
 }
 

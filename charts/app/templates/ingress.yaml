@@ -45,14 +45,6 @@ spec:
           resources:
             requests:
               memory: 500Mi
-          
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                - matchExpressions:
-                  - key: onpremise
-                    operator: DoesNotExist
 
           service:
             type: NodePort
@@ -62,7 +54,6 @@ spec:
 
           extraArgs:
             enable-ssl-passthrough: true
-            default-ssl-certificate: {{ .Values.ingress.sslSecret }}
 
         {{- with  .Values.ingress.nodeIps }}
         service:

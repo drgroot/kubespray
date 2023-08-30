@@ -110,11 +110,18 @@ spec:
           annotations:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- with $tool.ingress.tls }}
+          tls:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- end }}
           hosts:
             - host: {{ $tool.url }}
               paths:
                 - path: /
                   pathType: Prefix
+            {{- with $tool.extraIngress }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
         {{- end }}
 {{- end }}

@@ -1,0 +1,45 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "app.fullname" . }}-cert-manager
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: {{ .Values.certmanager.namespace }}
+    server: {{ .Values.spec.destination.server }}
+  project: {{ .Values.spec.project }}
+  source:
+    chart: cert-manager
+    repoURL: https://charts.jetstack.io
+    targetRevision: {{ .Values.certmanager.version }}
+    helm:
+      releaseName: cert-manager
+      values: |-
+        installCRDs: true
+
+        promethus:
+          enabled: false
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  namespace: {{ .Values.certmanager.namespace }}
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: {{ .Values.certmanager.email }}
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - dns01:
+        cloudflare:
+          email: {{ .Values.certmanager.email }}
+          apiKeySecretRef:
+            name: {{ .Values.certmanager.apikeyname }}
+            key: {{ .Values.certmanager.apikey }}

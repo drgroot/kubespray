@@ -19,7 +19,7 @@ locals {
 
     ingress    = "4.0.6"
     keda       = "2.10.1"
-    # longhorn   = "1.4.2"
+    certmanager = "v1.12.3"
     nfs_provisioner = "4.0.18"
   }
 }

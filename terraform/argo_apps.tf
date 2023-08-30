@@ -1,12 +1,32 @@
-resource "kubernetes_secret" "argossl" {
+resource "kubernetes_namespace" "networking" {
   metadata {
-    name      = "argocd-server-tls"
-    namespace = "argocd"
+    name = "networking"
   }
 
-  type = "tls"
+  lifecycle {
+    ignore_changes = [metadata[0].labels]
+  }
+}
 
-  data = kubernetes_secret.ssl.data
+resource "kubernetes_namespace" "certmanager" {
+  metadata {
+    name = "cert-manager"
+  }
+
+  lifecycle {
+    ignore_changes = [metadata[0].labels]
+  }
+}
+
+resource "kubernetes_secret" "certmanager" {
+  metadata {
+    name = "cert-manager-cloudflarekey"
+    namespace = kubernetes_namespace.certmanager.metadata[0].name
+  }
+
+  data = {
+    CLOUDFLARE_API_KEY = var.CLOUDFLARE_API_KEY
+  }
 }
 
 resource "kubernetes_manifest" "project" {
@@ -104,7 +124,13 @@ resource "kubernetes_manifest" "application" {
           ingress:
             version: ${local.versions.ingress}
             namespace: ${kubernetes_namespace.networking.metadata[0].name}
-            sslSecret: ${kubernetes_secret.ssl.metadata[0].namespace}/${kubernetes_secret.ssl.metadata[0].name}
+
+          certmanager:
+            namespace: ${kubernetes_namespace.certmanager.metadata[0].name}
+            version: ${local.versions.certmanager}
+            apikeyname: ${kubernetes_secret.certmanager.metadata[0].name} 
+            apikey: ${keys(kubernetes_secret.certmanager.data)[0]}
+            email: ${var.CLOUDFLARE_EMAIL}
 
           keda:
             version: ${local.versions.keda}

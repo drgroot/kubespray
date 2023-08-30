@@ -17,7 +17,8 @@ locals {
   all_cnames = concat(
       [
         "*",
-        data.cloudflare_zones.domain.zones[0].name,
+        "coder",
+        # data.cloudflare_zones.domain.zones[0].name,
       ],
       local.namespace_cnames
     )
@@ -50,40 +51,3 @@ resource "cloudflare_record" "subdomains" {
   ttl     = 1
 }
 
-# SSL Key generation
-resource "tls_private_key" "tls_private" {
-  algorithm = "RSA"
-}
-
-resource "random_password" "certificate_password" {
-  length  = 16
-  special = false
-}
-
-resource "acme_registration" "reg" {
-  account_key_pem = tls_private_key.tls_private.private_key_pem
-  email_address   = "ali@yusuf.email"
-}
-
-resource "acme_certificate" "certificate" {
-  account_key_pem = acme_registration.reg.account_key_pem
-  common_name     = data.cloudflare_zones.domain.zones[0].name
-  subject_alternative_names = concat(
-    [
-      "*.${data.cloudflare_zones.domain.zones[0].name}",
-    ],
-    [
-      for x in local.namespace_cnames : "${x}.${data.cloudflare_zones.domain.zones[0].name}" if length(split(".", x)) > 1
-    ],
-  )
-  certificate_p12_password = random_password.certificate_password.result
-
-  dns_challenge {
-    provider = "cloudflare"
-
-    config = {
-      CLOUDFLARE_EMAIL = var.CLOUDFLARE_EMAIL
-      CLOUDFLARE_API_KEY = var.CLOUDFLARE_API_KEY
-    }
-  }
-}

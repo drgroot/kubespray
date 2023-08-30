@@ -32,6 +32,15 @@ resource "kubernetes_manifest" "application_tools" {
                 semvar: ${local.versions.drone.semvar}
                 tag: ${local.versions.drone.tag}
               url: ${join(".",["drone",data.cloudflare_zones.domain.zones[0].name])}
+              ingress:
+                annotations:
+                  kubernetes.io/ingress.class: nginx
+                  cert-manager.io/cluster-issuer: letsencrypt-prod
+                  nginx.ingress.kubernetes.io/ssl-redirect: "true"
+                tls:
+                  - hosts:
+                      - "*.yusufali.ca"
+                    secretName: wildcard-yusufali
               secrets: 
                 - ${kubernetes_secret.drone.metadata[0].name}
               resources: {}
@@ -56,6 +65,16 @@ resource "kubernetes_manifest" "application_tools" {
                 tag: ${local.versions.gitea.tag}
                 suffix: "-rootless"
               url: ${join(".",["git",data.cloudflare_zones.domain.zones[0].name])}
+              ingress:
+                annotations:
+                  kubernetes.io/ingress.class: nginx
+                  cert-manager.io/cluster-issuer: letsencrypt-prod
+                  nginx.ingress.kubernetes.io/ssl-redirect: "true"
+                  nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+                tls:
+                  - hosts:
+                      - "*.yusufali.ca"
+                    secretName: wildcard-yusufali
               secrets:
                 - ${kubernetes_secret.gitea.metadata[0].name}
               ports:
@@ -71,22 +90,65 @@ resource "kubernetes_manifest" "application_tools" {
                   subPath: data
                 - mountPath: /etc/gitea
                   subPath: config
+            - name: coder
+              image:
+                name: "ghcr.io/coder/coder"
+                semvar: "~v2.x.x"
+                tag: "v2.1.4"
+              url: "${join(".",["coder",data.cloudflare_zones.domain.zones[0].name])}"
+              extraIngress: 
+                - host: "${join(".",["*.coder",data.cloudflare_zones.domain.zones[0].name])}"
+                  paths:
+                    - path: /
+                      pathType: Prefix
+              ingress:
+                annotations:
+                  kubernetes.io/ingress.class: nginx
+                  cert-manager.io/cluster-issuer: letsencrypt-prod
+                  nginx.ingress.kubernetes.io/ssl-redirect: "true"
+                  nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+                tls:
+                  - hosts:
+                      - "coder.yusufali.ca"
+                      - "*.coder.yusufali.ca"
+                    secretName: coder-yusufali
+              env:
+                - name: CODER_TAILSCALE
+                  value: "true"
+                - name: CODER_ACCESS_URL
+                  value: "https://coder.yusufali.ca"
+                - name: CODER_ADDRESS
+                  value: "0.0.0.0:7080"
+              secrets:
+                - ${kubernetes_secret.coder.metadata[0].name}
+              ports:
+                - port: 7080
+              resources: {}
+              namespace: ${kubernetes_namespace.coder.metadata[0].name}
+              serviceAccountName: ${kubernetes_service_account_v1.coder.metadata[0].name}
             - name: registry
               image:
                 name: registry
                 semvar: ~2
                 tag: 2
               url: ${join(".",["registry",data.cloudflare_zones.domain.zones[0].name])}
+              ingress:
+                annotations:
+                  nginx.ingress.kubernetes.io/client-body-buffer-size: 5000m
+                  nginx.ingress.kubernetes.io/proxy-body-size: 5000m
+                  kubernetes.io/ingress.class: nginx
+                  cert-manager.io/cluster-issuer: letsencrypt-prod
+                  nginx.ingress.kubernetes.io/ssl-redirect: "true"
+                  nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+                tls:
+                  - hosts:
+                      - "*.yusufali.ca"
+                    secretName: wildcard-yusufali
               secrets:
                 - ${kubernetes_secret.registry.metadata[0].name}
               ports:
                 - port: 5000
               className: nfs-onpremise-dynamic
-              ingress:
-                annotations:
-                  nginx.ingress.kubernetes.io/client-body-buffer-size: 5000m
-                  nginx.ingress.kubernetes.io/proxy-body-size: 5000m
-                  nginx.ingress.kubernetes.io/ssl-redirect: "true"
               securityContext:
                 runAsGroup: 1000
                 runAsUser: 1000
