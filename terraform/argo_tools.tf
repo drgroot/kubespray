@@ -100,7 +100,7 @@ resource "kubernetes_manifest" "application_tools" {
                   nginx.ingress.kubernetes.io/ssl-redirect: "true"
               resources: {}
               namespace: ${kubernetes_namespace.coder.metadata[0].name}
-              serviceAccountName: ${kubernetes_service_account_v1.coder.metadata[0].name}
+              serviceAccount: ${kubernetes_service_account_v1.coder.metadata[0].name}
             - name: registry
               image:
                 name: registry
