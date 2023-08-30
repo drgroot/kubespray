@@ -95,7 +95,9 @@ resource "kubernetes_default_service_account_v1" "default_sa" {
     {
       (kubernetes_namespace.drone_runner.metadata[0].name) = kubernetes_namespace.drone_runner.metadata[0].name
       default                                              = "default"
+      argocd                                               = "argocd"
       (kubernetes_namespace.nfs.metadata[0].name)          = kubernetes_namespace.nfs.metadata[0].name
+      (kubernetes_namespace.coder.metadata[0].name) = kubernetes_namespace.coder.metadata[0].name
     }
   )
 
