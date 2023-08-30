@@ -1,9 +1,8 @@
 on:
-  pull_request:
-    types: [opened, reopened]
-  push:
+  pull_request_target:
     branches:
-      - '*'
+      - master
+  push:
 
 jobs:
   terraformk8s:
@@ -14,7 +13,7 @@ jobs:
 
       - run: terraform -chdir=terraform init
       - run: terraform -chdir=terraform plan -no-color -input=false -state=/inventory/terraform/state.tfstate -var='ID_RSA_PUB=/inventory/id_rsa.pub' -var='ID_RSA=/inventory/id_rsa' -var-file="/inventory/variables.tfvars"
-      
+
       - if: github.ref == 'refs/heads/master'
         run: terraform -chdir=terraform apply -auto-approve -input=false -state=/inventory/terraform/state.tfstate -var='ID_RSA_PUB=/inventory/id_rsa.pub' -var='ID_RSA=/inventory/id_rsa' -var-file="/inventory/variables.tfvars"
 
@@ -26,6 +25,6 @@ jobs:
 
       - run: terraform -chdir=terraform_drone init
       - run: terraform -chdir=terraform_drone plan -no-color -input=false -state=/inventory/terraform/drone.tfstate -var-file="/inventory/variables.tfvars"
-      
+
       - if: github.ref == 'refs/heads/master'
         run: terraform -chdir=terraform_drone apply -auto-approve -input=false -state=/inventory/terraform/drone.tfstate -var-file="/inventory/variables.tfvars"
