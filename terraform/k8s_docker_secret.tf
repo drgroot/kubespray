@@ -65,6 +65,7 @@ resource "kubernetes_secret" "docker_credentials" {
       default                                              = "default"
       argocd                                               = "argocd"
       (kubernetes_namespace.nfs.metadata[0].name)          = kubernetes_namespace.nfs.metadata[0].name
+      (kubernetes_namespace.coder.metadata[0].name) = kubernetes_namespace.coder.metadata[0].name
     }
   )
 
