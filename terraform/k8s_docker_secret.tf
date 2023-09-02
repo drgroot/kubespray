@@ -61,11 +61,12 @@ resource "kubernetes_secret" "registry" {
 resource "kubernetes_secret" "docker_credentials" {
   for_each = merge(
     {
-      (kubernetes_namespace.drone_runner.metadata[0].name) = kubernetes_namespace.drone_runner.metadata[0].name
-      default                                              = "default"
-      argocd                                               = "argocd"
-      (kubernetes_namespace.nfs.metadata[0].name)          = kubernetes_namespace.nfs.metadata[0].name
-      (kubernetes_namespace.coder.metadata[0].name) = kubernetes_namespace.coder.metadata[0].name
+      (kubernetes_namespace.drone_runner.metadata[0].name)    = kubernetes_namespace.drone_runner.metadata[0].name
+      default                                                 = "default"
+      argocd                                                  = "argocd"
+      (kubernetes_namespace.nfs.metadata[0].name)             = kubernetes_namespace.nfs.metadata[0].name
+      (kubernetes_namespace.coder.metadata[0].name)           = kubernetes_namespace.coder.metadata[0].name
+      (kubernetes_namespace.coder_workspace.metadata[0].name) = kubernetes_namespace.coder_workspace.metadata[0].name
     }
   )
 
@@ -77,7 +78,7 @@ resource "kubernetes_secret" "docker_credentials" {
   data = {
     ".dockerconfigjson" = jsonencode({
       auths = {
-        "${join(".",["registry",data.cloudflare_zones.domain.zones[0].name])}" = {
+        "${join(".", ["registry", data.cloudflare_zones.domain.zones[0].name])}" = {
           auth = "${base64encode("${random_password.registryusername.result}:${random_password.registrypassword.result}")}"
         },
         "https://index.docker.io/v1/" : {
@@ -93,9 +94,11 @@ resource "kubernetes_secret" "docker_credentials" {
 resource "kubernetes_default_service_account_v1" "default_sa" {
   for_each = merge(
     {
-      (kubernetes_namespace.drone_runner.metadata[0].name) = kubernetes_namespace.drone_runner.metadata[0].name
-      default                                              = "default"
-      (kubernetes_namespace.nfs.metadata[0].name)          = kubernetes_namespace.nfs.metadata[0].name
+      (kubernetes_namespace.drone_runner.metadata[0].name)    = kubernetes_namespace.drone_runner.metadata[0].name
+      default                                                 = "default"
+      (kubernetes_namespace.nfs.metadata[0].name)             = kubernetes_namespace.nfs.metadata[0].name
+      (kubernetes_namespace.coder.metadata[0].name)           = kubernetes_namespace.coder.metadata[0].name
+      (kubernetes_namespace.coder_workspace.metadata[0].name) = kubernetes_namespace.coder_workspace.metadata[0].name
     }
   )
 

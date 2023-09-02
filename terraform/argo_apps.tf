@@ -1,34 +1,3 @@
-resource "kubernetes_namespace" "networking" {
-  metadata {
-    name = "networking"
-  }
-
-  lifecycle {
-    ignore_changes = [metadata[0].labels]
-  }
-}
-
-resource "kubernetes_namespace" "certmanager" {
-  metadata {
-    name = "cert-manager"
-  }
-
-  lifecycle {
-    ignore_changes = [metadata[0].labels]
-  }
-}
-
-resource "kubernetes_secret" "certmanager" {
-  metadata {
-    name = "cert-manager-cloudflarekey"
-    namespace = kubernetes_namespace.certmanager.metadata[0].name
-  }
-
-  data = {
-    CLOUDFLARE_API_KEY = var.CLOUDFLARE_API_KEY
-  }
-}
-
 resource "kubernetes_manifest" "project" {
   manifest = {
     apiVersion = "argoproj.io/v1alpha1"
