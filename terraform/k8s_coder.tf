@@ -8,9 +8,19 @@ resource "kubernetes_namespace" "coder" {
   }
 }
 
+resource "kubernetes_namespace" "coder_workspace" {
+  metadata {
+    name = "coder-workspace"
+  }
+
+  lifecycle {
+    ignore_changes = [metadata[0].labels]
+  }
+}
+
 resource "kubernetes_persistent_volume_claim" "coder" {
   metadata {
-    name = "workspace"
+    name      = "workspace"
     namespace = kubernetes_namespace.coder.metadata[0].name
   }
   spec {
@@ -36,9 +46,14 @@ resource "kubernetes_secret" "coder" {
 }
 
 resource "kubernetes_service_account_v1" "coder" {
+  for_each = {
+    (kubernetes_namespace.coder.metadata[0].name)           = kubernetes_namespace.coder.metadata[0].name,
+    (kubernetes_namespace.coder_workspace.metadata[0].name) = kubernetes_namespace.coder.metadata[0].name
+  }
+
   metadata {
-    name      = kubernetes_namespace.coder.metadata[0].name
-    namespace = kubernetes_namespace.coder.metadata[0].name
+    name      = each.key
+    namespace = each.value
   }
 
   image_pull_secret {
@@ -47,15 +62,20 @@ resource "kubernetes_service_account_v1" "coder" {
 }
 
 resource "kubernetes_role" "coder" {
+  for_each = {
+    (kubernetes_namespace.coder.metadata[0].name)           = kubernetes_namespace.coder.metadata[0].name,
+    (kubernetes_namespace.coder_workspace.metadata[0].name) = kubernetes_namespace.coder_workspace.metadata[0].name
+  }
+
   metadata {
-    name      = kubernetes_service_account_v1.coder.metadata[0].name
-    namespace = kubernetes_namespace.coder.metadata[0].name
+    name      = "coder-role"
+    namespace = each.value
   }
 
   rule {
     api_groups = ["*"]
-    resources = ["*"]
-    verbs = ["*"]
+    resources  = ["*"]
+    verbs      = ["*"]
   }
 
   rule {
@@ -67,7 +87,7 @@ resource "kubernetes_role" "coder" {
 
 resource "kubernetes_cluster_role" "coder" {
   metadata {
-    name      = kubernetes_service_account_v1.coder.metadata[0].name
+    name = "coder-cluster-role"
   }
 
   rule {
@@ -90,7 +110,7 @@ resource "kubernetes_cluster_role_binding" "coder" {
 
   subject {
     kind      = "ServiceAccount"
-    name      = kubernetes_service_account_v1.coder.metadata[0].name
+    name      = kubernetes_service_account_v1.coder["coder"].metadata[0].name
     namespace = kubernetes_namespace.coder.metadata[0].name
   }
 
@@ -102,20 +122,25 @@ resource "kubernetes_cluster_role_binding" "coder" {
 }
 
 resource "kubernetes_role_binding" "coder" {
+  for_each = {
+    (kubernetes_namespace.coder.metadata[0].name)           = kubernetes_namespace.coder.metadata[0].name,
+    (kubernetes_namespace.coder_workspace.metadata[0].name) = kubernetes_namespace.coder_workspace.metadata[0].name
+  }
+
   metadata {
-    name      = "binding-coder-sa"
-    namespace = kubernetes_namespace.coder.metadata[0].name
+    name      = "binding-coder-${each.key}-sa"
+    namespace = each.key
   }
 
   subject {
     kind      = "ServiceAccount"
-    name      = kubernetes_service_account_v1.coder.metadata[0].name
+    name      = kubernetes_service_account_v1.coder[each.key].metadata[0].name
     namespace = kubernetes_namespace.coder.metadata[0].name
   }
 
   role_ref {
     kind      = "Role"
-    name      = kubernetes_role.coder.metadata[0].name
+    name      = kubernetes_role.coder[each.key].metadata[0].name
     api_group = "rbac.authorization.k8s.io"
   }
 }
@@ -123,22 +148,22 @@ resource "kubernetes_role_binding" "coder" {
 locals {
   coder_services = {
     database = {
-      cpu = "250m"
+      cpu    = "250m"
       memory = "512Mi"
-      port = 5432
-      image = "postgres"
+      port   = 5432
+      image  = "postgres"
       env = {
-        POSTGRES_USER = "username"
+        POSTGRES_USER     = "username"
         POSTGRES_PASSWORD = "password"
       }
       url_prefix = "postgresql://username:password@"
       url_suffix = ""
     }
     bus = {
-      cpu = "100m"
+      cpu    = "100m"
       memory = "50Mi"
-      port = 5672
-      image = "rabbitmq:3-management"
+      port   = 5672
+      image  = "rabbitmq:3-management"
       env = {
         RABBITMQ_DEFAULT_VHOST = "test"
       }
@@ -146,11 +171,11 @@ locals {
       url_suffix = "/test"
     }
     cache = {
-      cpu = "100m"
-      memory = "250Mi"
-      port = 6379
-      image = "redis"
-      env = {}
+      cpu        = "100m"
+      memory     = "250Mi"
+      port       = 6379
+      image      = "redis"
+      env        = {}
       url_prefix = "redis://"
       url_suffix = ""
     }
@@ -161,8 +186,8 @@ resource "kubernetes_deployment_v1" "coder_middleware" {
   for_each = local.coder_services
 
   metadata {
-    name = "coder-middleware-${each.key}"
-    namespace = kubernetes_namespace.coder.metadata[0].name
+    name      = "coder-middleware-${each.key}"
+    namespace = kubernetes_namespace.coder_workspace.metadata[0].name
     labels = {
       app = "coder-middleware-${each.key}"
     }
@@ -190,21 +215,21 @@ resource "kubernetes_deployment_v1" "coder_middleware" {
 
       spec {
         container {
-          name = "app"
+          name  = "app"
           image = each.value.image
 
           dynamic "env" {
             for_each = each.value.env
-            
+
             content {
-              name = env.key
+              name  = env.key
               value = env.value
             }
           }
 
           resources {
             requests = {
-              cpu = each.value.cpu
+              cpu    = each.value.cpu
               memory = each.value.memory
             }
           }
@@ -222,15 +247,15 @@ resource "kubernetes_service_v1" "coder_middleware" {
   for_each = local.coder_services
 
   metadata {
-    name = kubernetes_deployment_v1.coder_middleware[each.key].metadata[0].name
+    name      = kubernetes_deployment_v1.coder_middleware[each.key].metadata[0].name
     namespace = kubernetes_deployment_v1.coder_middleware[each.key].metadata[0].namespace
-    labels = kubernetes_deployment_v1.coder_middleware[each.key].spec[0].template[0].metadata[0].labels
+    labels    = kubernetes_deployment_v1.coder_middleware[each.key].spec[0].template[0].metadata[0].labels
   }
 
   spec {
     selector = kubernetes_deployment_v1.coder_middleware[each.key].spec[0].template[0].metadata[0].labels
     port {
-      port = local.coder_services[each.key].port
+      port        = local.coder_services[each.key].port
       target_port = local.coder_services[each.key].port
     }
   }
@@ -240,9 +265,9 @@ resource "kubernetes_secret" "coder_middleware" {
   for_each = local.coder_services
 
   metadata {
-    name = kubernetes_deployment_v1.coder_middleware[each.key].metadata[0].name
-    namespace = kubernetes_deployment_v1.coder_middleware[each.key].metadata[0].namespace
-    labels = kubernetes_deployment_v1.coder_middleware[each.key].spec[0].template[0].metadata[0].labels
+    name      = kubernetes_deployment_v1.coder_middleware[each.key].metadata[0].name
+    namespace = kubernetes_namespace.coder.metadata[0].name
+    labels    = kubernetes_deployment_v1.coder_middleware[each.key].spec[0].template[0].metadata[0].labels
   }
 
   data = {

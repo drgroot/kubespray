@@ -5,7 +5,7 @@ data "cloudflare_zones" "domain" {
 }
 
 data "vault_generic_secret" "secrets" {
-  path = "kubernetes/TENANTS" 
+  path = "kubernetes/TENANTS"
 }
 
 locals {
@@ -15,13 +15,14 @@ locals {
     ])
   ])
   all_cnames = concat(
-      [
-        "*",
-        "coder",
-        # data.cloudflare_zones.domain.zones[0].name,
-      ],
-      local.namespace_cnames
-    )
+    [
+      "*",
+      "coder",
+      "*.coder",
+      # data.cloudflare_zones.domain.zones[0].name,
+    ],
+    local.namespace_cnames
+  )
 }
 
 resource "cloudflare_record" "mail" {
@@ -51,3 +52,33 @@ resource "cloudflare_record" "subdomains" {
   ttl     = 1
 }
 
+resource "kubernetes_secret" "certmanager" {
+  metadata {
+    name      = "cert-manager-cloudflarekey"
+    namespace = kubernetes_namespace.certmanager.metadata[0].name
+  }
+
+  data = {
+    CLOUDFLARE_API_KEY = var.CLOUDFLARE_API_KEY
+  }
+}
+
+resource "kubernetes_namespace" "networking" {
+  metadata {
+    name = "networking"
+  }
+
+  lifecycle {
+    ignore_changes = [metadata[0].labels]
+  }
+}
+
+resource "kubernetes_namespace" "certmanager" {
+  metadata {
+    name = "cert-manager"
+  }
+
+  lifecycle {
+    ignore_changes = [metadata[0].labels]
+  }
+}

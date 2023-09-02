@@ -31,7 +31,7 @@ resource "kubernetes_manifest" "application_tools" {
                 name: ${local.versions.drone.name}
                 semvar: ${local.versions.drone.semvar}
                 tag: ${local.versions.drone.tag}
-              url: ${join(".",["drone",data.cloudflare_zones.domain.zones[0].name])}
+              url: ${join(".", ["drone", data.cloudflare_zones.domain.zones[0].name])}
               ingress:
                 annotations:
                   kubernetes.io/ingress.class: nginx
@@ -64,7 +64,7 @@ resource "kubernetes_manifest" "application_tools" {
                 semvar: ${local.versions.gitea.semvar}
                 tag: ${local.versions.gitea.tag}
                 suffix: "-rootless"
-              url: ${join(".",["git",data.cloudflare_zones.domain.zones[0].name])}
+              url: ${join(".", ["git", data.cloudflare_zones.domain.zones[0].name])}
               ingress:
                 annotations:
                   kubernetes.io/ingress.class: nginx
@@ -95,9 +95,9 @@ resource "kubernetes_manifest" "application_tools" {
                 name: "ghcr.io/coder/coder"
                 semvar: "~v2.x.x"
                 tag: "v2.1.4"
-              url: "${join(".",["coder",data.cloudflare_zones.domain.zones[0].name])}"
+              url: "${join(".", ["coder", data.cloudflare_zones.domain.zones[0].name])}"
               extraIngress: 
-                - host: "${join(".",["*.coder",data.cloudflare_zones.domain.zones[0].name])}"
+                - host: "${join(".", ["*.coder", data.cloudflare_zones.domain.zones[0].name])}"
                   paths:
                     - path: /
                       pathType: Prefix
@@ -125,13 +125,13 @@ resource "kubernetes_manifest" "application_tools" {
                 - port: 7080
               resources: {}
               namespace: ${kubernetes_namespace.coder.metadata[0].name}
-              serviceAccount: ${kubernetes_service_account_v1.coder.metadata[0].name}
+              serviceAccount: ${kubernetes_service_account_v1.coder["coder"].metadata[0].name}
             - name: registry
               image:
                 name: registry
                 semvar: ~2
                 tag: 2
-              url: ${join(".",["registry",data.cloudflare_zones.domain.zones[0].name])}
+              url: ${join(".", ["registry", data.cloudflare_zones.domain.zones[0].name])}
               ingress:
                 annotations:
                   nginx.ingress.kubernetes.io/client-body-buffer-size: 5000m

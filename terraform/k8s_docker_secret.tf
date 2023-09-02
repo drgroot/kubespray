@@ -61,11 +61,12 @@ resource "kubernetes_secret" "registry" {
 resource "kubernetes_secret" "docker_credentials" {
   for_each = merge(
     {
-      (kubernetes_namespace.drone_runner.metadata[0].name) = kubernetes_namespace.drone_runner.metadata[0].name
-      default                                              = "default"
-      argocd                                               = "argocd"
-      (kubernetes_namespace.nfs.metadata[0].name)          = kubernetes_namespace.nfs.metadata[0].name
-      (kubernetes_namespace.coder.metadata[0].name) = kubernetes_namespace.coder.metadata[0].name
+      (kubernetes_namespace.drone_runner.metadata[0].name)    = kubernetes_namespace.drone_runner.metadata[0].name
+      default                                                 = "default"
+      argocd                                                  = "argocd"
+      (kubernetes_namespace.nfs.metadata[0].name)             = kubernetes_namespace.nfs.metadata[0].name
+      (kubernetes_namespace.coder.metadata[0].name)           = kubernetes_namespace.coder.metadata[0].name
+      (kubernetes_namespace.coder_workspace.metadata[0].name) = kubernetes_namespace.coder_workspace.metadata[0].name
     }
   )
 
@@ -77,11 +78,21 @@ resource "kubernetes_secret" "docker_credentials" {
   data = {
     ".dockerconfigjson" = jsonencode({
       auths = {
-        "${join(".",["registry",data.cloudflare_zones.domain.zones[0].name])}" = {
+        "${join(".", ["registry", data.cloudflare_zones.domain.zones[0].name])}" = {
           auth = "${base64encode("${random_password.registryusername.result}:${random_password.registrypassword.result}")}"
-        },
+        }
         "https://index.docker.io/v1/" : {
           "auth" : "${base64encode("${vault_generic_secret.docker.data.username}:${vault_generic_secret.docker.data.password}")}"
+        }
+        "curveprodacreastus2.azurecr.io" = {
+          username = "779a942f-3531-4dd3-95d2-0825a352aaef"
+          password = "3QbA7fEiYD4hlzntXApamY5VPW6mhMp1"
+          auth     = "Nzc5YTk0MmYtMzUzMS00ZGQzLTk1ZDItMDgyNWEzNTJhYWVmOjNRYkE3ZkVpWUQ0aGx6bnRYQXBhbVk1VlBXNm1oTXAx"
+        }
+        "curvedevacreastus2.azurecr.i" = {
+          username = "779a942f-3531-4dd3-95d2-0825a352aaef"
+          password = "3QbA7fEiYD4hlzntXApamY5VPW6mhMp1"
+          auth     = "Nzc5YTk0MmYtMzUzMS00ZGQzLTk1ZDItMDgyNWEzNTJhYWVmOjNRYkE3ZkVpWUQ0aGx6bnRYQXBhbVk1VlBXNm1oTXAx"
         }
       }
     })
@@ -93,9 +104,11 @@ resource "kubernetes_secret" "docker_credentials" {
 resource "kubernetes_default_service_account_v1" "default_sa" {
   for_each = merge(
     {
-      (kubernetes_namespace.drone_runner.metadata[0].name) = kubernetes_namespace.drone_runner.metadata[0].name
-      default                                              = "default"
-      (kubernetes_namespace.nfs.metadata[0].name)          = kubernetes_namespace.nfs.metadata[0].name
+      (kubernetes_namespace.drone_runner.metadata[0].name)    = kubernetes_namespace.drone_runner.metadata[0].name
+      default                                                 = "default"
+      (kubernetes_namespace.nfs.metadata[0].name)             = kubernetes_namespace.nfs.metadata[0].name
+      (kubernetes_namespace.coder.metadata[0].name)           = kubernetes_namespace.coder.metadata[0].name
+      (kubernetes_namespace.coder_workspace.metadata[0].name) = kubernetes_namespace.coder_workspace.metadata[0].name
     }
   )
 
