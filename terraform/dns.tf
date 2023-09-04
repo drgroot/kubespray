@@ -63,6 +63,17 @@ resource "kubernetes_secret" "certmanager" {
   }
 }
 
+resource "kubernetes_secret" "cloudflarekey" {
+  metadata {
+    name      = "cloudflarekey"
+    namespace = "default"
+  }
+
+  data = {
+    CF_API_KEY = var.CLOUDFLARE_API_KEY
+  }
+}
+
 resource "kubernetes_namespace" "networking" {
   metadata {
     name = "networking"

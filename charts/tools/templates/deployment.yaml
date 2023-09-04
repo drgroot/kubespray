@@ -71,6 +71,8 @@ spec:
               targetPort: {{ $port.port }}
               port: {{ $port.port }}
           {{- end }}
+          {{- else }}
+          enabled: false
           {{- end }}
 
         {{- with $tool.securityContext }}

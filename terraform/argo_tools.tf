@@ -37,6 +37,7 @@ resource "kubernetes_manifest" "application_tools" {
                   kubernetes.io/ingress.class: nginx
                   cert-manager.io/cluster-issuer: letsencrypt-prod
                   nginx.ingress.kubernetes.io/ssl-redirect: "true"
+                  external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
                 tls:
                   - hosts:
                       - "*.yusufali.ca"
@@ -71,6 +72,7 @@ resource "kubernetes_manifest" "application_tools" {
                   cert-manager.io/cluster-issuer: letsencrypt-prod
                   nginx.ingress.kubernetes.io/ssl-redirect: "true"
                   nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+                  external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
                 tls:
                   - hosts:
                       - "*.yusufali.ca"
@@ -107,6 +109,7 @@ resource "kubernetes_manifest" "application_tools" {
                   cert-manager.io/cluster-issuer: letsencrypt-prod
                   nginx.ingress.kubernetes.io/ssl-redirect: "true"
                   nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+                  external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
                 tls:
                   - hosts:
                       - "coder.yusufali.ca"
@@ -126,6 +129,45 @@ resource "kubernetes_manifest" "application_tools" {
               resources: {}
               namespace: ${kubernetes_namespace.coder.metadata[0].name}
               serviceAccount: ${kubernetes_service_account_v1.coder["coder"].metadata[0].name}
+            - name: cloudflare-external-dns
+              image:
+                name: registry.k8s.io/external-dns/external-dns
+                semvar: "~v0.x.x"
+                tag: "v0.13.5"
+              args:
+                - --source=ingress
+                - --domain-filter=${data.cloudflare_zones.domain.zones[0].name}
+                - --provider=cloudflare
+                - --policy=upsert-only
+                - --default-targets=mordorhome.yusufali.ca
+                - --managed-record-types=CNAME
+              secrets:
+                - ${kubernetes_secret.cloudflarekey.metadata[0].name}
+              env:
+                - name: CF_API_EMAIL
+                  value: ${var.CLOUDFLARE_EMAIL}
+              ports: []
+              serviceAccount: external-dns
+            - name: pihole-external-dns
+              image:
+                name: registry.k8s.io/external-dns/external-dns
+                semvar: "~v0.x.x"
+                tag: "v0.13.5"
+              args:
+                - --source=ingress
+                - --provider=pihole
+                - --pihole-server=http://192.168.2.100
+                - --pihole-password=palestine
+                - --pihole-tls-skip-verify
+                - --registry=noop
+                - --policy=upsert-only
+                - --default-targets=mordorhome.yusufali.ca
+                - --managed-record-types=CNAME
+                - --domain-filter=k8s.private
+              secrets: []
+              env: []
+              ports: []
+              serviceAccount: external-dns
             - name: registry
               image:
                 name: registry
@@ -140,6 +182,7 @@ resource "kubernetes_manifest" "application_tools" {
                   cert-manager.io/cluster-issuer: letsencrypt-prod
                   nginx.ingress.kubernetes.io/ssl-redirect: "true"
                   nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+                  external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
                 tls:
                   - hosts:
                       - "*.yusufali.ca"
