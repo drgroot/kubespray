@@ -8,6 +8,26 @@ all:
       ansible_host: 192.168.2.102
       ansible_user: ubuntu
       ip: 192.168.2.102
+    kube3:
+      ansible_host: 192.168.2.212
+      ansible_user: ubuntu
+      ip: 192.168.2.212
+    kube4:
+      ansible_host: 192.168.2.213
+      ansible_user: ubuntu
+      ip: 192.168.2.213
+    kube5:
+      ansible_host: 192.168.2.215
+      ansible_user: ubuntu
+      ip: 192.168.2.215
+    kube6:
+      ansible_host: 192.168.2.214
+      ansible_user: ubuntu
+      ip: 192.168.2.214
+    kube7:
+      ansible_host: 192.168.2.216
+      ansible_user: ubuntu
+      ip: 192.168.2.216
   children:
     kube_control_plane:
       hosts:
