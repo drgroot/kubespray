@@ -36,6 +36,11 @@ all:
       hosts:
         kube1:
         kube2:
+        kube3:
+        kube4:
+        kube5:
+        kube6:
+        kube7:
     etcd:
       hosts:
         kube1:
