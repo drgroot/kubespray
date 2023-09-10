@@ -20,11 +20,6 @@ bin_dir: /usr/local/bin
 # valid options are "nginx" or "haproxy"
 # loadbalancer_apiserver_type: nginx  # valid values "nginx" or "haproxy"
 
-## If the cilium is going to be used in strict mode, we can use the
-## localhost connection and not use the external LB. If this parameter is
-## not specified, the first node to connect to kubeapi will be used.
-# use_localhost_as_kubeapi_loadbalancer: true
-
 ## Local loadbalancer should use this port
 ## And must be set port 6443
 loadbalancer_apiserver_port: 6443
@@ -37,7 +32,7 @@ loadbalancer_apiserver_healthcheck_port: 8081
 ## By default, Kubespray collects nameservers on the host. It then adds the previously collected nameservers in nameserverentries.
 ## If true, Kubespray does not include host nameservers in nameserverentries in dns_late stage. However, It uses the nameserver to make sure cluster installed safely in dns_early stage.
 ## Use this option with caution, you may need to define your dns servers. Otherwise, the outbound queries such as www.google.com may fail.
-disable_host_nameservers: false
+# disable_host_nameservers: false
 
 ## Upstream dns servers
 upstream_dns_servers:
@@ -51,13 +46,14 @@ upstream_dns_servers:
 # cloud_provider:
 
 ## When cloud_provider is set to 'external', you can set the cloud controller to deploy
-## Supported cloud controllers are: 'openstack', 'vsphere' and 'hcloud'
+## Supported cloud controllers are: 'openstack', 'vsphere', 'huaweicloud' and 'hcloud'
 ## When openstack or vsphere are used make sure to source in the required fields
 # external_cloud_provider:
 
-## Set these proxy values in order to update package manager and docker daemon to use proxies
+## Set these proxy values in order to update package manager and docker daemon to use proxies and custom CA for https_proxy if needed
 # http_proxy: ""
 # https_proxy: ""
+# https_proxy_cert_file: ""
 
 ## Refer to roles/kubespray-defaults/defaults/main.yml before modifying no_proxy
 # no_proxy: ""
@@ -129,10 +125,13 @@ kube_webhook_token_auth_url_skip_tls_verify: false
 ntp_enabled: false
 ntp_manage_config: false
 ntp_servers:
-  - "0.pool.ntp.org iburst"
-  - "1.pool.ntp.org iburst"
-  - "2.pool.ntp.org iburst"
-  - "3.pool.ntp.org iburst"
+  - '0.pool.ntp.org iburst'
+  - '1.pool.ntp.org iburst'
+  - '2.pool.ntp.org iburst'
+  - '3.pool.ntp.org iburst'
 
 ## Used to control no_log attribute
 unsafe_show_logs: false
+
+## If enabled it will allow kubespray to attempt setup even if the distribution is not supported. For unsupported distributions this can lead to unexpected failures in some cases.
+allow_unsupported_distribution_setup: false

@@ -5,29 +5,29 @@
 # This puts them in a sane location and namespace.
 # Editing those values will almost surely break something.
 kube_config_dir: /etc/kubernetes
-kube_script_dir: "{{ bin_dir }}/kubernetes-scripts"
-kube_manifest_dir: "{{ kube_config_dir }}/manifests"
+kube_script_dir: '{{ bin_dir }}/kubernetes-scripts'
+kube_manifest_dir: '{{ kube_config_dir }}/manifests'
 
 # This is where all the cert scripts and certs will be located
-kube_cert_dir: "{{ kube_config_dir }}/ssl"
+kube_cert_dir: '{{ kube_config_dir }}/ssl'
 
 # This is where all of the bearer tokens will be stored
-kube_token_dir: "{{ kube_config_dir }}/tokens"
+kube_token_dir: '{{ kube_config_dir }}/tokens'
 
 kube_api_anonymous_auth: true
 
 ## Change this to use another Kubernetes version, e.g. a current beta release
-kube_version: v1.26.1
+kube_version: v1.27.5
 
 # Where the binaries will be downloaded.
 # Note: ensure that you've enough disk space (about 1G)
-local_release_dir: "/tmp/releases"
+local_release_dir: '/tmp/releases'
 # Random shifts for retrying failed ops like pushing/downloading
 retry_stagger: 5
 
 # This is the user that owns tha cluster installation.
 kube_owner: kube
-kube_apiserver_node_port_range: "80-32767"
+kube_apiserver_node_port_range: '80-32767'
 # This is the group that the cert creation scripts chgrp the
 # cert files to. Not really changeable...
 kube_cert_group: kube-cert
@@ -36,12 +36,11 @@ kube_cert_group: kube-cert
 kube_log_level: 2
 
 # Directory where credentials will be stored
-credentials_dir: "/inventory/mycluster/credentials/"
-artifacts_dir: "/inventory/mycluster/artifacts"
+credentials_dir: '/inventory/mycluster/credentials/'
+artifacts_dir: '/inventory/mycluster/artifacts'
 ## It is possible to activate / deactivate selected authentication methods (oidc, static token auth)
 # kube_oidc_auth: false
 # kube_token_auth: false
-
 
 ## Variables for OpenID Connect Configuration https://kubernetes.io/docs/admin/authentication/
 ## To use OpenID you have to deploy additional an OpenID Provider (e.g Dex, Keycloak, ...)
@@ -69,7 +68,7 @@ artifacts_dir: "/inventory/mycluster/artifacts"
 # Can also be set to 'cloud', which lets the cloud provider setup appropriate routing
 kube_network_plugin: calico
 
-# Setting multi_networking to true will install Multus: https://github.com/intel/multus-cni
+# Setting multi_networking to true will install Multus: https://github.com/k8snetworkplumbingwg/multus-cni
 kube_network_plugin_multus: false
 
 # Kubernetes internal network for services, unused block of space.
@@ -117,8 +116,8 @@ kube_pods_subnet_ipv6: fd85:ee78:d8a6:8607::1:0000/112
 kube_network_node_prefix_ipv6: 120
 
 # The port the API Server will be listening on.
-kube_apiserver_ip: "{{ kube_service_addresses|ipaddr('net')|ipaddr(1)|ipaddr('address') }}"
-kube_apiserver_port: 6443  # (https)
+kube_apiserver_ip: "{{ kube_service_addresses | ipaddr('net') | ipaddr(1) | ipaddr('address') }}"
+kube_apiserver_port: 6443 # (https)
 
 # Kube-proxy proxyMode configuration.
 # Can be ipvs, iptables
@@ -141,7 +140,7 @@ kube_proxy_nodeport_addresses: >-
 
 # If non-empty, will use this string as identification instead of the actual hostname
 # kube_override_hostname: >-
-#   {%- if cloud_provider is defined and cloud_provider in [ 'aws' ] -%}
+#   {%- if cloud_provider is defined and cloud_provider in ['aws'] -%}
 #   {%- else -%}
 #   {{ inventory_hostname }}
 #   {%- endif -%}
@@ -165,7 +164,7 @@ ndots: 2
 # Custom search domains to be added in addition to the default cluster search domains
 # searchdomains:
 #   - svc.{{ cluster_name }}
-#   - default.svc.{{ cluster_name  }}
+#   - default.svc.{{ cluster_name }}
 # Remove default cluster search domains (``default.svc.{{ dns_domain }}, svc.{{ dns_domain }}``).
 # remove_default_searchdomains: false
 # Can be coredns, coredns_dual, manual or none
@@ -219,9 +218,9 @@ resolvconf_mode: host_resolvconf
 # Deploy netchecker app to verify DNS resolve as an HTTP service
 deploy_netchecker: false
 # Ip address of the kubernetes skydns service
-skydns_server: "{{ kube_service_addresses|ipaddr('net')|ipaddr(3)|ipaddr('address') }}"
-skydns_server_secondary: "{{ kube_service_addresses|ipaddr('net')|ipaddr(4)|ipaddr('address') }}"
-dns_domain: "{{ cluster_name }}"
+skydns_server: "{{ kube_service_addresses | ipaddr('net') | ipaddr(3) | ipaddr('address') }}"
+skydns_server_secondary: "{{ kube_service_addresses | ipaddr('net') | ipaddr(4) | ipaddr('address') }}"
+dns_domain: '{{ cluster_name }}'
 
 ## Container runtime
 ## docker for docker, crio for cri-o and containerd for containerd.
@@ -241,7 +240,7 @@ kubernetes_audit: false
 
 # define kubelet config dir for dynamic kubelet
 # kubelet_config_dir:
-default_kubelet_config_dir: "{{ kube_config_dir }}/dynamic_kubelet_dir"
+default_kubelet_config_dir: '{{ kube_config_dir }}/dynamic_kubelet_dir'
 
 # pod security policy (RBAC must be enabled either by having 'RBAC' in authorization_modes or kubeadm enabled)
 podsecuritypolicy_enabled: false
@@ -264,15 +263,15 @@ kubeconfig_localhost: true
 # kubelet_enforce_node_allocatable: pods
 
 ## Set runtime and kubelet cgroups when using systemd as cgroup driver (default)
-# kubelet_runtime_cgroups: "{{ kube_reserved_cgroups }}/{{ container_manager }}.service"
-# kubelet_kubelet_cgroups: "{{ kube_reserved_cgroups }}/kubelet.service"
+# kubelet_runtime_cgroups: "/{{ kube_service_cgroups }}/{{ container_manager }}.service"
+# kubelet_kubelet_cgroups: "/{{ kube_service_cgroups }}/kubelet.service"
 
 ## Set runtime and kubelet cgroups when using cgroupfs as cgroup driver
 # kubelet_runtime_cgroups_cgroupfs: "/system.slice/{{ container_manager }}.service"
 # kubelet_kubelet_cgroups_cgroupfs: "/system.slice/kubelet.service"
 
 # Optionally reserve this space for kube daemons.
-# kube_reserved: true
+# kube_reserved: false
 ## Uncomment to override default values
 ## The following two items need to be set when kube_reserved is true
 # kube_reserved_cgroups_for_service_slice: kube.slice
@@ -368,7 +367,7 @@ persistent_volumes_enabled: false
 #   - TLS_RSA_WITH_RC4_128_SHA
 
 ## Amount of time to retain events. (default 1h0m0s)
-event_ttl_duration: "1h0m0s"
+event_ttl_duration: '1h0m0s'
 
 ## Automatically renew K8S control plane certificates on first Monday of each month
 auto_renew_certificates: false
@@ -378,5 +377,5 @@ auto_renew_certificates: false
 # kubeadm patches path
 kubeadm_patches:
   enabled: false
-  source_dir: "{{ inventory_dir }}/patches"
-  dest_dir: "{{ kube_config_dir }}/patches"
+  source_dir: '{{ inventory_dir }}/patches'
+  dest_dir: '{{ kube_config_dir }}/patches'
