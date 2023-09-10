@@ -27,4 +27,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: deploy changes
-        run: ansible-playbook -i inventory/sample/hosts.yaml kubespray/upgrade-cluster.yml -b -v --private-key /inventory/id_rsa
+        run: |
+          rm kubespray/playbooks/roles || true
+          ln -s ../roles kubespray/playbooks/roles
+          ansible-playbook -i inventory/sample/hosts.yaml kubespray/upgrade-cluster.yml -b -v --private-key /inventory/id_rsa

@@ -30,7 +30,10 @@ jobs:
         run: ansible-playbook -i inventory/sample/hosts.yaml additional.yml -b -v --private-key /inventory/id_rsa
 
       - name: deploy changes
-        run: ansible-playbook -i inventory/sample/hosts.yaml kubespray/cluster.yml -b -v --private-key /inventory/id_rsa
-      
+        run: |
+          rm kubespray/playbooks/roles || true
+          ln -s ../roles kubespray/playbooks/roles
+          ansible-playbook -i inventory/sample/hosts.yaml kubespray/cluster.yml -b -v --private-key /inventory/id_rsa
+
       - name: run post install
         run: ansible-playbook -i inventory/sample/hosts.yaml post_install.yml -b -v --private-key /inventory/id_rsa

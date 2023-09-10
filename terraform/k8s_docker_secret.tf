@@ -84,16 +84,6 @@ resource "kubernetes_secret" "docker_credentials" {
         "https://index.docker.io/v1/" : {
           "auth" : "${base64encode("${vault_generic_secret.docker.data.username}:${vault_generic_secret.docker.data.password}")}"
         }
-        "curveprodacreastus2.azurecr.io" = {
-          username = "779a942f-3531-4dd3-95d2-0825a352aaef"
-          password = "3QbA7fEiYD4hlzntXApamY5VPW6mhMp1"
-          auth     = "Nzc5YTk0MmYtMzUzMS00ZGQzLTk1ZDItMDgyNWEzNTJhYWVmOjNRYkE3ZkVpWUQ0aGx6bnRYQXBhbVk1VlBXNm1oTXAx"
-        }
-        "curvedevacreastus2.azurecr.i" = {
-          username = "779a942f-3531-4dd3-95d2-0825a352aaef"
-          password = "3QbA7fEiYD4hlzntXApamY5VPW6mhMp1"
-          auth     = "Nzc5YTk0MmYtMzUzMS00ZGQzLTk1ZDItMDgyNWEzNTJhYWVmOjNRYkE3ZkVpWUQ0aGx6bnRYQXBhbVk1VlBXNm1oTXAx"
-        }
       }
     })
   }

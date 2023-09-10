@@ -4,7 +4,7 @@ on:
       - master
 
 jobs:
-  remove-nodes:
+  reset-cluster:
     runs-on: self-hosted
     environment:
       name: remove.prod
@@ -26,15 +26,8 @@ jobs:
       - name: install packages
         run: pip install -r requirements.txt
 
-      - name: deploy addional configs
-        run: ansible-playbook -i inventory/sample/hosts.yaml additional.yml -b -v --private-key /inventory/id_rsa
-
       - name: deploy changes
-        run: ansible-playbook -i inventory/sample/hosts.yaml kubespray/remove-node.yml -b -v --private-key /inventory/id_rsa -e node=ns557394
-
-      - name: run post install
-        run: ansible-playbook -i inventory/sample/hosts.yaml post_install.yml -b -v --private-key /inventory/id_rsa
-      
-      - name: copy artifacts
         run: |
-          cp inventory/sample/hosts.yaml /inventory/mycluster/.
+          rm kubespray/playbooks/roles || true
+          ln -s ../roles kubespray/playbooks/roles
+          ansible-playbook -i inventory/sample/hosts.yaml kubespray/reset.yml -b -v --private-key /inventory/id_rsa -e reset_confirmation=yes

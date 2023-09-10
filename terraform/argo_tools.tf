@@ -148,26 +148,6 @@ resource "kubernetes_manifest" "application_tools" {
                   value: ${var.CLOUDFLARE_EMAIL}
               ports: []
               serviceAccount: external-dns
-            - name: pihole-external-dns
-              image:
-                name: registry.k8s.io/external-dns/external-dns
-                semvar: "~v0.x.x"
-                tag: "v0.13.5"
-              args:
-                - --source=ingress
-                - --provider=pihole
-                - --pihole-server=http://192.168.2.100
-                - --pihole-password=palestine
-                - --pihole-tls-skip-verify
-                - --registry=noop
-                - --policy=upsert-only
-                - --default-targets=mordorhome.yusufali.ca
-                - --managed-record-types=CNAME
-                - --domain-filter=k8s.private
-              secrets: []
-              env: []
-              ports: []
-              serviceAccount: external-dns
             - name: registry
               image:
                 name: registry

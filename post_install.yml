@@ -22,9 +22,15 @@
     #     path: /etc/iptables/rules.v4
     - name: reboot task
       ansible.builtin.cron:
-        name: "roboot when required"
+        name: 'roboot when required'
         special_time: hourly
-        job: "if [ -f /var/run/reboot-required ]; then /usr/sbin/shutdown -r now; fi"
+        job: 'if [ -f /var/run/reboot-required ]; then /usr/sbin/shutdown -r now; fi'
+        user: root
+    - name: swapoff task
+      ansible.builtin.cron:
+        name: 'disable swap at reboot'
+        special_time: reboot
+        job: 'swapoff -a'
         user: root
 # - name: setup firewall
 #   hosts: all
