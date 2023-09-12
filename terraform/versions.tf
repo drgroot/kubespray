@@ -17,6 +17,7 @@ locals {
       mariadb = "10.7.3"
     }
 
+    externalsecrets = "0.9.4"
     ingress    = "4.0.6"
     keda       = "2.10.1"
     certmanager = "v1.12.3"

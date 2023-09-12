@@ -1,3 +1,13 @@
+resource "kubernetes_namespace" "externalsecrets" {
+  metadata {
+    name = "externalsecrets"
+  }
+
+  lifecycle {
+    ignore_changes = [metadata[0].labels]
+  }
+}
+
 resource "kubernetes_manifest" "project" {
   manifest = {
     apiVersion = "argoproj.io/v1alpha1"
@@ -103,6 +113,10 @@ resource "kubernetes_manifest" "application" {
 
           keda:
             version: ${local.versions.keda}
+
+          externalsecrets:
+            version: ${local.versions.externalsecrets}
+            namespace: ${kubernetes_namespace.externalsecrets.metadata[0].name}
           EOF
         }
       }
