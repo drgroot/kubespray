@@ -12,19 +12,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v2
 
       - run: terraform -chdir=terraform init
-      - run: terraform -chdir=terraform plan -no-color -input=false -state=/inventory/terraform/state.tfstate -var='ID_RSA_PUB=/inventory/id_rsa.pub' -var='ID_RSA=/inventory/id_rsa' -var-file="/inventory/variables.tfvars"
+      - run: terraform -chdir=terraform plan -no-color -input=false -state=/inventory/terraform/state.tfstate -var-file="/inventory/variables.tfvars"
 
       - if: github.ref == 'refs/heads/master'
-        run: terraform -chdir=terraform apply -auto-approve -input=false -state=/inventory/terraform/state.tfstate -var='ID_RSA_PUB=/inventory/id_rsa.pub' -var='ID_RSA=/inventory/id_rsa' -var-file="/inventory/variables.tfvars"
-
-  terraformtenant:
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v3
-      - uses: hashicorp/setup-terraform@v2
-
-      - run: terraform -chdir=terraform_drone init
-      - run: terraform -chdir=terraform_drone plan -no-color -input=false -state=/inventory/terraform/drone.tfstate -var-file="/inventory/variables.tfvars"
-
-      - if: github.ref == 'refs/heads/master'
-        run: terraform -chdir=terraform_drone apply -auto-approve -input=false -state=/inventory/terraform/drone.tfstate -var-file="/inventory/variables.tfvars"
+        run: terraform -chdir=terraform apply -auto-approve -input=false -state=/inventory/terraform/state.tfstate -var-file="/inventory/variables.tfvars"

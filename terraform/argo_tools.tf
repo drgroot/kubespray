@@ -25,47 +25,73 @@ resource "kubernetes_manifest" "application_tools" {
           spec:
             project: ${kubernetes_manifest.project.manifest.metadata.name}
 
+          secretStore:
+            name: ${local.cluster_secret_store_name}
+            kind: ClusterSecretStore
+          
+          secrets:
+            docker-credentials:
+              namespace: ${kubernetes_namespace.coder.metadata[0].name}
+              template:
+                .dockerconfigjson: |
+                  {
+                    "auths": {
+                      "https://registry.yusufali.ca": {
+                        "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
+                      }
+                    }
+                  }
+              data:
+                - name: USERNAME
+                  key: DOCKER
+                  property: PRIVATE_USERNAME
+                - name: PASSWORD
+                  key: DOCKER
+                  property: PRIVATE_PASSWORD
+            docker-credentials:
+              namespace: ${kubernetes_namespace.coder_workspace.metadata[0].name}
+              type: kubernetes.io/dockerconfigjson
+              template:
+                .dockerconfigjson: |
+                  {
+                    "auths": {
+                      "https://registry.yusufali.ca": {
+                        "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
+                      }
+                    }
+                  }
+              data:
+                - name: USERNAME
+                  key: DOCKER
+                  property: PRIVATE_USERNAME
+                - name: PASSWORD
+                  key: DOCKER
+                  property: PRIVATE_PASSWORD
+            postgres-credentials:
+              namespace: ${kubernetes_namespace.coder.metadata[0].name}
+              data:
+                - key: DB_POSTGRES
+                  property: USERNAME
+                - key: DB_POSTGRES
+                  property: PASSWORD
+            registry-credentials:
+              template:
+                htpasswd: |-
+                  {{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD }}
+              data:
+                - key: DOCKER
+                  property: PRIVATE_USERNAME
+                - key: DOCKER
+                  property: PRIVATE_PASSWORD
+
           tools:
-            - name: drone
+            - name: gitlab
               image:
-                name: ${local.versions.drone.name}
-                semvar: ${local.versions.drone.semvar}
-                tag: ${local.versions.drone.tag}
-              url: ${join(".", ["drone", data.cloudflare_zones.domain.zones[0].name])}
-              ingress:
-                annotations:
-                  kubernetes.io/ingress.class: nginx
-                  cert-manager.io/cluster-issuer: letsencrypt-prod
-                  nginx.ingress.kubernetes.io/ssl-redirect: "true"
-                  external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
-                tls:
-                  - hosts:
-                      - "*.yusufali.ca"
-                    secretName: wildcard-yusufali
-              secrets: 
-                - ${kubernetes_secret.drone.metadata[0].name}
-              resources: {}
-              ports:
-                - port: 80
-            - name: drone-runner
-              namespace: ${kubernetes_namespace.drone_runner.metadata[0].name}
-              serviceAccount: ${kubernetes_service_account_v1.drone_runner.metadata[0].name}
-              image:
-                name: "drone/drone-runner-kube"
-                tag: "latest"
-                semvar: "latest"
-              ports:
-                - port: 3000
-              resources: {}
-              secrets:
-                - drone-runner
-            - name: gitea
-              image:
-                name: ${local.versions.gitea.name}
-                semvar: ${local.versions.gitea.semvar}
-                tag: ${local.versions.gitea.tag}
-                suffix: "-rootless"
-              url: ${join(".", ["git", data.cloudflare_zones.domain.zones[0].name])}
+                name: ${local.versions.gitlab.name}
+                semvar: ${local.versions.gitlab.semvar}
+                tag: ${local.versions.gitlab.tag}
+                suffix: "-ee.0"
+              url: ${join(".", ["src", "yusufali.ca"])}
               ingress:
                 annotations:
                   kubernetes.io/ingress.class: nginx
@@ -77,29 +103,37 @@ resource "kubernetes_manifest" "application_tools" {
                   - hosts:
                       - "*.yusufali.ca"
                     secretName: wildcard-yusufali
-              secrets:
-                - ${kubernetes_secret.gitea.metadata[0].name}
               ports:
-                - port: 3000
-                - port: 2222
-              securityContext:
-                runAsGroup: 1000
-                runAsUser: 1000
+                - port: 8081
+                - port: 22
+              secrets: []
               resources: {}
               className: nfs-onpremise-dynamic
               volumes:
-                - mountPath: /var/lib/gitea
+                - mountPath: /var/opt/gitlab
                   subPath: data
-                - mountPath: /etc/gitea
+                - mountPath: /etc/gitlab
                   subPath: config
+                - mountPath: /opt/gitlab/embedded/service/gitlab-rails/.license_encryption_key.pub
+                  subPath: license/.license_encryption_key.pub
+                - mountPath: /opt/gitlab/embedded/service/gitlab-rails/.test_license_encryption_key.pub
+                  subPath: license/.license_encryption_key.pub
+              extraVolumeMounts:
+                - name: dshm
+                  mountPath: /dev/shm
+              extraVolumes:
+                - name: dshm
+                  emptyDir:
+                    medium: Memory
+                    sizeLimit: "256Mi"
             - name: coder
               image:
                 name: "ghcr.io/coder/coder"
                 semvar: "~v2.x.x"
                 tag: "v2.1.4"
-              url: "${join(".", ["coder", data.cloudflare_zones.domain.zones[0].name])}"
+              url: "${join(".", ["coder", "yusufali.ca"])}"
               extraIngress: 
-                - host: "${join(".", ["*.coder", data.cloudflare_zones.domain.zones[0].name])}"
+                - host: "${join(".", ["*.coder", "yusufali.ca"])}"
                   paths:
                     - path: /
                       pathType: Prefix
@@ -122,38 +156,30 @@ resource "kubernetes_manifest" "application_tools" {
                   value: "https://coder.yusufali.ca"
                 - name: CODER_ADDRESS
                   value: "0.0.0.0:7080"
-              secrets:
-                - ${kubernetes_secret.coder.metadata[0].name}
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-credentials
+                      key: PASSWORD
+                - name: POSTGRES_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-credentials
+                      key: USERNAME
+                - name: CODER_PG_CONNECTION_URL
+                  value: "postgres://$(POSTGRES_USERNAME):$(POSTGRES_PASSWORD)@${kubernetes_service_v1.database["postgres"].metadata[0].name}.${kubernetes_service_v1.database["postgres"].metadata[0].namespace}.svc.cluster.local/coder?sslmode=disable"
+              secrets: []
               ports:
                 - port: 7080
               resources: {}
               namespace: ${kubernetes_namespace.coder.metadata[0].name}
               serviceAccount: ${kubernetes_service_account_v1.coder["coder"].metadata[0].name}
-            - name: cloudflare-external-dns
-              image:
-                name: registry.k8s.io/external-dns/external-dns
-                semvar: "~v0.x.x"
-                tag: "v0.13.5"
-              args:
-                - --source=ingress
-                - --domain-filter=${data.cloudflare_zones.domain.zones[0].name}
-                - --provider=cloudflare
-                - --policy=upsert-only
-                - --default-targets=mordorhome.yusufali.ca
-                - --managed-record-types=CNAME
-              secrets:
-                - ${kubernetes_secret.cloudflarekey.metadata[0].name}
-              env:
-                - name: CF_API_EMAIL
-                  value: ${var.CLOUDFLARE_EMAIL}
-              ports: []
-              serviceAccount: external-dns
             - name: registry
               image:
                 name: registry
                 semvar: ~2
                 tag: 2
-              url: ${join(".", ["registry", data.cloudflare_zones.domain.zones[0].name])}
+              url: ${join(".", ["registry", "yusufali.ca"])}
               ingress:
                 annotations:
                   nginx.ingress.kubernetes.io/client-body-buffer-size: 5000m
@@ -167,8 +193,7 @@ resource "kubernetes_manifest" "application_tools" {
                   - hosts:
                       - "*.yusufali.ca"
                     secretName: wildcard-yusufali
-              secrets:
-                - ${kubernetes_secret.registry.metadata[0].name}
+              secrets: []
               ports:
                 - port: 5000
               className: nfs-onpremise-dynamic
@@ -178,10 +203,28 @@ resource "kubernetes_manifest" "application_tools" {
               resources: {}
               volumes:
                 - mountPath: /var/lib/registry
+              env:
+                - name: REGISTRY_AUTH
+                  value: "htpasswd"
+                - name: REGISTRY_AUTH_HTPASSWD_REALM
+                  value: "Registry Realm"
+                - name: REGISTRY_AUTH_HTPASSWD_PATH
+                  value: "/auth/htpasswd"
+                - name: REGISTRY_STORAGE_MAINTENANCE
+                  value: |
+                    uploadpurging:
+                      enabled: true
+                      age: 48h
+                      interval: 24h
+                      dryrun: false
+                    readonly:
+                      enabled: false
+                    delete:
+                      enabled: true
               extraVolumes:
                 - name: htpasswd
                   secret:
-                    secretName: ${kubernetes_secret.registryAuth.metadata[0].name}
+                    secretName: registry-credentials
               extraVolumeMounts:
                 - name: htpasswd
                   mountPath: /auth

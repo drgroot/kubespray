@@ -24,14 +24,45 @@ storage:
       - name: downloads
         fixed: true
 
+secretStore:
+  name: asdasd
+  kind: ClusterSecretStore
+
+secrets:
+  rclone:
+    data:
+      - key: RCLONE
+        property: rclone.conf
+  # private:
+  #   type: kubernetes.io/dockerconfigjson
+  #   template:
+  #     .dockerconfigjson: |
+  #       {
+  #         "auths": {
+  #           "https://registry.yusufali.ca": {
+  #             "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
+  #           }
+  #         }
+  #       }
+  #   data:
+  #     - name: USERNAME
+  #       key: DOCKER
+  #       property: PRIVATE_USERNAME
+  #     - name: PASSWORD
+  #       key: DOCKER
+  #       property: PRIVATE_PASSWORD
+
+imageSecrets:
+  chart: []
+    # - public
+    # - private
+  external: []
+
 tasks:
-  secrets:
-    image: registry.yusufali.ca/elrond/helper
-    rclone: rclone
-    scripts: rclone-scripts
+  image: rclone/rclone
   configs:
     - name: backup
-      command: 
+      command:
         - python3
       args:
         - mycommand
@@ -61,6 +92,3 @@ templateSource:
 
 versions:
   nfs_provisioner: "4.0.17"
-  syncthing:
-    semvar: "~1"
-    tag: "1.20.4"

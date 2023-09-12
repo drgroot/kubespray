@@ -1,49 +1,34 @@
-resource "vault_generic_secret" "secrets" {
-  path = "kubernetes/CLUSTER_INFORMATION" 
-  data_json = jsonencode({
-      CA_KEY_ALGORITHM   = "RSA"
-      CA_PRIVATE_KEY_PEM = file(var.CA_KEY)
-      CA_CERT_PEM        = file(var.CA_CERT)
-      master_ip          = local.all_nodes[0].ip
-      ADMINCONF          = file(var.ADMIN_CONF)
-
-      # ssl_tls_crt  = join("", [acme_certificate.certificate.certificate_pem, acme_certificate.certificate.issuer_pem])
-      # ssl_tls_key = acme_certificate.certificate.private_key_pem
-      # ssl_certificate_p12 = acme_certificate.certificate.certificate_p12
-      # ssl_certificate_p12_password = random_password.certificate_password.result
-  })
+# make account for apps. readonly
+resource "random_password" "readonly_external_password" {
+  length  = 30
+  special = true
 }
-
-resource "vault_generic_secret" "generic" {
-  for_each = {
-    DOCKER = merge(
-      kubernetes_secret.docker_credentials["default"].data,
-      {
-        PUBLIC_REGISTRY_URL  = vault_generic_secret.docker.data.username
-        PRIVATE_REGISTRY_URL = join(".",["registry",data.cloudflare_zones.domain.zones[0].name])
-      }
-    ),
-    NPM = {
-      username  = random_password.registryusername.result
-      NPM_TOKEN = random_password.registrypassword.result
-      NPM_HOST  = join(".",["npm",data.cloudflare_zones.domain.zones[0].name])
-    }
+resource "vault_policy" "readonly_access_secrets" {
+  name = "kubernetes-readonly"
+  policy = <<-EOT
+  %{ for pathname in ["external-infra/data/*","kubernetes/data/*"] ~}
+  path "${pathname}" {
+    capabilities = ["read","list"]
   }
-
-  path      = "kubernetes/${each.key}"
-  data_json = jsonencode(each.value)
+  %{ endfor ~}
+  EOT 
+}
+resource "vault_generic_endpoint" "readonly_access_secrets" {
+  path  = "auth/userpass/users/kubernetesreadonly"
+  ignore_absent_fields = true
+  data_json = jsonencode({
+    policies = [vault_policy.readonly_access_secrets.name]
+    password = random_password.readonly_external_password.result
+  })
 }
 
-resource "vault_generic_secret" "email" {
-  path = "external-infra/SMTP"
-  data_json = jsonencode({
-    SMTP_FROM_DOMAIN = var.SMTP_FROM_DOMAIN
-    SMTP_FROM_EMAIL = join("@", [var.SMTP_FROM_USER, var.SMTP_FROM_DOMAIN])
-    SMTP_FROM_USER   = var.SMTP_FROM_USER
-    SMTP_HOST         = var.SMTP_HOST
-    SMTP_PASSWORD     = var.SMTP_PASSWORD
-    SMTP_PORT         = var.SMTP_PORT
-    SMTP_USERNAME     = var.SMTP_USERNAME
-    SMTP_SECURITY     = var.SMTP_SECURITY
-  })
+resource "kubernetes_secret" "vault_password" {
+  metadata {
+    name = "vault-password"
+    namespace = "default"
+  }
+  
+  data = {
+    password = random_password.readonly_external_password.result
+  }
 }

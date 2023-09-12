@@ -1,14 +1,9 @@
 locals {
   versions = {
-    gitea = {
-      name   = "gitea/gitea"
-      semvar = "~1.x.x"
-      tag    = "1.18"
-    }
-    drone = {
-      name   = "drone/drone"
-      tag    = "2.12.0"
-      semvar = "~2"
+    gitlab = {
+      name   = "gitlab/gitlab-ee"
+      tag    = "16.3.0"
+      semvar = "~16.3"
     }
 
     databases={
@@ -17,9 +12,12 @@ locals {
       mariadb = "10.7.3"
     }
 
+    externalsecrets = "0.9.4"
     ingress    = "4.0.6"
     keda       = "2.10.1"
     certmanager = "v1.12.3"
     nfs_provisioner = "4.0.18"
+    gitlabrunner = "v0.56.0"
+    externaldns = "1.13.1"
   }
 }

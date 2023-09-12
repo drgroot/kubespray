@@ -1,15 +1,12 @@
-resource "random_string" "database_username" {
-  length = 16
-  special = false
-}
-
-resource "random_password" "database_password" {
-  length = 16
-  special = false
+data "vault_generic_secret" "database_credentials" {
+  path = "external-infra/DB_POSTGRES"
 }
 
 locals {
   backup_location = "/backup/backup.sql"
+  db_password = data.vault_generic_secret.database_credentials.data.PASSWORD
+  db_username = data.vault_generic_secret.database_credentials.data.USERNAME
+
   databases = {
     postgres = {
       override_username = true
@@ -18,15 +15,7 @@ locals {
       password = "POSTGRES_PASSWORD"
       port = 5432
       live_check = ["/bin/bash","-c", "psql -U $POSTGRES_USER -c 'SELECT 1'"]
-      backup = ["/bin/bash", "-c", "export PGPASSWORD=${random_password.database_password.result}; pg_dumpall -U ${random_string.database_username.result} -h $DATABASE_HOST -p $DATABASE_PORT --clean --file=${local.backup_location}"]
-    }
-    mysql = {
-      volume_mount = "/var/lib/mysql"
-      username = "root"
-      override_username = false
-      password = "MYSQL_ROOT_PASSWORD"
-      port = 3306
-      live_check = ["/bin/bash","-c", "mysql -u root -p${random_password.database_password.result} -e 'SELECT 1'"]
+      backup = ["/bin/bash", "-c", "export PGPASSWORD=${local.db_password}; pg_dumpall -U ${local.db_username} -h $DATABASE_HOST -p $DATABASE_PORT --clean --file=${local.backup_location}"]
     }
     mariadb = {
       volume_mount = "/var/lib/mysql"
@@ -34,8 +23,8 @@ locals {
       override_username = false
       password = "MYSQL_ROOT_PASSWORD"
       port = 3306
-      live_check = ["/bin/bash","-c", "mysql -u root -p${random_password.database_password.result} -e 'SELECT 1'"]
-      backup = ["/bin/bash","-c", "mysqldump -h $DATABASE_HOST -P $DATABASE_PORT -u root -p${random_password.database_password.result} --all-databases --skip-lock-tables > ${local.backup_location}"]
+      live_check = ["/bin/bash","-c", "mysql -u root -p${local.db_password} -e 'SELECT 1'"]
+      backup = ["/bin/bash","-c", "mysqldump -h $DATABASE_HOST -P $DATABASE_PORT -u root -p${local.db_password} --all-databases --skip-lock-tables > ${local.backup_location}"]
     }
   }
 }
@@ -98,6 +87,11 @@ resource "kubernetes_deployment_v1" "database" {
             sub_path = each.key
           }
 
+          volume_mount {
+            name = "dshm"
+            mount_path = "/dev/shm"
+          }
+
           resources {
             requests = {
               cpu = "512m"
@@ -107,12 +101,12 @@ resource "kubernetes_deployment_v1" "database" {
 
           env {
             name = local.databases[each.key].override_username ? local.databases[each.key].username : "MYasdSQL_PsadWD"
-            value = random_string.database_username.result
+            value = local.db_username
           }
 
           env {
             name = local.databases[each.key].password
-            value = random_password.database_password.result
+            value = local.db_password
           }
 
           port {
@@ -142,6 +136,14 @@ resource "kubernetes_deployment_v1" "database" {
             claim_name = kubernetes_persistent_volume_claim.database_pvc[each.key].metadata[0].name
           }
         }
+
+        volume {
+          name = "dshm"
+          empty_dir {
+            medium = "Memory"
+            size_limit = "1Gi"
+          }
+        }
       }
     }
   }
@@ -161,18 +163,6 @@ resource "kubernetes_service_v1" "database" {
       target_port = local.databases[each.key].port
     }
   }
-}
-
-resource "vault_generic_secret" "database" {
-  for_each = local.versions.databases
-
-  path = "kubernetes/DATABASE_${upper(each.key)}"
-  data_json = jsonencode({
-    hostname = "${kubernetes_service_v1.database[each.key].metadata[0].name}.default.svc.cluster.local"
-    password = random_password.database_password.result
-    port = kubernetes_service_v1.database[each.key].spec[0].port[0].port
-    username = local.databases[each.key].override_username ? random_string.database_username.result : local.databases[each.key].username
-  })
 }
 
 resource "kubernetes_persistent_volume_claim" "database_backup_pvc" {

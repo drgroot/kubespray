@@ -10,6 +10,9 @@ metadata:
   namespace: {{ $.Values.spec.destination.namespace }}
   labels:
     {{- include "nfs.labels" $ | nindent 4 }}
+    task: {{ $task.name }}
+    server: {{ $server.name }}
+    folder: {{ $folder.name }}
 spec:
   schedule: {{ $task.cron | default "0 3 * * *" | quote }}
   concurrencyPolicy: Forbid
@@ -20,18 +23,29 @@ spec:
       name: {{ include "nfs.fullname" $ }}-{{ $task.name }}-{{ $server.name }}-{{ $folder.name }}
       labels:
         {{- include "nfs.labels" $ | nindent 8 }}
+        task: {{ $task.name }}
+        server: {{ $server.name }}
+        folder: {{ $folder.name }}
     spec:
       template:
         metadata:
           name: {{ include "nfs.fullname" $ }}-{{ $task.name }}-{{ $server.name }}-{{ $folder.name }}
           labels:
             {{- include "nfs.labels" $ | nindent 12 }}
+            task: {{ $task.name }}
+            server: {{ $server.name }}
+            folder: {{ $folder.name }}
         spec:
           restartPolicy: Never
+          {{ if gt (len $.Values.imageSecrets.chart) 0 }}
+          imagePullSecrets:
+            {{- range $imageSecret := $.Values.imageSecrets.chart }}
+            - name: {{ include "nfs.fullname" $ }}-{{ $imageSecret }}
+            {{- end }}
+          {{ end }}
           containers:
             - name: task
-              image: {{ default $task.image $.Values.tasks.secrets.image }}
-              imagePullPolicy: Always
+              image: {{ default $task.image $.Values.tasks.image }}
               {{- with $task.command }}
               command:
               {{ toYaml . | nindent 16 }}
@@ -51,10 +65,12 @@ spec:
                   cpu: 100m
                   memory: 512Mi
               volumeMounts:
-                - name: rclone
-                  mountPath: /rclone
-                - name: scripts
-                  mountPath: /scripts
+                {{ range $secret := $task.secrets }}
+                {{ if and (hasKey $secret "mount") ($secret.mount) }}
+                - name: {{ $secret.name }}
+                  mountPath: /{{ $secret.name }}
+                {{ end }}
+                {{ end }}
                 - name: source
                   mountPath: /source
                   subPath: {{ $folder.name }}
@@ -62,14 +78,14 @@ spec:
               {{ toYaml . | nindent 16}}
               {{- end }}
           volumes:
-            - name: rclone
+            {{ range $secret := $task.secrets }}
+            {{ if and (hasKey $secret "mount") ($secret.mount) }}
+            - name: {{ $secret.name }}
               secret:
                 defaultMode: 0755
-                secretName: {{ $.Values.tasks.secrets.rclone }}
-            - name: scripts
-              secret:
-                defaultMode: 0755
-                secretName: {{ $.Values.tasks.secrets.scripts }}
+                secretName: {{ include "nfs.fullname" $ }}-{{ $secret.name }}
+            {{ end }}  
+            {{ end }}
             - name: source
               nfs:
                 server: {{ $server.hostname }}

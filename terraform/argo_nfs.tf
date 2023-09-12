@@ -1,30 +1,3 @@
-resource "kubernetes_namespace" "nfs" {
-  metadata {
-    name = "nfs"
-  }
-
-  lifecycle {
-    ignore_changes = [metadata[0].labels]
-  }
-}
-
-resource "vault_generic_secret" "rclone" {
-  path = "external-infra/RCLONE"
-
-  data_json = jsonencode({
-    "rclone.conf" = file(var.RCLONE_FILE)
-  })
-}
-
-resource "kubernetes_secret" "rclone_secret" {
-  metadata {
-    name      = "rclone"
-    namespace = kubernetes_namespace.nfs.metadata[0].name
-  }
-
-  data = vault_generic_secret.rclone.data
-}
-
 resource "kubernetes_manifest" "application_nfs" {
   manifest = {
     apiVersion = "argoproj.io/v1alpha1"
@@ -59,6 +32,7 @@ resource "kubernetes_manifest" "application_nfs" {
               folders:
                 - name: media
                   fixed: true
+                  upload: true
                 - name: documents
                   fixed: true
             - name: onpremise
@@ -74,10 +48,28 @@ resource "kubernetes_manifest" "application_nfs" {
                 - name: downloads
                   fixed: true
           
+          secretStore:
+            name: ${local.cluster_secret_store_name}
+          
           tasks:
-            secrets:
-              rclone: ${kubernetes_secret.rclone_secret.metadata[0].name}
-            configs: []
+            configs:
+              - name: upload
+                secrets:
+                  - name: rclone
+                    mount: true
+                securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                command: 
+                  - /bin/sh
+                  - -c
+                  - --
+                args:
+                  - |
+                    rclone move -P \
+                      --config /rclone/rclone.conf \
+                      --dropbox-shared-folders \
+                      /source/toupload/  crypt:/  
 
             versions:
               nfs_provisioner: ${local.versions.nfs_provisioner}

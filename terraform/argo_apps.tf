@@ -1,3 +1,7 @@
+locals {
+  cluster_secret_store_name = "cluster-readonly-secretstore"
+}
+
 resource "kubernetes_manifest" "project" {
   manifest = {
     apiVersion = "argoproj.io/v1alpha1"
@@ -47,22 +51,6 @@ resource "kubernetes_manifest" "project" {
   }
 }
 
-resource "kubernetes_secret" "repository_credentials" {
-  metadata {
-    name      = "infra-repo-credentials"
-    namespace = "argocd"
-    labels = {
-      "argocd.argoproj.io/secret-type" = "repo-creds"
-    }
-  }
-  data = {
-    type     = "git"
-    url      = "https://git.yusufali.ca/infra"
-    username = var.GIT_USERNAME
-    password = var.GIT_PASSWORD
-  }
-}
-
 resource "kubernetes_manifest" "application" {
   manifest = {
     apiVersion = "argoproj.io/v1alpha1"
@@ -89,20 +77,57 @@ resource "kubernetes_manifest" "application" {
           values = <<-EOF
           spec:
             project: ${kubernetes_manifest.project.manifest.metadata.name}
+          
+          vault:
+            server: ${var.VAULT_ADDRESS}
+            secretStore:
+              name: ${local.cluster_secret_store_name}
+              username: kubernetesreadonly
+              secretRef:
+                name: ${kubernetes_secret.vault_password.metadata[0].name}
+                namespace: ${kubernetes_secret.vault_password.metadata[0].namespace}
+                key: ${keys(kubernetes_secret.vault_password.data)[0]}
+
 
           ingress:
             version: ${local.versions.ingress}
-            namespace: ${kubernetes_namespace.networking.metadata[0].name}
+            namespace: networking
 
           certmanager:
-            namespace: ${kubernetes_namespace.certmanager.metadata[0].name}
+            namespace: certmanager
             version: ${local.versions.certmanager}
-            apikeyname: ${kubernetes_secret.certmanager.metadata[0].name} 
-            apikey: ${keys(kubernetes_secret.certmanager.data)[0]}
-            email: ${var.CLOUDFLARE_EMAIL}
+            email: "ali@yusuf.email"
+          
+          externaldns:
+            version: ${local.versions.externaldns}
 
           keda:
             version: ${local.versions.keda}
+            namespace: keda
+
+          externalsecrets:
+            version: ${local.versions.externalsecrets}
+            namespace: externalsecrets
+
+          gitlabrunner:
+            version: ${local.versions.gitlabrunner}
+            namespace: gitlab
+
+          tenants:
+            %{for tenant in nonsensitive(jsondecode(data.vault_generic_secret.tenants.data.tenants)) }
+            - namespace: ${tenant.namespace}
+              repository: ${tenant.repository}
+              docker:
+                ${contains(tenant.flags, "docker") ? "- PUBLIC_" : ""}
+                ${contains(tenant.flags, "docker:private") ? "- PRIVATE_" : ""}
+              externalinfra:
+                ${contains(tenant.flags, "smtp") ? "- SMTP" : ""}
+                ${contains(tenant.flags, "rclone") ? "- RCLONE" : ""}
+              databases:
+                %{ for key in nonsensitive(keys(local.database_access_credentials)) }
+                ${ local.database_access_credentials[key].namespace == tenant.namespace ? "- ${replace(vault_generic_secret.database_credential[key].path,"kubernetes/","")}" : ""}
+                %{ endfor }
+            %{ endfor }
           EOF
         }
       }

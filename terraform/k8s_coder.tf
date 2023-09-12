@@ -34,17 +34,6 @@ resource "kubernetes_persistent_volume_claim" "coder" {
   }
 }
 
-resource "kubernetes_secret" "coder" {
-  metadata {
-    name      = "coder-db-secret"
-    namespace = kubernetes_namespace.coder.metadata[0].name
-  }
-
-  data = {
-    CODER_PG_CONNECTION_URL = "postgres://${vault_generic_secret.database["postgres"].data.username}:${vault_generic_secret.database["postgres"].data.password}@${vault_generic_secret.database["postgres"].data.hostname}:${vault_generic_secret.database["postgres"].data.port}/coder?sslmode=disable"
-  }
-}
-
 resource "kubernetes_service_account_v1" "coder" {
   for_each = {
     (kubernetes_namespace.coder.metadata[0].name)           = kubernetes_namespace.coder.metadata[0].name,
@@ -57,7 +46,7 @@ resource "kubernetes_service_account_v1" "coder" {
   }
 
   image_pull_secret {
-    name = kubernetes_secret.docker_credentials["default"].metadata[0].name
+    name = "docker-credentials"
   }
 }
 

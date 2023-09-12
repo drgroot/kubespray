@@ -3,11 +3,11 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     project: bootstrap
-  
+
   source:
     url: https://github.com/drgroot/kubespray.git
     revision: HEAD
-  
+
   syncPolicy:
     automated:
       prune: true
@@ -19,11 +19,31 @@ templateSource:
   repoURL: https://github.com/drgroot/kubespray.git
   targetRevision: HEAD
 
-ingress:
-  namespace: networking-ingress
-  version: 4.0.6
-  sslSecret: namespace/myssl-secret
-  nodeIps: []
+secrets:
+  cloudflare_domain:
+    key: CLOUDFLARE
+    property: CLOUDFLARE_PERSONAL_DOMAIN_NAME
+  cloudflare_api:
+    key: CLOUDFLARE
+    property: CLOUDFLARE_PERSONAL_API_KEY
 
-keda:
-  version: 2.8.1
+vault:
+  server: http://vault.com
+  secretStore:
+    name: my-cluster-secretstore
+    username: vault-username
+    secretRef:
+      name: vault-secret-name
+      namespace: my-namespace
+      key: PASSWORD
+
+
+dockerconfigTemplate:
+  .dockerconfigjson: |
+    {
+      "auths": {
+        {{ print .HOST | quote }}: {
+          "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
+        }
+      }
+    }
