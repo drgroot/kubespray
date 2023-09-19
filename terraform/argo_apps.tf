@@ -116,7 +116,6 @@ resource "kubernetes_manifest" "application" {
           tenants:
             %{for tenant in nonsensitive(jsondecode(data.vault_generic_secret.tenants.data.tenants)) }
             - namespace: ${tenant.namespace}
-              repository: ${tenant.repository}
               docker:
                 ${contains(tenant.flags, "docker") ? "- PUBLIC_" : ""}
                 ${contains(tenant.flags, "docker:private") ? "- PRIVATE_" : ""}
