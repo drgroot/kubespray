@@ -128,9 +128,9 @@ resource "kubernetes_manifest" "application_tools" {
                     sizeLimit: "256Mi"
             - name: coder
               image:
-                name: "ghcr.io/coder/coder"
-                semvar: "~v2.x.x"
-                tag: "v2.1.4"
+                name: ${local.versions.coder.name}
+                semvar: ${local.versions.coder.semvar}
+                tag: ${local.versions.coder.tag}
               url: "${join(".", ["coder", "yusufali.ca"])}"
               extraIngress: 
                 - host: "${join(".", ["*.coder", "yusufali.ca"])}"
@@ -176,9 +176,9 @@ resource "kubernetes_manifest" "application_tools" {
               serviceAccount: ${kubernetes_service_account_v1.coder["coder"].metadata[0].name}
             - name: registry
               image:
-                name: registry
-                semvar: ~2
-                tag: 2
+                name: ${local.versions.registry.name}
+                semvar: ${local.versions.registry.semvar}
+                tag: ${local.versions.registry.tag}
               url: ${join(".", ["registry", "yusufali.ca"])}
               ingress:
                 annotations:
