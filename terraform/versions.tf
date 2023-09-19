@@ -3,7 +3,7 @@ locals {
     gitlab = {
       name   = "gitlab/gitlab-ee"
       tag    = "16.3.0"
-      semvar = "~16"
+      semvar = "~16.x.x"
     }
     coder = {
       name   = "ghcr.io/coder/coder"
