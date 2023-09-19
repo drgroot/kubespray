@@ -18,7 +18,7 @@ spec:
           argocd.argoproj.io/secret-type: repo-creds
       data:
         type: git
-        url: https://src.yusufali.ca/charts/projects.git
+        url: https://src.yusufali.ca/infra/projects.git
         username: '{{ printf "{{ .USERNAME }}" }}'
         password: '{{ printf "{{ .PASSWORD }}" }}'
   data:
@@ -86,7 +86,7 @@ metadata:
 spec:
   project: {{ include "app.fullname" $ }}-{{ $tenant.namespace }}-project
   source:
-    repoURL: https://src.yusufali.ca/charts/projects.git
+    repoURL: https://src.yusufali.ca/infra/projects.git
     targetRevision: HEAD
     path: {{ $tenant.namespace }}
     helm:
