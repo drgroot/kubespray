@@ -37,8 +37,9 @@ spec:
             - name: cluster-docker-secret
 
         runners:
-          image_pull_secrets = ["cluster-docker-secret"]
           config: |
             [[runners]]
+              image_pull_secrets = ["cluster-docker-secret"]
               [runners.kubernetes]
                 cpu_request = "500m"
+                image_pull_secrets = ["cluster-docker-secret"]
