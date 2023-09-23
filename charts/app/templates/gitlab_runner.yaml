@@ -3,6 +3,42 @@ kind: Namespace
 metadata:
   name: {{ .Values.gitlabrunner.namespace }}
 ---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: {{ include "app.fullname" $ }}-docker-private-credentials
+  namespace: {{ .Values.gitlabrunner.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ $.Values.vault.secretStore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: cluster-private-docker-registry
+    template:
+      data:
+        .dockerconfigjson: |-
+          {
+            "auths": {
+              {{ print .HOST | quote }}: {
+                "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
+              }
+            }
+          }
+      type: kubernetes.io/dockerconfigjson
+  data:
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_USERNAME
+      secretKey: USERNAME
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_PASSWORD
+      secretKey: PASSWORD
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_HOST
+      secretKey: HOST
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -25,7 +61,7 @@ spec:
       releaseName: gitlabrunner
       values: |-
         imagePullSecrets:
-          - name: cluster-docker-secret
+          - name: cluster-private-docker-registry
         
         gitlabUrl: https://src.yusufali.ca
         runnerToken: glrt-ApsSkmytqgzxDq4Cz_RJ
@@ -34,12 +70,12 @@ spec:
           create: true
 
           imagePullSecrets:
-            - name: cluster-docker-secret
+            - name: cluster-private-docker-registry
 
         runners:
           config: |
             [[runners]]
-              image_pull_secrets = ["cluster-docker-secret"]
+              image_pull_secrets = ["cluster-private-docker-registry"]
               [runners.kubernetes]
                 cpu_request = "500m"
-                image_pull_secrets = ["cluster-docker-secret"]
+                image_pull_secrets = ["cluster-private-docker-registry"]
