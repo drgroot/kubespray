@@ -15,16 +15,11 @@ spec:
   target:
     name: cluster-private-docker-registry
     template:
-      data:
-        .dockerconfigjson: |-
-          {
-            "auths": {
-              {{ print .HOST | quote }}: {
-                "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
-              }
-            }
-          }
       type: kubernetes.io/dockerconfigjson
+      {{- with $.Values.dockerconfigTemplate }}
+      data:
+{{ toYaml . | indent 8 }}
+      {{- end }}
   data:
     - remoteRef:
         key: DOCKER
