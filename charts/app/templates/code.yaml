@@ -1,0 +1,62 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: {{ include "app.fullname" $ }}-docker-private-credentials
+  namespace: coder
+spec:
+  secretStoreRef:
+    name: {{ $.Values.vault.secretStore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: cluster-private-docker-registry
+    template:
+      type: kubernetes.io/dockerconfigjson
+      {{- with $.Values.dockerconfigTemplate }}
+      data:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+  data:
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_USERNAME
+      secretKey: USERNAME
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_PASSWORD
+      secretKey: PASSWORD
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_HOST
+      secretKey: HOST
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: {{ include "app.fullname" $ }}-docker-private-credentials
+  namespace: coder-workspace
+spec:
+  secretStoreRef:
+    name: {{ $.Values.vault.secretStore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: cluster-private-docker-registry
+    template:
+      type: kubernetes.io/dockerconfigjson
+      {{- with $.Values.dockerconfigTemplate }}
+      data:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+  data:
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_USERNAME
+      secretKey: USERNAME
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_PASSWORD
+      secretKey: PASSWORD
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_HOST
+      secretKey: HOST
+---
