@@ -2,7 +2,7 @@ locals {
   versions = {
     gitlab = {
       name   = "gitlab/gitlab-ee"
-      tag    = "16.3.0"
+      tag    = "16.3.4"
       semvar = "~16.x.x"
     }
     coder = {
@@ -27,7 +27,7 @@ locals {
     keda       = "2.10.1"
     certmanager = "v1.12.3"
     nfs_provisioner = "4.0.18"
-    gitlabrunner = "v0.56.1"
+    gitlabrunner = "v0.57.0"
     externaldns = "1.13.1"
   }
 }
