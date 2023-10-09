@@ -13,6 +13,7 @@
         state: latest
 - name: Install kubectl software
   hosts: kube_control_plane
+  tasks:
     - name: install kubectl
       ansible.builtin.get_url:
         url: https://dl.k8s.io/release/v1.27.1/bin/linux/amd64/kubectl
