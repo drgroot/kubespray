@@ -52,24 +52,7 @@ resource "kubernetes_manifest" "application_nfs" {
             name: ${local.cluster_secret_store_name}
           
           tasks:
-            configs:
-              - name: upload
-                secrets:
-                  - name: rclone
-                    mount: true
-                securityContext:
-                  runAsUser: 1000
-                  runAsGroup: 1000
-                command: 
-                  - /bin/sh
-                  - -c
-                  - --
-                args:
-                  - |
-                    rclone move -P \
-                      --config /rclone/rclone.conf \
-                      --dropbox-shared-folders \
-                      /source/toupload/  crypt:/  
+            configs: []
 
             versions:
               nfs_provisioner: ${local.versions.nfs_provisioner}
