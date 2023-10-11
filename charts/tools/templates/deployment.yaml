@@ -104,7 +104,7 @@ spec:
 
         {{- with $tool.affinity }}
         affinity:
-          {{- toYaml . | nindent 8 }}
+          {{- toYaml . | nindent 10 }}
         {{- end }}
         
         {{- if hasKey $tool "url" }}
