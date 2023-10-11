@@ -77,6 +77,20 @@ resource "kubernetes_deployment_v1" "database" {
       }
 
       spec {
+        affinity {
+          node_affinity {
+            required_during_scheduling_ignored_during_execution {
+              node_selector_term {
+                match_expressions {
+                  key      = "kubernetes.io/arch"
+                  operator = "In"
+                  values   = ["amd64"]
+                }
+              }
+            }
+          }
+        }
+
         container {
           name = each.key
           image = "${each.key}:${each.value}"
