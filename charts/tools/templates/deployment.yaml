@@ -9,8 +9,6 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
-  annotations:
-    argocd-image-updater.argoproj.io/image-list: image={{ $tool.image.name }}:{{ $tool.image.semvar }}
 spec:
   project: {{ $.Values.spec.project }}
   destination:
