@@ -126,6 +126,15 @@ resource "kubernetes_manifest" "application_tools" {
                   emptyDir:
                     medium: Memory
                     sizeLimit: "256Mi"
+              affinity:
+                nodeAffinity:
+                  requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                      - matchExpressions:
+                          - key: kubernetes.io/arch
+                            operator: In
+                            values:
+                              - amd64
             - name: coder
               image:
                 name: ${local.versions.coder.name}
