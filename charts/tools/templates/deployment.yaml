@@ -101,6 +101,11 @@ spec:
         volumes:
           {{- toYaml . | nindent 10 }}
         {{- end }}
+
+        {{- with $tool.affinity }}
+        affinity:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
         
         {{- if hasKey $tool "url" }}
         ingress:
