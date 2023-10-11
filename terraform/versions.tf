@@ -2,17 +2,17 @@ locals {
   versions = {
     gitlab = {
       name   = "gitlab/gitlab-ee"
-      tag    = "16.3.4"
+      tag    = "16.4.1"
       semvar = "~16.x.x"
     }
     coder = {
       name   = "ghcr.io/coder/coder"
-      tag    = "v2.1.4"
+      tag    = "v2.2.1"
       semvar = "~v2.x.x"
     }
     registry = {
       name = "registry"
-      tag = "2"
+      tag = "2.8.3"
       semvar = "~2"
     }
 
@@ -27,7 +27,7 @@ locals {
     keda       = "2.10.1"
     certmanager = "v1.12.3"
     nfs_provisioner = "4.0.18"
-    gitlabrunner = "v0.57.0"
+    gitlabrunner = "v0.57.1"
     externaldns = "1.13.1"
   }
 }
