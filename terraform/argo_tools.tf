@@ -209,7 +209,10 @@ resource "kubernetes_manifest" "application_tools" {
               securityContext:
                 runAsGroup: 1000
                 runAsUser: 1000
-              resources: {}
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 200Mi
               volumes:
                 - mountPath: /var/lib/registry
               env:

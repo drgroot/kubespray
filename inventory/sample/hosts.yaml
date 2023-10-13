@@ -1,32 +1,37 @@
 all:
   hosts:
     kube0:
+      ansible_host: 192.168.1.10
       ansible_user: ubuntu
       ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
       ip: 192.168.1.10
     kube1:
+      ansible_host: 192.168.1.11
       ansible_user: ubuntu
       ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
       ip: 192.168.1.11
     kube3:
+      ansible_host: 192.168.1.12
       ansible_user: ubuntu
       ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
       ip: 192.168.1.12
     kube4:
+      ansible_host: 192.168.1.13
       ansible_user: ubuntu
       ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
       ip: 192.168.1.13
-    # kube5:
-    #   ansible_host: kube5.home
-    #   ansible_user: ubuntu
-    #   ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
-    #   ip: 192.168.1.14
-    kube6:
+    kube5:
+      ansible_host: 192.168.1.14
       ansible_user: ubuntu
       ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
-      ip: 192.168.1.15
+      ip: 192.168.1.14
+    # kube6:
+    #   ansible_host: 192.168.1.15
+    #   ansible_user: ubuntu
+    #   ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
+    #   ip: 192.168.1.15
     # kube7:
-    #   ansible_host: kube7.home
+    #   ansible_host: 192.168.1.16
     #   ansible_user: ubuntu
     #   ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
     #   ip: 192.168.1.16
@@ -42,18 +47,13 @@ all:
       hosts:
         kube3:
         kube4:
-        # kube5:
-        kube6:
+        kube5:
+        # kube6:
         # kube7:
     kube_node:
-      hosts:
-        kube0:
-        kube1:
-        kube3:
-        kube4:
-        # kube5:
-        kube6:
-        # kube7:
+      children:
+        arm64nodes:
+        amd64nodes:
     etcd:
       hosts:
         kube0:
