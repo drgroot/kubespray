@@ -39,21 +39,21 @@ all:
     kube_control_plane:
       hosts:
         kube0:
-    kube_node:
-      hosts:
-        kube0:
-        kube1:
-        kube3:
-        kube4:
-        # kube5:
-        # kube6:
-        # kube7:
     amd64nodes:
       hosts:
         kube0:
         kube1:
     arm64nodes:
       hosts:
+        kube3:
+        kube4:
+        # kube5:
+        kube6:
+        # kube7:
+    kube_node:
+      hosts:
+        kube0:
+        kube1:
         kube3:
         kube4:
         # kube5:
