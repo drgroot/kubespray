@@ -29,5 +29,6 @@ locals {
     nfs_provisioner = "4.0.18"
     gitlabrunner = "v0.57.1"
     externaldns = "1.13.1"
+    prometheus = "51.7.0"
   }
 }
