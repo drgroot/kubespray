@@ -43,7 +43,6 @@ spec:
 
             hosts:
               - grafana.yusufali.ca
-              - grafana.k8s.private
 
             persistence:
               type: pvc
