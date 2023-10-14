@@ -24,6 +24,11 @@ spec:
     helm:
       releaseName: prometheus
       values: |-
+        defaultRules:
+          create: true
+          rules:
+            alertmanager: false
+    
         grafana:
           ingress:
             enabled: true
