@@ -117,6 +117,9 @@ resource "kubernetes_manifest" "application" {
             version: ${local.versions.prometheus}
             namespace: monitoring
 
+          redis:
+            version: ${local.versions.redis}
+
           tenants:
             %{for tenant in nonsensitive(jsondecode(data.vault_generic_secret.tenants.data.tenants)) }
             - namespace: ${tenant.namespace}

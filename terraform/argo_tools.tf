@@ -88,7 +88,6 @@ resource "kubernetes_manifest" "application_tools" {
             - name: gitlab
               image:
                 name: ${local.versions.gitlab.name}
-                semvar: ${local.versions.gitlab.semvar}
                 tag: ${local.versions.gitlab.tag}
                 suffix: "-ee.0"
               url: ${join(".", ["src", "yusufali.ca"])}
@@ -138,7 +137,6 @@ resource "kubernetes_manifest" "application_tools" {
             - name: coder
               image:
                 name: ${local.versions.coder.name}
-                semvar: ${local.versions.coder.semvar}
                 tag: ${local.versions.coder.tag}
               url: "${join(".", ["coder", "yusufali.ca"])}"
               extraIngress: 
@@ -186,7 +184,6 @@ resource "kubernetes_manifest" "application_tools" {
             - name: registry
               image:
                 name: ${local.versions.registry.name}
-                semvar: ${local.versions.registry.semvar}
                 tag: ${local.versions.registry.tag}
               url: ${join(".", ["registry", "yusufali.ca"])}
               ingress:
