@@ -13,6 +13,9 @@ metadata:
   finalizers:
   - resources-finalizer.argocd.argoproj.io
 spec:
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
   destination:
     namespace: {{ .Values.keda.namespace }}
     server: {{ .Values.spec.destination.server }}
