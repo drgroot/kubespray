@@ -20,9 +20,11 @@ spec:
     helm:
       releaseName: redis
       values: |-
-        password: test
+        usePassword: false
+
         persistence:
-          enabled: false
+          enabled: true
+          storageClass: nfs-onpremise-dynamic
 
         cluster:
           nodes: 3
