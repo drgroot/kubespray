@@ -10,11 +10,11 @@ all:
       ansible_user: ubuntu
       ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
       ip: 192.168.1.11
-    kube2:
-      ansible_host: 192.168.1.12
-      ansible_user: ubuntu
-      ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
-      ip: 192.168.1.12
+    # kube2:
+    #   ansible_host: 192.168.1.12
+    #   ansible_user: ubuntu
+    #   ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
+    #   ip: 192.168.1.12
     kube3:
       ansible_host: 192.168.1.13
       ansible_user: ubuntu
@@ -35,7 +35,7 @@ all:
         kube1:
     arm64nodes:
       hosts:
-        kube2:
+        # kube2:
         kube3:
         kube4:
     kube_node:
