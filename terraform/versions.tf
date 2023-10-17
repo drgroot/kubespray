@@ -28,6 +28,5 @@ locals {
     prometheus = "51.7.0"
 
     gitlabrunner = "v0.57.1" # https://gitlab.com/gitlab-org/charts/gitlab-runner/-/tags
-    redis = "9.0.12"         # https://github.com/bitnami/charts/blob/main/bitnami/redis-cluster/Chart.yaml
   }
 }
