@@ -1,2 +1,1 @@
-kube_scheduler_config_extra_opts:
-  metricsBindAddress: 0.0.0.0:10249
+
