@@ -2,11 +2,11 @@ locals {
   versions = {
     gitlab = {
       name   = "gitlab/gitlab-ee"
-      tag    = "16.4.1"
+      tag    = "16.5.1"
     }
     coder = {
       name   = "ghcr.io/coder/coder"
-      tag    = "v2.3.0"
+      tag    = "v2.3.3"
     }
     registry = {
       name = "registry"
@@ -27,6 +27,6 @@ locals {
     externaldns = "1.13.1"
     prometheus = "51.7.0"
 
-    gitlabrunner = "v0.57.1" # https://gitlab.com/gitlab-org/charts/gitlab-runner/-/tags
+    gitlabrunner = "v0.58.2" # https://gitlab.com/gitlab-org/charts/gitlab-runner/-/tags
   }
 }
