@@ -27,11 +27,6 @@ variable "STORAGE_MOUNT" {
   sensitive = true
 }
 
-variable "STORAGE_DOWNLOADS" {
-  type = string
-  sensitive = true
-}
-
 variable "STORAGE_MEDIA" {
   type = string
   sensitive = true

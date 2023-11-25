@@ -41,12 +41,6 @@ resource "kubernetes_manifest" "application_nfs" {
               folders:
                 - name: backups
                 - name: dynamic
-            - name: downloads
-              hostname: ${var.STORAGE_HOSTNAME}
-              mount_path: ${var.STORAGE_DOWNLOADS}
-              folders:
-                - name: downloads
-                  fixed: true
           
           secretStore:
             name: ${local.cluster_secret_store_name}
