@@ -74,3 +74,6 @@ spec:
               [runners.kubernetes]
                 cpu_request = "500m"
                 image_pull_secrets = ["cluster-private-docker-registry"]
+
+                [runners.kubernetes.node_selector]
+                  "kubernetes.io/arch" = "arm64"
