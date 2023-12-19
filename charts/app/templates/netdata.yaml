@@ -28,7 +28,8 @@ spec:
       releaseName: netdata
       values: |-
         ingress:
-          hosts: netdata.k8s.private
+          hosts:
+            - netdata.k8s.private
         
         parent:
           database:
