@@ -113,8 +113,8 @@ resource "kubernetes_manifest" "application" {
             version: ${local.versions.gitlabrunner}
             namespace: gitlab
 
-          prometheus:
-            version: ${local.versions.prometheus}
+          netdata:
+            version: ${local.versions.netdata}
             namespace: monitoring
 
           tenants:
