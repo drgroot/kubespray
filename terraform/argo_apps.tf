@@ -116,6 +116,14 @@ resource "kubernetes_manifest" "application" {
           netdata:
             version: ${local.versions.netdata}
             namespace: monitoring
+          
+          rabbitmq:
+            version: ${local.versions.rabbitmq}
+            namespace: default
+
+          redis:
+            version: ${local.versions.redis}
+            namespace: default
 
           tenants:
             %{for tenant in nonsensitive(jsondecode(data.vault_generic_secret.tenants.data.tenants)) }

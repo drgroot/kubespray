@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.rabbitmq.namespace }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "app.fullname" . }}-rabbitmq
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Values.rabbitmq.namespace }}
+    server: {{ .Values.spec.destination.server }}
+  project: {{ .Values.spec.project }}
+  source:
+    chart: rabbitmq
+    repoURL: https://charts.bitnami.com/bitnami
+    targetRevision: {{ .Values.rabbitmq.version }}
+    helm:
+      releaseName: rabbitmq
+      values: |-
+        replicaCount: 1
+
+        auth:
+          username: user
+          password: user
+
+        clustering:
+          rebalance: true
+
+        resources:
+          limits: {}
+          requests: {}
+
+        serviceAccount:
+          create: false
+
+        persistence:
+          storageClass: nfs-onpremise-dynamic
+
+        ingress:
+          enabled: true
+          hostname: rabbitmq.k8s.private
+          ingressClassName: nginx
+        
+        ulimitNofiles: ""

@@ -148,26 +148,6 @@ locals {
       url_prefix = "postgresql://username:password@"
       url_suffix = ""
     }
-    bus = {
-      cpu    = "100m"
-      memory = "50Mi"
-      port   = 5672
-      image  = "rabbitmq:3-management"
-      env = {
-        RABBITMQ_DEFAULT_VHOST = "test"
-      }
-      url_prefix = "amqp://"
-      url_suffix = "/test"
-    }
-    cache = {
-      cpu        = "100m"
-      memory     = "250Mi"
-      port       = 6379
-      image      = "redis"
-      env        = {}
-      url_prefix = "redis://"
-      url_suffix = ""
-    }
   }
 }
 
@@ -260,6 +240,8 @@ resource "kubernetes_secret" "coder_middleware" {
   }
 
   data = {
+    "BUS_URL": "amqp://user:user@rabbitmq-headless.default.svc.cluster.local",
+    "CACHE_URL": "redis://redis-redis-cluster-headless.default.svc.cluster.local",
     "${upper(each.key)}_URL" = join(
       "",
       [
