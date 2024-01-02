@@ -21,25 +21,25 @@ spec:
     server: {{ .Values.spec.destination.server }}
   project: {{ .Values.spec.project }}
   source:
-    chart: redis-cluster
+    chart: redis
     repoURL: https://charts.bitnami.com/bitnami
     targetRevision: {{ .Values.redis.version }}
     helm:
       releaseName: redis
       values: |-
         usePassword: false
+        fullnameOverride: redis
 
-        redis:
+        master:
           resources:
             requests:
               memory: 128Mi
 
-        cluster:
-          nodes: 3
-          replicas: 0
+          persistence:
+            enabled: false
 
-        serviceAccount:
-          create: false
+          serviceAccount:
+            create: false
 
-        persistence:
-          storageClass: nfs-onpremise-dynamic
+        replica:
+          replicaCount: 0

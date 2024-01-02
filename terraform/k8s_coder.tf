@@ -241,7 +241,7 @@ resource "kubernetes_secret" "coder_middleware" {
 
   data = {
     "BUS_URL": "amqp://user:user@rabbitmq-headless.default.svc.cluster.local",
-    "CACHE_URL": "redis://redis-redis-cluster-headless.default.svc.cluster.local",
+    "CACHE_URL": "redis://redis-headless.default.svc.cluster.local",
     "${upper(each.key)}_URL" = join(
       "",
       [
