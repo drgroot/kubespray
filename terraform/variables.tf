@@ -31,3 +31,13 @@ variable "STORAGE_MEDIA" {
   type = string
   sensitive = true
 }
+
+variable "STORAGE_THORIN_HOSTNAME" {
+  type = string
+  sensitive = true
+}
+
+variable "STORAGE_THORIN_MOUNT" {
+  type = string
+  sensitive = true
+}
