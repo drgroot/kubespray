@@ -26,6 +26,12 @@ resource "kubernetes_manifest" "application_nfs" {
             project: ${kubernetes_manifest.project.manifest.metadata.name}
 
           storage:
+            - name: media-thorin
+              hostname: ${var.STORAGE_THORIN_HOSTNAME}
+              mount_path: ${var.STORAGE_THORIN_MOUNT}
+              folders:
+                - name: media
+                  fixed: true
             - name: media
               hostname: ${var.STORAGE_HOSTNAME}
               mount_path: ${var.STORAGE_MEDIA}
