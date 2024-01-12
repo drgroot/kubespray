@@ -136,18 +136,18 @@ resource "kubernetes_role_binding" "coder" {
 
 locals {
   coder_services = {
-    database = {
-      cpu    = "250m"
-      memory = "512Mi"
-      port   = 5432
-      image  = "postgres"
-      env = {
-        POSTGRES_USER     = "username"
-        POSTGRES_PASSWORD = "password"
-      }
-      url_prefix = "postgresql://username:password@"
-      url_suffix = ""
-    }
+    # database = {
+    #   cpu    = "250m"
+    #   memory = "512Mi"
+    #   port   = 5432
+    #   image  = "postgres"
+    #   env = {
+    #     POSTGRES_USER     = "username"
+    #     POSTGRES_PASSWORD = "password"
+    #   }
+    #   url_prefix = "postgresql://username:password@"
+    #   url_suffix = ""
+    # }
   }
 }
 
@@ -227,6 +227,18 @@ resource "kubernetes_service_v1" "coder_middleware" {
       port        = local.coder_services[each.key].port
       target_port = local.coder_services[each.key].port
     }
+  }
+}
+
+resource "kubernetes_secret" "coder_middleware_secret" {
+  metadata {
+    name      = "coder-middleware-database"
+    namespace = kubernetes_namespace.coder.metadata[0].name
+  }
+
+  data = {
+    "BUS_URL": "amqp://user:user@rabbitmq-headless.default.svc.cluster.local",
+    "CACHE_URL": "redis://redis-headless.default.svc.cluster.local"
   }
 }
 
