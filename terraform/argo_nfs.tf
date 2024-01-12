@@ -26,27 +26,27 @@ resource "kubernetes_manifest" "application_nfs" {
             project: ${kubernetes_manifest.project.manifest.metadata.name}
 
           storage:
-            - name: media-thorin
-              hostname: ${var.STORAGE_THORIN_HOSTNAME}
-              mount_path: ${var.STORAGE_THORIN_MOUNT}
-              folders:
-                - name: media
-                  fixed: true
-            - name: media
-              hostname: ${var.STORAGE_HOSTNAME}
-              mount_path: ${var.STORAGE_MEDIA}
-              folders:
-                - name: media
-                  fixed: true
-                  upload: true
-                - name: documents
-                  fixed: true
             - name: onpremise
-              hostname: ${var.STORAGE_HOSTNAME}
-              mount_path: ${var.STORAGE_MOUNT}
+              hostname: 192.168.1.4
               folders:
                 - name: backups
+                  mountPath: /volume2/containerData
                 - name: dynamic
+                  mountPath: /volume2/containerData
+                - name: media
+                  mountPath: /volume2/media
+                  fixed: true
+            - name: thorin
+              hostname: 192.168.1.3
+              folders:
+                - name: documents
+                  fixed: true
+                - name: media
+                  fixed: true
+                - name: downloads
+                  fixed: true
+                - name: ssd-raid0
+                - name: datalake
           
           secretStore:
             name: ${local.cluster_secret_store_name}

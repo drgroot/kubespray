@@ -1,17 +1,16 @@
 storage:
   - name: onpremise
     hostname: my-onpremise-hostname
-    mount_path: /var/lib/mounts
     folders:
       - name: backups
         backup: true
+        mountPath: /var/lib/mounts
       - name: dynamic
         backup: true
       - name: syncthing
         syncthing: true
   - name: cloud
     hostname: myNodeName
-    mount_path: /var/lib/mounts
     folders:
       - name: dynamic
         backup: true

@@ -21,13 +21,15 @@ spec:
       values: |-
         nfs:
           server: {{ $server.hostname }}
-          path: {{ $server.mount_path }}
+          path: {{ $folder.mountPath | default (printf "/%s" $folder.name) }}
         storageClass:
           name: nfs-{{ $server.name }}-{{ $folder.name }}
           provisionerName: nfs.io/nfs-{{ $server.name }}-{{ $folder.name }}
           accessModes: ReadWriteMany
           onDelete: retain
           {{- if $folder.fixed }}
+          pathPattern: "/"
+          {{- else if $folder.subPath }}
           pathPattern: "{{ $folder.name }}"
           {{- else if $folder.pathOverride }}
           pathPattern: "{{ $folder.name }}/${.PVC.namespace}/${.PVC.annotations.nfs.io/storage-path}"
