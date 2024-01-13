@@ -31,7 +31,7 @@ resource "kubernetes_manifest" "application_nfs" {
               folders:
                 - name: backups
                   mountPath: /volume2/containerData
-                  subPath: dynamic
+                  subPath: backups
                 - name: dynamic
                   mountPath: /volume2/containerData
                   subPath: dynamic
