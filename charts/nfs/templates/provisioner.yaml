@@ -29,12 +29,14 @@ spec:
           onDelete: retain
           {{- if $folder.fixed }}
           pathPattern: "/"
-          {{- else if $folder.subPath }}
-          pathPattern: "{{ $folder.name }}"
           {{- else if $folder.pathOverride }}
           pathPattern: "{{ $folder.name }}/${.PVC.namespace}/${.PVC.annotations.nfs.io/storage-path}"
           {{- else }}
-          pathPattern: "{{ $folder.name }}/${.PVC.namespace}/${.PVC.name}"
+            {{- if $folder.subPath }}
+          pathPattern: "{{ $folder.subPath }}/${.PVC.namespace}/${.PVC.name}"
+            {{- else }}
+          pathPattern: "${.PVC.namespace}/${.PVC.name}"
+            {{- end }}
           {{- end }}
           mountOptions:
             - vers=4
