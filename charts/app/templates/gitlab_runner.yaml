@@ -77,4 +77,4 @@ spec:
                 node_selector_overwrite_allowed = ".*"
 
                 [runners.kubernetes.node_selector]
-                  "kubernetes.io/arch" = "arm64"
+                  "kubernetes.io/os" = "linux"
