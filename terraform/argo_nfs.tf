@@ -49,6 +49,7 @@ resource "kubernetes_manifest" "application_nfs" {
                   fixed: true
                 - name: ssd-raid0
                 - name: datalake
+                  fixed: true
           
           secretStore:
             name: ${local.cluster_secret_store_name}
