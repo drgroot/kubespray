@@ -47,6 +47,3 @@ dockerconfigTemplate:
       }
     }
 
-prometheus:
-  namespace: monitoring
-  version: 1.0.0

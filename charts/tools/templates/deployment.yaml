@@ -30,6 +30,10 @@ spec:
         serviceAccountName: {{ $tool.serviceAccount }}
         {{- end }}
 
+        {{- with $tool.imagePullPolicy }}
+        imagePullPolicy: {{ $tool.imagePullPolicy }}
+        {{- end }}
+
         {{- with $tool.env }}
         env:
           {{ toYaml . | nindent 10 }}

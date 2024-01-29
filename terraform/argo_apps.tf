@@ -113,10 +113,6 @@ resource "kubernetes_manifest" "application" {
             version: ${local.versions.gitlabrunner}
             namespace: gitlab
 
-          netdata:
-            version: ${local.versions.netdata}
-            namespace: monitoring
-          
           rabbitmq:
             version: ${local.versions.rabbitmq}
             namespace: default

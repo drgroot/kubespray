@@ -30,5 +30,4 @@ jobs:
         run: |
           rm kubespray/playbooks/roles || true
           ln -s ../roles kubespray/playbooks/roles
-          ansible-playbook -i inventory/sample/hosts.yaml kubespray/upgrade-cluster.yml -b -v --private-key /inventory/id_rsa -l amd64nodes
-          ansible-playbook -i inventory/sample/hosts.yaml kubespray/upgrade-cluster.yml -b -v --private-key /inventory/id_rsa -l arm64nodes
+          ansible-playbook -i inventory/sample/hosts.yaml kubespray/upgrade-cluster.yml -b -v --private-key /inventory/id_rsa
