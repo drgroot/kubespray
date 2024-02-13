@@ -86,7 +86,7 @@ metadata:
   namespace: {{ $.Values.coder.namespace}}
 spec:
   secretStoreRef:
-    name: {{ $.Values.vault.secretStore.name }}
+    name: cluster-readonly-secretstore-kubernetes
     kind: ClusterSecretStore
   target:
     name: coder-middleware-database
