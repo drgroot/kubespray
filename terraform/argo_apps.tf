@@ -95,9 +95,9 @@ resource "kubernetes_manifest" "application" {
               namespace: ${kubernetes_namespace.coder_workspace.metadata[0].name}
             pvcs:
               - name: workspace
-                storageClass: nfs-onpremise-dynamic
+                storageClassName: nfs-onpremise-dynamic
               - name: datalake
-                storageClass: nfs-thorin-datalake
+                storageClassName: nfs-thorin-datalake
 
           ingress:
             version: ${local.versions.ingress}
