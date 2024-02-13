@@ -25,13 +25,13 @@ spec:
     repoURL: https://charts.bitnami.com/bitnami
     targetRevision: {{ .Values.rabbitmq.version }}
     helm:
-      releaseName: rabbitmq
+      releaseName: {{ .Values.rabbitmq.releaseName | default "rabbitmq" }}
       values: |-
         replicaCount: 1
 
         auth:
-          username: user
-          password: user
+          username: {{ .Values.rabbitmq.username }}
+          password: {{ .Values.rabbitmq.password }}
 
         clustering:
           rebalance: true

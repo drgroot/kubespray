@@ -1,5 +1,6 @@
 locals {
   cluster_secret_store_name = "cluster-readonly-secretstore"
+  rabbitmq_user = "user"
 }
 
 resource "kubernetes_manifest" "project" {
@@ -88,6 +89,15 @@ resource "kubernetes_manifest" "application" {
                 namespace: ${kubernetes_secret.vault_password.metadata[0].namespace}
                 key: ${keys(kubernetes_secret.vault_password.data)[0]}
 
+          coder:
+            namespace: ${kubernetes_namespace.coder.metadata[0].name}
+            workspaces:
+              namespace: ${kubernetes_namespace.coder_workspace.metadata[0].name}
+            pvcs:
+              - name: workspace
+                storageClass: nfs-onpremise-dynamic
+              - name: datalake
+                storageClass: nfs-thorin-datalake
 
           ingress:
             version: ${local.versions.ingress}
@@ -116,6 +126,8 @@ resource "kubernetes_manifest" "application" {
           rabbitmq:
             version: ${local.versions.rabbitmq}
             namespace: default
+            username: ${local.rabbitmq_user}
+            password: ${local.rabbitmq_user}
 
           redis:
             version: ${local.versions.redis}
@@ -151,4 +163,29 @@ resource "kubernetes_manifest" "application" {
   field_manager {
     force_conflicts = true
   }
+}
+
+data "kubernetes_secret" "rabbitmq" {
+  metadata {
+    name      = "rabbitmq"
+    namespace = "default"
+  }
+}
+
+resource "vault_generic_secret" "rabbitmq" {
+  path = "kubernetes/rabbitmq"
+  data_json = jsonencode({
+    username = local.rabbitmq_user
+    password = data.kubernetes_secret.rabbitmq.data["rabbitmq-password"]
+    host = "rabbitmq-headless.default.svc.cluster.local"
+    url = "amqp://${local.rabbitmq_user}:${data.kubernetes_secret.rabbitmq.data["rabbitmq-password"]}@rabbitmq-headless.default.svc.cluster.local"
+  })
+}
+
+resource "vault_generic_secret" "redis" {
+  path = "kubernetes/redis"
+  data_json = jsonencode({
+    host = "redis-headless.default.svc.cluster.local"
+    url = "redis://redis-headless.default.svc.cluster.local"
+  })
 }
