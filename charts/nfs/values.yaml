@@ -32,45 +32,26 @@ secrets:
     data:
       - key: RCLONE
         property: rclone.conf
-  # private:
-  #   type: kubernetes.io/dockerconfigjson
-  #   template:
-  #     .dockerconfigjson: |
-  #       {
-  #         "auths": {
-  #           "https://registry.yusufali.ca": {
-  #             "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
-  #           }
-  #         }
-  #       }
-  #   data:
-  #     - name: USERNAME
-  #       key: DOCKER
-  #       property: PRIVATE_USERNAME
-  #     - name: PASSWORD
-  #       key: DOCKER
-  #       property: PRIVATE_PASSWORD
+  private:
+    type: kubernetes.io/dockerconfigjson
+    template:
+      .dockerconfigjson: |
+        {
+          "auths": {
+            "https://registry.yusufali.ca": {
+              "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
+            }
+          }
+        }
+    data:
+      - name: USERNAME
+        key: DOCKER
+        property: PRIVATE_USERNAME
+      - name: PASSWORD
+        key: DOCKER
+        property: PRIVATE_PASSWORD
 
-imageSecrets:
-  chart: []
-    # - public
-    # - private
-  external: []
-
-tasks:
-  image: rclone/rclone
-  configs:
-    - name: backup
-      command:
-        - python3
-      args:
-        - mycommand
-      env: {}
-    - name: sync
-      command:
-        - python3
-      args:
-        - blahblah
+tasks: []
 
 spec:
   project: myproject

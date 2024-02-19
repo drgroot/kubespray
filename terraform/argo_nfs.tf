@@ -38,11 +38,18 @@ resource "kubernetes_manifest" "application_nfs" {
                 - name: media
                   mountPath: /volume2/media
                   fixed: true
+                  backup:
+                    enabled: true
+                    schedule: "0 0 * * *"
+                    subPath: photos/originals
             - name: thorin
               hostname: 192.168.1.3
               folders:
                 - name: documents
                   fixed: true
+                  backup:
+                    enabled: true
+                    schedule: "0 */4 * * *"
                 - name: media
                   fixed: true
                 - name: downloads
@@ -50,15 +57,23 @@ resource "kubernetes_manifest" "application_nfs" {
                 - name: ssd-raid0
                 - name: datalake
                   fixed: true
+                  backup:
+                    enabled: true
+                    schedule: "0 0 * * *"
           
           secretStore:
             name: ${local.cluster_secret_store_name}
           
           tasks:
-            configs: []
+            - name: backup
+              image: registry.yusufali.ca/containers/backup:latest
+              imageSecret: private
+              secrets:
+                - rclone
+              pvc: nfs-onpremise-dynamic
 
-            versions:
-              nfs_provisioner: ${local.versions.nfs_provisioner}
+          versions:
+            nfs_provisioner: ${local.versions.nfs_provisioner}
           EOF
         }
       }

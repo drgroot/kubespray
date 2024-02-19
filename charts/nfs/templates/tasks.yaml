@@ -1,0 +1,109 @@
+{{- range $task := .Values.tasks }}
+{{- range $server := $.Values.storage }}
+{{- range $folder := $server.folders }}
+{{- if (get $folder $task.name | default dict).enabled }}
+---
+
+{{- if $task.pvc }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "nfs.fullname" $ }}-{{ $server.name }}-{{ $folder.name }}-{{ $task.name }}
+  namespace: {{ $.Values.spec.destination.namespace }}
+  labels:
+    task: {{ $task.name }}
+    folder: {{ $folder.name }}
+    server: {{ $server.name }}
+spec:
+  storageClassName: {{ $task.pvc }}
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ $task.size | default "1Gi" }}
+---
+{{- end }}
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "nfs.fullname" $ }}-{{ $server.name }}-{{ $folder.name }}-{{ $task.name }}
+  labels:
+    task: {{ $task.name }}
+    folder: {{ $folder.name }}
+    server: {{ $server.name }}
+  namespace: {{ $.Values.spec.destination.namespace }}
+spec:
+  schedule: {{ (get $folder $task.name).schedule | default "0 0 * * *" }}
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 0
+  jobTemplate:
+    metadata:
+      name: {{ include "nfs.fullname" $ }}-{{ $server.name }}-{{ $folder.name }}-{{ $task.name }}
+      labels:
+        task: {{ $task.name }}
+        folder: {{ $folder.name }}
+        server: {{ $server.name }}
+    spec:
+      parallelism: 1
+      template:
+        metadata:
+          name: {{ include "nfs.fullname" $ }}-{{ $server.name }}-{{ $folder.name }}-{{ $task.name }}
+          labels:
+            task: {{ $task.name }}
+            folder: {{ $folder.name }}
+            server: {{ $server.name }}
+        spec:
+          {{- with $task.imageSecret }}
+          imagePullSecrets:
+            - name: {{ $task.imageSecret }}
+          {{- end }}
+          containers:
+            - name: task
+              image: {{ $task.image }}
+              {{- with $task.securityContext}}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              env:
+                - name: FOLDER
+                  value: {{ $folder.name }}
+                - name: SERVER
+                  value: {{ $server.name }}
+                - name: TASK
+                  value: {{ $task.name }}
+              {{- with $task.secrets }}
+              envFrom:
+              {{- range $secret := . }}
+                - secretRef:
+                    name: {{ $secret }}
+              {{- end }}
+              {{- end }}
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                - name: data
+                  mountPath: /data
+                  {{- if (get $folder $task.name).subPath }}
+                  subPath: {{ (get $folder $task.name).subPath }}
+                  {{- end }}
+          volumes:
+            - name: data
+              nfs:
+                server: {{ $server.hostname }}
+                path: {{ $folder.mountPath | default (printf "/%s" $folder.name) }}
+                readOnly: true
+            {{- if $task.pvc }}
+            - name: config
+              persistentVolumeClaim:
+                claimName: {{ include "nfs.fullname" $ }}-{{ $server.name }}-{{ $folder.name }}-{{ $task.name }}
+            {{- end }}
+          restartPolicy: Never
+---
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
