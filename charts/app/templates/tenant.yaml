@@ -2,23 +2,23 @@
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: {{ include "app.fullname" $ }}-repo-credentials
+  name: tenant-repo-credentials
   namespace: argocd
   labels:
-    argocd.argoproj.io/secret-type: repository
+    argocd.argoproj.io/secret-type: repo-creds
 spec:
   secretStoreRef:
-    name: {{ $.Values.vault.secretStore.name }}
+    name: {{ $.Values.externalsecrets.stores.vault.secretStore.name }}
     kind: ClusterSecretStore
   target:
-    name: {{ include "app.fullname" $ }}-repo-credentials
+    name: tenant-repo-credentials
     template:
       metadata:
         labels:
-          argocd.argoproj.io/secret-type: repository
+          argocd.argoproj.io/secret-type: repo-creds
       data:
         type: git
-        url: https://src.yusufali.ca/infra/projects.git
+        url: https://git.yusufali.ca/
         username: '{{ printf "{{ .USERNAME }}" }}'
         password: '{{ printf "{{ .PASSWORD }}" }}'
   data:
@@ -40,7 +40,7 @@ metadata:
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: {{ include "app.fullname" $ }}-{{ $tenant.namespace }}-project
+  name: tenant-{{ $tenant.namespace }}-project
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: argocd
@@ -79,12 +79,12 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ include "app.fullname" $ }}-{{ $tenant.namespace }}-application
+  name: tenant-{{ $tenant.namespace }}-application
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: {{ include "app.fullname" $ }}-{{ $tenant.namespace }}-project
+  project: tenant-{{ $tenant.namespace }}-project
   source:
     repoURL: https://src.yusufali.ca/infra/projects.git
     targetRevision: HEAD
@@ -107,11 +107,11 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: {{ include "app.fullname" $ }}-{{ $tenant.namespace }}-docker-{{ $dockerprefix | lower | replace "_" "" }}
+  name: {{ $tenant.namespace }}-docker-{{ $dockerprefix | lower | replace "_" "" }}
   namespace: {{ $tenant.namespace }}
 spec:
   secretStoreRef:
-    name: {{ $.Values.vault.secretStore.name }}
+    name: {{ $.Values.externalsecrets.stores.vault.secretStore.name }}
     kind: ClusterSecretStore
   target:
     name: cluster-docker-{{ $dockerprefix | lower | replace "_" "" }}
@@ -145,28 +145,10 @@ metadata:
   namespace: {{ $tenant.namespace }}
 spec:
   secretStoreRef:
-    name: {{ $.Values.vault.secretStore.name }}
+    name: {{ $.Values.externalsecrets.stores.vault.secretStore.name }}
     kind: ClusterSecretStore
   target:
     name: cluster-{{ $path | lower }}
-  dataFrom:
-    - extract:
-        key: {{ $path }}
----
-{{- end }}
-{{- range $path := $tenant.databases }}
----
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: {{ include "app.fullname" $ }}-{{ $tenant.namespace }}-{{ $path | replace "DB_" "" }}
-  namespace: {{ $tenant.namespace }}
-spec:
-  secretStoreRef:
-    name: {{ $.Values.vault.secretStore.name }}-kubernetes
-    kind: ClusterSecretStore
-  target:
-    name: cluster-{{ $path | replace "DB_" "" }}
   dataFrom:
     - extract:
         key: {{ $path }}

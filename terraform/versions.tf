@@ -1,5 +1,5 @@
 data "vault_generic_secret" "versions" {
-  path = "kubernetes/VERSIONS"
+  path = "external-infra/VERSIONS"
 }
 
 locals {

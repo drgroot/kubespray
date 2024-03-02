@@ -31,26 +31,7 @@ resource "kubernetes_manifest" "application_tools" {
           
           secrets:
             docker-credentials:
-              namespace: ${kubernetes_namespace.coder.metadata[0].name}
-              template:
-                .dockerconfigjson: |
-                  {
-                    "auths": {
-                      "https://registry.yusufali.ca": {
-                        "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
-                      }
-                    }
-                  }
-              data:
-                - name: USERNAME
-                  key: DOCKER
-                  property: PRIVATE_USERNAME
-                - name: PASSWORD
-                  key: DOCKER
-                  property: PRIVATE_PASSWORD
-            docker-credentials:
-              namespace: ${kubernetes_namespace.coder_workspace.metadata[0].name}
-              type: kubernetes.io/dockerconfigjson
+              namespace: default
               template:
                 .dockerconfigjson: |
                   {
@@ -68,7 +49,7 @@ resource "kubernetes_manifest" "application_tools" {
                   key: DOCKER
                   property: PRIVATE_PASSWORD
             postgres-credentials:
-              namespace: ${kubernetes_namespace.coder.metadata[0].name}
+              namespace: default
               data:
                 - key: DB_POSTGRES
                   property: USERNAME
@@ -179,8 +160,8 @@ resource "kubernetes_manifest" "application_tools" {
               ports:
                 - port: 7080
               resources: {}
-              namespace: ${kubernetes_namespace.coder.metadata[0].name}
-              serviceAccount: ${kubernetes_service_account_v1.coder["coder"].metadata[0].name}
+              namespace: default
+              serviceAccount: coder-sa
             - name: registry
               image:
                 name: ${local.versions.registry.name}

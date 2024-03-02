@@ -3,6 +3,37 @@ kind: Namespace
 metadata:
   name: {{ .Values.redis.namespace }}
 ---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: redis-docker-credentials
+  namespace: {{ .Values.redis.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.externalsecrets.stores.vault.secretStore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: redis-docker-credentials
+    template:
+      type: kubernetes.io/dockerconfigjson
+      {{- with $.Values.dockerconfigTemplate }}
+      data:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+  data:
+    - remoteRef:
+        key: DOCKER
+        property:  PUBLIC_USERNAME 
+      secretKey: USERNAME
+    - remoteRef:
+        key: DOCKER
+        property:  PUBLIC_PASSWORD 
+      secretKey: PASSWORD
+    - remoteRef:
+        key: DOCKER
+        property: PUBLIC_HOST
+      secretKey: HOST
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -25,16 +56,25 @@ spec:
     repoURL: https://charts.bitnami.com/bitnami
     targetRevision: {{ .Values.redis.version }}
     helm:
-      releaseName: redis
+      releaseName: {{ .Values.redis.releaseName }}
       values: |-
-        fullnameOverride: redis
+        fullnameOverride: {{ .Values.redis.releaseName }}
+
+        image:
+          pullSecrets:
+            - name: redis-docker-credentials
+
         auth:
           enabled: false
 
         master:
           resources:
-            requests:
-              memory: 128Mi
+            resources:
+              {{- toYaml .Values.redis.resources | nindent 14 }}
+
+          extraFlags:
+            - --maxmemory-policy
+            - allkeys-lru
 
           persistence:
             enabled: false
@@ -44,3 +84,9 @@ spec:
 
         replica:
           replicaCount: 0
+
+        networkPolicy:
+          enabled: false
+
+        serviceAccount:
+          create: false

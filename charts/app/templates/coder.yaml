@@ -1,0 +1,200 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.coder.namespace }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.coder.workspaces.namespace }}
+---
+{{- range $pvc := .Values.coder.pvcs -}}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $pvc.name }}
+  namespace: {{ $.Values.coder.workspaces.namespace }}
+  finalizers:
+    - kubernetes.io/pvc-protection
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 15Gi
+  storageClassName: {{ $pvc.storageClassName }}
+---
+{{- end -}}
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: coder-middleware-secrets
+  namespace: {{ .Values.coder.workspaces.namespace}}
+spec:
+  secretStoreRef:
+    name: cluster-readonly-secretstore-kubernetes
+    kind: ClusterSecretStore
+  target:
+    name: coder-middleware-secrets
+  data:
+    - secretKey: BUS_URL
+      remoteRef:
+        key: kubernetes/rabbitmq-secrets
+        property: url
+    - secretKey: CACHE_URL
+      remoteRef:
+        key: kubernetes/redis-secrets
+        property: url
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: coder-cluster-role
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - persistentvolumes
+      - persistentvolumes/status
+      - nodes
+      - nodes/status
+      - customresourcedefinitions
+      - customresourcedefinitions/status
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: coder-role
+  namespace: {{ .Values.coder.workspaces.namespace}}
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - list
+      - watch
+      - get
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: coder-sa
+  namespace: {{ .Values.coder.namespace }}
+automountServiceAccountToken: true
+imagePullSecrets:
+  - name: coder-docker-private-credentials
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: coder-workspaces-sa
+  namespace: {{ .Values.coder.workspaces.namespace }}
+automountServiceAccountToken: true
+imagePullSecrets:
+  - name: coder-docker-private-credentials
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-binding-coder
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: coder-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: coder-sa
+    namespace: {{ .Values.coder.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: coder-role-binding
+  namespace: {{ .Values.coder.workspaces.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: coder-role
+subjects:
+  - kind: ServiceAccount
+    name: coder-workspaces-sa
+    namespace: {{ .Values.coder.workspaces.namespace }}
+  - kind: ServiceAccount
+    name: coder-sa
+    namespace: {{ .Values.coder.namespace }}
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: coder-docker-private-credentials
+  namespace: {{ .Values.coder.workspaces.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ $.Values.externalsecrets.stores.vault.secretStore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: coder-docker-private-credentials
+    template:
+      type: kubernetes.io/dockerconfigjson
+      {{- with $.Values.dockerconfigTemplate }}
+      data:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+  data:
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_USERNAME
+      secretKey: USERNAME
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_PASSWORD
+      secretKey: PASSWORD
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_HOST
+      secretKey: HOST
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: coder-docker-private-credentials
+  namespace: {{ .Values.coder.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ $.Values.externalsecrets.stores.vault.secretStore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: coder-docker-private-credentials
+    template:
+      type: kubernetes.io/dockerconfigjson
+      {{- with $.Values.dockerconfigTemplate }}
+      data:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+  data:
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_USERNAME
+      secretKey: USERNAME
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_PASSWORD
+      secretKey: PASSWORD
+    - remoteRef:
+        key: DOCKER
+        property: PRIVATE_HOST
+      secretKey: HOST
+---

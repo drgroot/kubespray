@@ -27,16 +27,6 @@ secrets:
     key: CLOUDFLARE
     property: CLOUDFLARE_PERSONAL_API_KEY
 
-vault:
-  server: http://vault.com
-  secretStore:
-    name: my-cluster-secretstore
-    username: vault-username
-    secretRef:
-      name: vault-secret-name
-      namespace: my-namespace
-      key: PASSWORD
-
 dockerconfigTemplate:
   .dockerconfigjson: |
     {
@@ -47,3 +37,45 @@ dockerconfigTemplate:
       }
     }
 
+externalsecrets:
+  version: 0.7.0
+  namespace: externalsecrets
+  stores:
+    vault:
+      server: http://vault.com
+      secretStore:
+        name: my-cluster-secretstore
+        username: vault-username
+        secretRef:
+          name: vault-secret-name
+          namespace: my-namespace
+          key: PASSWORD
+
+postgres:
+  shmSize: 512Mi
+  namespace: default
+  replicaCount: 3
+  storageClass: default
+  backupStorageClass: default
+  secret:
+    postgres: asd
+    pgpool: asda
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 512m
+
+rabbitmq:
+  releaseName: rabbitmq
+  namespace: default
+  replicaCount: 3
+  storageClass: default
+  resources: {}
+
+coder:
+  releaseName: coder
+  namespace: default
+  version: 1.21.0
+  workspaces:
+    namespace: workspaces
+  pvcs: []

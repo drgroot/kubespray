@@ -3,6 +3,58 @@ kind: Namespace
 metadata:
   name: {{ .Values.rabbitmq.namespace }}
 ---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: rabbitmq-docker-credentials
+  namespace: {{ .Values.rabbitmq.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.externalsecrets.stores.vault.secretStore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: rabbitmq-docker-credentials
+    template:
+      type: kubernetes.io/dockerconfigjson
+      {{- with $.Values.dockerconfigTemplate }}
+      data:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+  data:
+    - remoteRef:
+        key: DOCKER
+        property:  PUBLIC_USERNAME 
+      secretKey: USERNAME
+    - remoteRef:
+        key: DOCKER
+        property:  PUBLIC_PASSWORD 
+      secretKey: PASSWORD
+    - remoteRef:
+        key: DOCKER
+        property: PUBLIC_HOST
+      secretKey: HOST
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: rabbitmq-credentials
+  namespace: {{ .Values.rabbitmq.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.externalsecrets.stores.vault.secretStore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: rabbitmq-credentials
+  data:
+    - secretKey: rabbitmq-erlang-cookie 
+      remoteRef:
+        key: RABBITMQ
+        property: rabbitmq-erlang-cookie 
+    - secretKey: rabbitmq-password 
+      remoteRef:
+        key: RABBITMQ
+        property:  rabbitmq-password 
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -25,26 +77,40 @@ spec:
     repoURL: https://charts.bitnami.com/bitnami
     targetRevision: {{ .Values.rabbitmq.version }}
     helm:
-      releaseName: {{ .Values.rabbitmq.releaseName | default "rabbitmq" }}
+      releaseName: {{ .Values.rabbitmq.releaseName }}
       values: |-
-        replicaCount: 1
+        fullnameOverride: {{ .Values.rabbitmq.releaseName }}
+        replicaCount: {{ .Values.rabbitmq.replicaCount }}
+
+        image:
+          pullSecrets:
+            - name: rabbitmq-docker-credentials
 
         auth:
-          username: {{ .Values.rabbitmq.username }}
-          password: {{ .Values.rabbitmq.password }}
+          username: user
+          auth:
+            existingPasswordSecret: rabbitmq-credentials
+            existingErlangSecret: rabbitmq-credentials
 
         clustering:
           rebalance: true
 
+        persistentVolumeClaimRetentionPolicy:
+          whenDeleted: Delete
+
         resources:
-          limits: {}
-          requests: {}
+          {{- toYaml .Values.rabbitmq.resources | nindent 10 }}
 
         serviceAccount:
           create: false
 
+        networkPolicy:
+          enabled: false
+
         persistence:
-          storageClass: nfs-onpremise-dynamic
+          storageClass: {{ .Values.rabbitmq.storageClass }}
+        persistentVolumeClaimRetentionPolicy:
+          whenDeleted: Delete
 
         ingress:
           enabled: true

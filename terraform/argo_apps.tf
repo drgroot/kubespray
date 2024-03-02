@@ -1,55 +1,10 @@
-locals {
-  cluster_secret_store_name = "cluster-readonly-secretstore"
-  rabbitmq_user = "user"
+data "vault_generic_secret" "tenants" {
+  path = "kubernetes/TENANTS" 
 }
 
-resource "kubernetes_manifest" "project" {
-  manifest = {
-    apiVersion = "argoproj.io/v1alpha1"
-    kind       = "AppProject"
-    metadata = {
-      name      = "bootstrap"
-      namespace = "argocd"
-      labels = {
-        "app.kubernetes.io/part-of" = "argocd"
-      }
-      finalizers = ["resources-finalizer.argocd.argoproj.io"]
-    }
-    spec = {
-      sourceRepos = ["*"]
-
-      destinations = [{
-        namespace = "*"
-        server    = "https://kubernetes.default.svc"
-      }]
-
-      syncWindows = [
-        {
-          kind         = "allow"
-          schedule     = "10 */4 * * *"
-          duration     = "1h"
-          applications = ["*"]
-          clusters     = ["*"]
-          namespaces   = ["*"]
-          timeZone     = "America/Toronto"
-          manualSync   = true
-        }
-      ]
-
-      clusterResourceWhitelist = [{
-        group = "*"
-        kind  = "*"
-      }]
-
-      namespaceResourceWhitelist = [{
-        group = "*"
-        kind  = "*"
-      }]
-    }
-  }
-  field_manager {
-    force_conflicts = true
-  }
+locals {
+  cluster_secret_store_name = "cluster-readonly-secretstore"
+  tenants = jsondecode(data.vault_generic_secret.tenants.data.tenants)
 }
 
 resource "kubernetes_manifest" "application" {
@@ -79,29 +34,23 @@ resource "kubernetes_manifest" "application" {
           spec:
             project: ${kubernetes_manifest.project.manifest.metadata.name}
           
-          vault:
-            server: ${var.VAULT_ADDRESS}
-            secretStore:
-              name: ${local.cluster_secret_store_name}
-              username: kubernetesreadonly
-              secretRef:
-                name: ${kubernetes_secret.vault_password.metadata[0].name}
-                namespace: ${kubernetes_secret.vault_password.metadata[0].namespace}
-                key: ${keys(kubernetes_secret.vault_password.data)[0]}
-
-          coder:
-            namespace: ${kubernetes_namespace.coder.metadata[0].name}
-            workspaces:
-              namespace: ${kubernetes_namespace.coder_workspace.metadata[0].name}
-            pvcs:
-              - name: workspace
-                storageClassName: nfs-onpremise-dynamic
-              - name: datalake
-                storageClassName: nfs-thorin-datalake
+          externalsecrets:
+            version: ${local.versions.externalsecrets}
+            namespace: externalsecrets
+            stores:
+              vault:
+                server: ${var.VAULT_ADDRESS}
+                secretStore:
+                  name: ${local.cluster_secret_store_name}
+                  username: kubernetesreadonly
+                  secretRef:
+                    name: ${kubernetes_secret.vault_password.metadata[0].name}
+                    namespace: ${kubernetes_secret.vault_password.metadata[0].namespace}
+                    key: ${keys(kubernetes_secret.vault_password.data)[0]} 
 
           ingress:
             version: ${local.versions.ingress}
-            namespace: networking
+            namespace: ingress
 
           certmanager:
             namespace: certmanager
@@ -115,23 +64,51 @@ resource "kubernetes_manifest" "application" {
             version: ${local.versions.keda}
             namespace: keda
 
-          externalsecrets:
-            version: ${local.versions.externalsecrets}
-            namespace: externalsecrets
-
-          gitlabrunner:
-            version: ${local.versions.gitlabrunner}
-            namespace: gitlab
-
           rabbitmq:
+            releaseName: rabbitmq
             version: ${local.versions.rabbitmq}
             namespace: default
-            username: ${local.rabbitmq_user}
-            password: ${local.rabbitmq_user}
+            storageClass: nfs-thorin-ssd-raid0
+            resources:
+              requests:
+                memory: 256Mi
+                cpu: 50m
 
           redis:
+            releaseName: rabbitmq
             version: ${local.versions.redis}
             namespace: default
+            resources:
+              requests:
+                memory: 256Mi
+                cpu: 50m
+
+          postgres:
+            releaseName: postgres
+            version: ${local.versions.postgres}
+            namespace: default
+            storageClass: nfs-thorin-ssd-raid0
+            backupStorageClass: nfs-onpremise-backups
+            resources:
+              requests:
+                memory: 8192Mi
+                cpu: 1000m
+
+          gitea:
+            namespace: default
+            version: ${local.versions.gitea}
+            replicas: 1
+            storageClass: nfs-onpremise-dynamic
+
+          coder:
+            namespace: default
+            workspaces:
+              namespace: workspaces
+            pvcs:
+              - name: workspace
+                storageClassName: nfs-onpremise-dynamic
+              - name: datalake
+                storageClassName: nfs-thorin-datalake
 
           tenants:
             %{for tenant in nonsensitive(jsondecode(data.vault_generic_secret.tenants.data.tenants)) }
@@ -141,11 +118,6 @@ resource "kubernetes_manifest" "application" {
                 ${contains(tenant.flags, "docker:private") ? "- PRIVATE_" : ""}
               externalinfra:
                 ${contains(tenant.flags, "smtp") ? "- SMTP" : ""}
-                ${contains(tenant.flags, "rclone") ? "- RCLONE" : ""}
-              databases:
-                %{ for key in nonsensitive(keys(local.database_access_credentials)) }
-                ${ local.database_access_credentials[key].namespace == tenant.namespace ? "- ${replace(vault_generic_secret.database_credential[key].path,"kubernetes/","")}" : ""}
-                %{ endfor }
             %{ endfor }
           EOF
         }
@@ -173,19 +145,26 @@ data "kubernetes_secret" "rabbitmq" {
 }
 
 resource "vault_generic_secret" "rabbitmq" {
-  path = "kubernetes/rabbitmq"
+  path = "kubernetes/rabbitmq-secrets"
   data_json = jsonencode({
-    username = local.rabbitmq_user
+    username = "user"
     password = data.kubernetes_secret.rabbitmq.data["rabbitmq-password"]
     host = "rabbitmq-headless.default.svc.cluster.local"
-    url = "amqp://${local.rabbitmq_user}:${data.kubernetes_secret.rabbitmq.data["rabbitmq-password"]}@rabbitmq-headless.default.svc.cluster.local"
+    url = "amqp://user:${data.kubernetes_secret.rabbitmq.data["rabbitmq-password"]}@rabbitmq-headless.default.svc.cluster.local"
   })
 }
 
 resource "vault_generic_secret" "redis" {
-  path = "kubernetes/redis"
+  path = "kubernetes/redis-secrets"
   data_json = jsonencode({
     host = "redis-headless.default.svc.cluster.local"
     url = "redis://redis-headless.default.svc.cluster.local"
+  })
+}
+
+resource "vault_generic_secret" "postgres" {
+  path = "kubernetes/postgres-secrets"
+  data_json = jsonencode({
+    host = "postgres-pgpool.default.svc.cluster.local"
   })
 }

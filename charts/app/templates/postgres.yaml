@@ -1,0 +1,126 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.postgres.namespace }}
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: postgres-docker-credentials
+  namespace: {{ .Values.postgres.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.externalsecrets.stores.vault.secretStore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: postgres-docker-credentials
+    template:
+      type: kubernetes.io/dockerconfigjson
+      {{- with $.Values.dockerconfigTemplate }}
+      data:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+  data:
+    - remoteRef:
+        key: DOCKER
+        property:  PUBLIC_USERNAME 
+      secretKey: USERNAME
+    - remoteRef:
+        key: DOCKER
+        property:  PUBLIC_PASSWORD 
+      secretKey: PASSWORD
+    - remoteRef:
+        key: DOCKER
+        property: PUBLIC_HOST
+      secretKey: HOST
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: postgres-credentials
+  namespace: {{ .Values.rabbitmq.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.externalsecrets.stores.vault.secretStore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: postgres-credentials
+  data:
+    - secretKey: postgres-username
+      remoteRef:
+        key: DB_POSTGRES
+        property: USERNAME
+    - secretKey: postgres-password 
+      remoteRef:
+        key: DB_POSTGRES
+        property:  PASSWORD
+    - secretKey: postgres-repmgrPassword 
+      remoteRef:
+        key: DB_POSTGRES
+        property:  PASSWORD
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "app.fullname" . }}-postgres
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Values.postgres.namespace }}
+    server: {{ .Values.spec.destination.server }}
+  project: {{ .Values.spec.project }}
+  source:
+    chart: postgresql-ha
+    repoURL: https://charts.bitnami.com/bitnami
+    targetRevision: {{ .Values.postgres.version }}
+    helm:
+      releaseName: {{ .Values.postgres.releaseName }}
+      values: |-
+        fullnameOverride: {{ .Values.postgres.releaseName }}
+
+        global:
+          imagePullSecrets:
+            - name: postgres-docker-credentials
+          postgresql:
+            existingSecret: postgres-credentials
+
+        postgresql:
+          replicaCount: {{ .Values.postgres.replicaCount }}
+
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
+
+          networkPolicy:
+            enabled: false
+
+          extraVolumes:
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: {{ .Values.postgres.shmSize }}
+          extraVolumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+
+        pgpool:
+          networkPolicy:
+            enabled: false
+
+        persistence:
+          enabled: true
+          storageClass: {{ .Values.postgres.storageClass }}
+
+        backup:
+          enabled: true
+          cronjob:
+            concurrencyPolicy: Forbid
+            successfulJobsHistoryLimit: 0
+            storage:
+              storageClass: {{ .Values.postgres.backupStorageClass }}
