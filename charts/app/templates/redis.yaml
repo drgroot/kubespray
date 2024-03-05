@@ -2,6 +2,37 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: {{ .Values.redis.namespace }}
+  labels:
+    type: system
+    dockerpublic: okay
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: redis-credentials
+  namespace: {{ .Values.redis.namespace }}
+spec:
+  secretStoreRefs:
+    - name: {{ .Values.secretStore.readWriteStore }}
+      kind: SecretStore
+  selector:
+    secret:
+      name: rabbitmq-credentials
+  template:
+    data:
+      hostname: {{ .Values.redis.releaseName }}-headless.{{ .Values.redis.namespace }}.svc.cluster.local
+      url: "redis://{{ .Values.redis.releaseName }}-headless.{{ .Values.redis.namespace }}.svc.cluster.local:6379"
+  data:
+    - match:
+        secretKey: hostname
+        remoteRef:
+          remoteKey: redis
+          property: hostname
+    - match:
+        secretKey: url
+        remoteRef:
+          remoteKey: redis
+          property: url
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -25,16 +56,25 @@ spec:
     repoURL: https://charts.bitnami.com/bitnami
     targetRevision: {{ .Values.redis.version }}
     helm:
-      releaseName: redis
+      releaseName: {{ .Values.redis.releaseName }}
       values: |-
-        fullnameOverride: redis
+        fullnameOverride: {{ .Values.redis.releaseName }}
+
+        global:
+          image:
+            pullSecrets:
+              - name: cluster-docker-public
+
         auth:
           enabled: false
 
         master:
           resources:
-            requests:
-              memory: 128Mi
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+
+          extraFlags:
+            - --maxmemory-policy
+            - allkeys-lru
 
           persistence:
             enabled: false
@@ -44,3 +84,9 @@ spec:
 
         replica:
           replicaCount: 0
+
+        networkPolicy:
+          enabled: false
+
+        serviceAccount:
+          create: false

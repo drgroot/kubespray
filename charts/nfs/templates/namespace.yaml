@@ -2,5 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: {{ .Values.spec.destination.namespace }}
+  labels:
+    type: system
+    dockerprivate: okay
 ---
 

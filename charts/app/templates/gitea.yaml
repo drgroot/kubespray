@@ -1,0 +1,236 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.gitea.namespace }}
+  labels:
+    type: system
+    dockerpublic: okay
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gitea-email-secrets
+  namespace: {{ .Values.gitea.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.gitea.secretstore }}
+    kind: SecretStore
+  target:
+    name: gitea-email-secrets
+  data:
+    - remoteRef:
+        key: SMTP
+        property: SMTP_HOST
+      secretKey: SMTP_HOST
+    - remoteRef:
+        key: SMTP
+        property: SMTP_PASSWORD
+      secretKey: SMTP_PASSWORD
+    - remoteRef:
+        key: SMTP
+        property: SMTP_PORT
+      secretKey: SMTP_PORT
+    - remoteRef:
+        key: SMTP
+        property: SMTP_SECURITY
+      secretKey: SMTP_SECURITY
+    - remoteRef:
+        key: SMTP
+        property: SMTP_USERNAME
+      secretKey: SMTP_USERNAME
+    - remoteRef:
+        key: SMTP
+        property: SMTP_FROM_DOMAIN
+      secretKey: SMTP_FROM_DOMAIN
+    - remoteRef:
+        key: SMTP
+        property: SMTP_FROM_EMAIL
+      secretKey: SMTP_FROM_EMAIL
+    - remoteRef:
+        key: SMTP
+        property: SMTP_FROM_USER
+      secretKey: SMTP_FROM_USER
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gitea-postgres-secrets
+  namespace: {{ .Values.gitea.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.gitea.secretstore }}
+    kind: SecretStore
+  target:
+    name: gitea-postgres-secrets
+    template:
+      type: Opaque
+      data:
+        url: 'postgres://gitea:{{ printf "{{ .password }}" }}@{{ .Values.postgres.releaseName }}-pgpool.{{ .Values.postgres.namespace }}.svc.cluster.local/gitea'
+        password: '{{ printf "{{ .password }}" }}'
+        username: '{{ printf "{{ .username }}" }}'
+  data:
+    - remoteRef:
+        key: DB_POSTGRES
+        property:  PASSWORD
+      secretKey: password
+    - remoteRef:
+        key: DB_POSTGRES
+        property:  USERNAME
+      secretKey: username
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "app.fullname" . }}-gitea
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Values.gitea.namespace }}
+    server: {{ .Values.spec.destination.server }}
+  project: {{ .Values.spec.project }}
+  source:
+    path: .
+    repoURL: https://gitea.com/gitea/helm-chart.git
+    targetRevision: HEAD
+    helm:
+      releaseName: gitea
+      values: |-
+        replicaCount: {{ .Values.gitea.replicas }}
+
+        strategy:
+          type: Recreate
+
+        ingress:
+          enabled: true
+          className: nginx
+          hosts:
+            - host: git.yusufali.ca
+              paths:
+                - path: /
+                  pathType: Prefix
+          annotations:
+            kubernetes.io/ingress.class: nginx
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+            nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+            external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
+          tls:
+            - hosts:
+                - "*.yusufali.ca"
+              secretName: wildcard-yusufali
+        
+        resources:
+            {{- toYaml .Values.gitea.resources | nindent 12 }}
+
+        deployment:
+          env: []
+
+        persistence:
+          enabled: true
+          storageClass: {{ .Values.gitea.storageClass }}
+        
+        gitea:
+          additionalConfigFromEnvs:
+            - name: GITEA__DATABASE__DB_TYPE
+              value: postgres
+            - name: GITEA__DATABASE__HOST
+              value: {{ .Values.postgres.releaseName }}-pgpool.{{ .Values.postgres.namespace }}.svc.cluster.local
+            - name: GITEA__DATABASE__NAME
+              value: gitea
+            - name: GITEA__DATABASE__USER
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-postgres-secrets
+                  key: username
+            - name: GITEA__DATABASE__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-postgres-secrets
+                  key: password
+
+            - name: GITEA__MAILER__SMTP_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-email-secrets
+                  key: SMTP_HOST
+            - name: GITEA__MAILER__SMTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-email-secrets
+                  key: SMTP_PORT
+            - name: GITEA__MAILER__USER
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-email-secrets
+                  key: SMTP_USERNAME
+            - name: GITEA__MAILER__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-email-secrets
+                  key: SMTP_PASSWORD
+            - name: GITEA__MAILER__FROM
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-email-secrets
+                  key: SMTP_FROM_EMAIL
+
+          config:
+            service:
+              DISABLE_REGISTRATION: true
+              DEFAULT_ORG_VISIBILITY: limited
+
+            server:
+              DOMAIN: git.yusufali.ca
+              ROOT_URL: https://git.yusufali.ca
+              SSH_DOMAIN: gitea-ssh.{{ .Values.gitea.namespace }}.svc.cluster.local
+              MINIMUM_KEY_SIZE_CHECK: false
+            
+            repository:
+              DISABLED_REPO_UNITS: repo.issues,repo.wiki,repo.projects,repo.packages,repo.ext_issues,repo.ext_wiki
+              DEFAULT_REPO_UNITS: repo.code,repo.releases,repo.pulls,repo.actions
+              DISABLE_STARS: true
+            
+            packages:
+              enabled: false
+
+            webhook:
+              ALLOWED_HOST_LIST: '*'
+            
+            migrations:
+              ALLOW_LOCALNETWORKS: true
+              ALLOWED_DOMAINS: '*'
+
+            mailer:
+              enabled: true
+              protocol: smtp+starttls
+
+            queue:
+              TYPE: redis
+              CONN_STR: redis://{{ .Values.redis.releaseName }}-headless.{{ .Values.redis.namespace }}.svc.cluster.local:6379/0
+            session:
+              PROVIDER: redis
+              PROVIDER_CONFIG: redis://{{ .Values.redis.releaseName }}-headless.{{ .Values.redis.namespace }}.svc.cluster.local:6379/0
+            cache:
+              ENABLED: true
+              ADAPTER: redis
+              HOST: redis://{{ .Values.redis.releaseName }}-headless.{{ .Values.redis.namespace }}.svc.cluster.local:6379/0
+            
+            ssh:
+              minimum_key_sizes:
+                RSA: 2048
+        
+        redis-cluster:
+          enabled: false
+        
+        postgresql-ha:
+          enabled: false
+        
+        postgresql:
+          enabled: false

@@ -62,12 +62,13 @@ resource "kubernetes_manifest" "application_nfs" {
                     schedule: "0 0 * * *"
           
           secretStore:
-            name: ${local.cluster_secret_store_name}
+            name: vault
+            kind: SecretStore
           
           tasks:
             - name: backup
               image: registry.yusufali.ca/containers/backup:latest
-              imageSecret: private
+              imageSecret: cluster-docker-private
               secrets:
                 - rclone
               pvc: nfs-onpremise-dynamic

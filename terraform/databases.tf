@@ -5,7 +5,7 @@ data "vault_generic_secret" "database_credentials" {
 locals {
   backup_location = "/backup/backup.sql"
   db_password = data.vault_generic_secret.database_credentials.data.PASSWORD
-  db_username = data.vault_generic_secret.database_credentials.data.USERNAME
+  db_username = "nyD9eJ4RDXaD83BS"
 
   databases = {
     postgres = {

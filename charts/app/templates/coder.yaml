@@ -1,0 +1,236 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.coder.namespace }}
+  labels:
+    type: system
+    dockerpublic: okay
+    dockerprivate: okay
+---
+{{- range $pvc := .Values.coder.pvcs -}}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $pvc.name }}
+  namespace:  {{ $.Values.coder.namespace }}
+  finalizers:
+    - kubernetes.io/pvc-protection
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 15Gi
+  storageClassName: {{ $pvc.storageClassName }}
+---
+{{- end -}}
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: coder-middleware-secrets
+  namespace:  {{ $.Values.coder.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.coder.secretstore }}
+    kind: SecretStore
+  target:
+    name: coder-middleware-secrets
+    template:
+      type: Opaque
+      data:
+        CACHE_URL: redis://{{ .Values.redis.releaseName }}-headless.{{ .Values.redis.namespace }}.svc.cluster.local:6379
+        BUS_URL: 'amqp://user:{{ printf "{{ .bus_password }}" }}@{{ .Values.rabbitmq.releaseName }}-headless.{{ .Values.rabbitmq.namespace }}.svc.cluster.local'
+  data:
+    - secretKey: bus_password
+      remoteRef:
+        key: RABBITMQ
+        property: rabbitmq-password
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: coder-cluster-role
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - persistentvolumes
+      - persistentvolumes/status
+      - nodes
+      - nodes/status
+      - customresourcedefinitions
+      - customresourcedefinitions/status
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: coder-role
+  namespace:  {{ .Values.coder.namespace }}
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - list
+      - watch
+      - get
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: coder-sa
+  namespace: {{ .Values.coder.namespace }}
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-binding-coder
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: coder-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: coder-sa
+    namespace: {{ .Values.coder.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: coder-role-binding
+  namespace:  {{ .Values.coder.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: coder-role
+subjects:
+  - kind: ServiceAccount
+    name: coder-sa
+    namespace: {{ .Values.coder.namespace }}
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: coder-postgres-secrets
+  namespace: {{ .Values.coder.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.coder.secretstore }}
+    kind: SecretStore
+  target:
+    name: coder-postgres-secrets
+    template:
+      type: Opaque
+      data:
+        password: '{{ printf "{{ .password }}" }}'
+        username: '{{ printf "{{ .username }}" }}'
+  data:
+    - remoteRef:
+        key: DB_POSTGRES
+        property:  PASSWORD
+      secretKey: password
+    - remoteRef:
+        key: DB_POSTGRES
+        property:  USERNAME
+      secretKey: username
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "app.fullname" . }}-coder
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Values.coder.namespace }}
+    server: {{ .Values.spec.destination.server }}
+  project: {{ .Values.spec.project }}
+  source:
+    path: charts/helm
+    repoURL: https://github.com/drgroot/kubespray.git
+    targetRevision: HEAD
+    helm:
+      releaseName: coder
+      values: |-
+        fullnameOverride: coder
+
+        image:
+          name: ghcr.io/coder/coder
+          tag: latest
+
+        serviceAccountName: coder-sa
+
+        env:
+          - name: CODER_TAILSCALE
+            value: "true"
+          - name: CODER_ACCESS_URL
+            value: "https://coder.yusufali.ca"
+          - name: CODER_ADDRESS
+            value: "0.0.0.0:7080"
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: coder-postgres-secrets
+                key: password
+          - name: POSTGRES_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: coder-postgres-secrets
+                key: username
+          - name: POSTGRES_HOST
+            value: {{ .Values.postgres.releaseName }}-pgpool.{{ .Values.postgres.namespace }}.svc.cluster.local
+          - name: CODER_PG_CONNECTION_URL
+            value: "postgres://$(POSTGRES_USERNAME):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST)/coder?sslmode=disable"
+
+        ports:
+          - name: port-7080
+            containerPort: 7080
+
+        service:
+          ports:
+            - name: port-7080
+              port: 7080
+              targetPort: 7080
+        
+        ingress:
+          enabled: true
+          annotations:
+            kubernetes.io/ingress.class: nginx
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+            nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+            external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
+          tls:
+            - hosts:
+                - "coder.yusufali.ca"
+                - "*.coder.yusufali.ca"
+              secretName: coder-yusufali
+          hosts:
+            - host: coder.yusufali.ca
+              paths:
+                - path: /
+                  pathType: Prefix
+            - host: "*.coder.yusufali.ca"
+              paths:
+                - path: /
+                  pathType: Prefix

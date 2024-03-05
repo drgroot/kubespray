@@ -2,23 +2,23 @@
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: {{ include "app.fullname" $ }}-repo-credentials
+  name: tenant-repo-credentials
   namespace: argocd
   labels:
-    argocd.argoproj.io/secret-type: repository
+    argocd.argoproj.io/secret-type: repo-creds
 spec:
   secretStoreRef:
-    name: {{ $.Values.vault.secretStore.name }}
-    kind: ClusterSecretStore
+    name: {{ .Values.secretStore.name }}
+    kind: {{ .Values.secretStore.kind }}
   target:
-    name: {{ include "app.fullname" $ }}-repo-credentials
+    name: tenant-repo-credentials
     template:
       metadata:
         labels:
-          argocd.argoproj.io/secret-type: repository
+          argocd.argoproj.io/secret-type: repo-creds
       data:
         type: git
-        url: https://src.yusufali.ca/infra/projects.git
+        url: https://git.yusufali.ca/
         username: '{{ printf "{{ .USERNAME }}" }}'
         password: '{{ printf "{{ .PASSWORD }}" }}'
   data:
@@ -32,15 +32,10 @@ spec:
         property: GIT_USERNAME
 ---
 {{- range $tenant := .Values.tenants }}
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: {{ $tenant.namespace }}
----
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: {{ include "app.fullname" $ }}-{{ $tenant.namespace }}-project
+  name: tenant-{{ $tenant.namespace }}-project
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: argocd
@@ -79,20 +74,23 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ include "app.fullname" $ }}-{{ $tenant.namespace }}-application
+  name: tenant-{{ $tenant.namespace }}-application
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: {{ include "app.fullname" $ }}-{{ $tenant.namespace }}-project
+  project: tenant-{{ $tenant.namespace }}-project
   source:
-    repoURL: https://src.yusufali.ca/infra/projects.git
+    repoURL: https://git.yusufali.ca/infra/projects.git
     targetRevision: HEAD
     path: {{ $tenant.namespace }}
     helm:
       releaseName: {{ $tenant.namespace }}
       values: |
         namespace: {{ $tenant.namespace }}
+        argoproject: tenant-{{ $tenant.namespace }}-project
+        spec:
+          project: tenant-{{ $tenant.namespace }}-project
   destination:
     name: ""
     namespace: argocd
@@ -102,42 +100,25 @@ spec:
       prune: true
       selfHeal: true
 ---
-{{- range $dockerprefix := $tenant.docker }}
+{{- range $path := $tenant.flags }}
 ---
+{{- if contains ":" $path }}
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: {{ include "app.fullname" $ }}-{{ $tenant.namespace }}-docker-{{ $dockerprefix | lower | replace "_" "" }}
+  name: tenant-{{ $tenant.namespace }}-{{ splitList ":" $path | first }}
   namespace: {{ $tenant.namespace }}
 spec:
   secretStoreRef:
-    name: {{ $.Values.vault.secretStore.name }}
-    kind: ClusterSecretStore
+    name: kubernetes
+    kind: {{ $.Values.secretStore.kind }}
   target:
-    name: cluster-docker-{{ $dockerprefix | lower | replace "_" "" }}
-    template:
-      type: kubernetes.io/dockerconfigjson
-      {{- with $.Values.dockerconfigTemplate }}
-      data:
-{{ toYaml . | indent 8 }}
-      {{- end }}
-  data:
-    - secretKey: USERNAME
-      remoteRef:
-        key: DOCKER
-        property: {{ $dockerprefix }}USERNAME
-    - secretKey: PASSWORD
-      remoteRef:
-        key: DOCKER
-        property: {{ $dockerprefix }}PASSWORD
-    - secretKey: HOST
-      remoteRef:
-        key: DOCKER
-        property: {{ $dockerprefix }}HOST
----
-{{- end }}
-{{- range $path := $tenant.externalinfra }}
----
+    name: cluster-{{ $tenant.namespace }}-{{ splitList ":" $path | first }}
+  dataFrom:
+    - extract:
+        key: {{ splitList ":" $path | first }}
+{{- else if contains "DOCKER_" $path }}
+{{- else }}
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
@@ -145,31 +126,14 @@ metadata:
   namespace: {{ $tenant.namespace }}
 spec:
   secretStoreRef:
-    name: {{ $.Values.vault.secretStore.name }}
-    kind: ClusterSecretStore
+    name: {{ $.Values.secretStore.name }}
+    kind: {{ $.Values.secretStore.kind }}
   target:
     name: cluster-{{ $path | lower }}
   dataFrom:
     - extract:
         key: {{ $path }}
----
 {{- end }}
-{{- range $path := $tenant.databases }}
----
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: {{ include "app.fullname" $ }}-{{ $tenant.namespace }}-{{ $path | replace "DB_" "" }}
-  namespace: {{ $tenant.namespace }}
-spec:
-  secretStoreRef:
-    name: {{ $.Values.vault.secretStore.name }}-kubernetes
-    kind: ClusterSecretStore
-  target:
-    name: cluster-{{ $path | replace "DB_" "" }}
-  dataFrom:
-    - extract:
-        key: {{ $path }}
 ---
 {{- end }}
 {{- end }}

@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: {{ .Values.certmanager.namespace }}
+  labels:
+    type: system
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -36,8 +38,8 @@ metadata:
   namespace: {{ .Values.certmanager.namespace }}
 spec:
   secretStoreRef:
-    name: {{ .Values.vault.secretStore.name }}
-    kind: ClusterSecretStore
+    name: {{ .Values.certmanager.secretstore }}
+    kind: SecretStore
   target:
     name: cluster-cloudflare-secret
   data:

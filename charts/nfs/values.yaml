@@ -32,25 +32,6 @@ secrets:
     data:
       - key: RCLONE
         property: rclone.conf
-  private:
-    type: kubernetes.io/dockerconfigjson
-    template:
-      .dockerconfigjson: |
-        {
-          "auths": {
-            "https://registry.yusufali.ca": {
-              "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
-            }
-          }
-        }
-    data:
-      - name: USERNAME
-        key: DOCKER
-        property: PRIVATE_USERNAME
-      - name: PASSWORD
-        key: DOCKER
-        property: PRIVATE_PASSWORD
-
 tasks: []
 
 spec:
