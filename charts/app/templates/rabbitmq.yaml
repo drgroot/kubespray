@@ -45,6 +45,11 @@ spec:
         remoteRef:
           remoteKey: rabbitmq
           property: url
+    - match:
+        secretKey: url
+        remoteRef:
+          remoteKey: rabbitmq
+          property: BUS_URL
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
