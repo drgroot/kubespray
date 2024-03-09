@@ -107,6 +107,10 @@ spec:
         strategy:
           type: Recreate
 
+        service:
+          ssh:
+            port: 2222
+
         ingress:
           enabled: true
           className: nginx
@@ -191,6 +195,8 @@ spec:
               ROOT_URL: https://git.yusufali.ca
               SSH_DOMAIN: gitea-ssh.{{ .Values.gitea.namespace }}.svc.cluster.local
               MINIMUM_KEY_SIZE_CHECK: false
+              SSH_PORT: 2222
+              SSH_LISTEN_PORT: 2222
             
             repository:
               DISABLED_REPO_UNITS: repo.issues,repo.wiki,repo.projects,repo.packages,repo.ext_issues,repo.ext_wiki
