@@ -81,9 +81,9 @@ metadata:
 spec:
   project: tenant-{{ $tenant.namespace }}-project
   source:
-    repoURL: https://git.yusufali.ca/infra/projects.git
+    repoURL: {{ $tenant.chart.url }}
     targetRevision: HEAD
-    path: {{ $tenant.namespace }}
+    path: {{ $tenant.chart.path }}
     helm:
       releaseName: {{ $tenant.namespace }}
       values: |

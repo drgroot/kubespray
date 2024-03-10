@@ -153,6 +153,9 @@ resource "kubernetes_manifest" "application" {
           tenants:
             %{for tenant in local.tenants }
             - namespace: ${tenant.namespace}
+              chart:
+                url: ${tenant.repository.url}
+                path: ${tenant.repository.path}
               flags:
                 %{ for flag in tenant.flags }
                 - ${flag}
