@@ -20,7 +20,7 @@ all:
       hosts:
         kube0:
     kube_node:
-      children:
+      hosts:
         kube0:
         kube1:
         samwise:
