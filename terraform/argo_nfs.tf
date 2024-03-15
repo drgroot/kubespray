@@ -41,7 +41,7 @@ resource "kubernetes_manifest" "application_nfs" {
                   backup:
                     enabled: true
                     schedule: "0 0 * * *"
-                    subPath: photos/originals
+                    subPath: photos/upload
             - name: thorin
               hostname: 192.168.1.3
               folders:
