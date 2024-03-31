@@ -185,6 +185,8 @@ spec:
             value: "true"
           - name: CODER_ACCESS_URL
             value: "https://coder.yusufali.ca"
+          - name: CODER_WILDCARD_ACCESS_URL
+            value: '*.coder.yusufali.ca'
           - name: CODER_ADDRESS
             value: "0.0.0.0:7080"
           - name: POSTGRES_PASSWORD
