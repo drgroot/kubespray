@@ -78,6 +78,23 @@ spec:
         property:  USERNAME
       secretKey: username
 ---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gitea-runner-secrets
+  namespace: {{ .Values.gitea.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.gitea.secretstore }}
+    kind: SecretStore
+  target:
+    name: gitea-runner-secrets
+  data:
+    - remoteRef:
+        key: GIT
+        property: GITEA_RUNNER_TOKEN
+      secretKey: token
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

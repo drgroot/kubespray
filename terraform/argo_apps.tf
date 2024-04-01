@@ -7,7 +7,7 @@ locals {
   tenant_map = merge(
     { for tenant in local.tenants : tenant.namespace => tenant },
     {
-      default = { namespace = "default", flags = ["DB_POSTGRES", "DOCKER_*", "RABBITMQ", "SMTP"] }
+      default = { namespace = "default", flags = ["GIT", "DB_POSTGRES", "DOCKER_*", "RABBITMQ", "SMTP"] }
       certmanager = { namespace = "certmanager", flags = ["CLOUDFLARE"] }
       workspaces = { namespace = "workspaces", flags = ["DOCKER_*", "DB_POSTGRES", "RABBITMQ"] }
       nfs = { namespace = "nfs", flags = ["RCLONE", "DOCKER_PRIVATE"] }
