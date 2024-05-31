@@ -123,7 +123,7 @@ resource "kubernetes_manifest" "application" {
             version: ${local.versions.postgres}
             namespace: default
             storageClass: nfs-thorin-ssd-raid0
-            backupStorageClass: nfs-onpremise-backups
+            backupStorageClass: nfs-thorin-backups
             resources:
               requests:
                 memory: 4096Mi
@@ -134,21 +134,21 @@ resource "kubernetes_manifest" "application" {
             namespace: default
             version: ${local.versions.gitea}
             replicas: 1
-            storageClass: nfs-onpremise-dynamic
+            storageClass: nfs-thorin-dynamic
 
           coder:
             secretstore: vault
             namespace: workspaces
             pvcs:
               - name: workspace
-                storageClassName: nfs-onpremise-dynamic
+                storageClassName: nfs-thorin-dynamic
               - name: datalake
                 storageClassName: nfs-thorin-datalake
           
           registry:
             secretstore: vault
             namespace: default
-            storageClass: nfs-onpremise-dynamic
+            storageClass: nfs-thorin-dynamic
 
           tenants:
             %{for tenant in local.tenants }

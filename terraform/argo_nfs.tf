@@ -26,25 +26,21 @@ resource "kubernetes_manifest" "application_nfs" {
             project: ${kubernetes_manifest.project.manifest.metadata.name}
 
           storage:
-            - name: onpremise
-              hostname: 192.168.1.4
-              folders:
-                - name: backups
-                  mountPath: /volume2/containerData
-                  subPath: backups
-                - name: dynamic
-                  mountPath: /volume2/containerData
-                  subPath: dynamic
-                - name: media
-                  mountPath: /volume2/media
-                  fixed: true
-                  backup:
-                    enabled: true
-                    schedule: "0 0 * * *"
-                    subPath: photos/upload
             - name: thorin
               hostname: 192.168.1.3
               folders:
+                - name: dynamic
+                  mountPath: /volume2/containerData
+                  subPath: dynamic
+                - name: backups
+                  mountPath: /volume2/containerData
+                  subPath: backups
+                - name: photos
+                  fixed: true
+                  backup:
+                    enabled: true
+                    schedule: "0 */4 * * *"
+                    subPath: upload
                 - name: documents
                   fixed: true
                   backup:
@@ -71,7 +67,7 @@ resource "kubernetes_manifest" "application_nfs" {
               imageSecret: cluster-docker-private
               secrets:
                 - rclone
-              pvc: nfs-onpremise-dynamic
+              pvc: nfs-thorin-dynamic
 
           versions:
             nfs_provisioner: ${local.versions.nfs_provisioner}
