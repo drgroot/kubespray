@@ -71,7 +71,7 @@ jobs:
             ARGS="kubespray/reset.yml -e reset_confirmation=yes"
           fi
 
-          ansible-playbook -i inventory/sample/hosts.yaml $ARGS -b -v --private-key /inventory/id_rsa
+          ansible-playbook -i inventory/sample/hosts.yaml $ARGS -b -v
 
       - name: Run Post Install
         if: github.ref == 'refs/heads/main'
