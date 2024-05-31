@@ -1,15 +1,41 @@
+name: TERRAFORM
 on:
   push:
 
+env:
+  TF_VAR_ADMIN_CONF: ${{ github.workspace }}/admin.conf
+  TF_VAR_VAULT_ADDRESS: ${{ secrets.VAULT_ADDRESS }}
+  TF_VAR_VAULT_USERNAME: ${{ secrets.VAULT_USERNAME }}
+  TF_VAR_VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+
 jobs:
-  terraformk8s:
+  terraform:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
+
+      # install stuff
       - uses: hashicorp/setup-terraform@v2
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.ID_RSA }}
+          name: id_rsa
+          known_hosts: unnecessary
+          if_key_exists: fail
+      
+      # get the admin conf from head node
+      - name: Get admin.conf
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@192.168.1.10 "sudo cat /etc/kubernetes/admin.conf" > $TF_VAR_ADMIN_CONF
+          sed -i 's/127.0.0.1/192.168.1.10/g' $TF_VAR_ADMIN_CONF
 
-      - run: terraform -chdir=terraform init
-      - run: terraform -chdir=terraform plan -no-color -input=false -state=/inventory/terraform/state.tfstate -var-file="/inventory/variables.tfvars"
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
 
-      - if: github.ref == 'refs/heads/master'
-        run: terraform -chdir=terraform apply -auto-approve -input=false -state=/inventory/terraform/state.tfstate -var-file="/inventory/variables.tfvars"
+      - name: Terraform Plan
+        run: terraform -chdir=terraform plan -no-color -input=false -state=/configuration/.kubespray/state.tfstate
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform -chdir=terraform apply -auto-approve -input=false -state=/configuration/.kubespray/state.tfstate

@@ -36,8 +36,8 @@ kube_cert_group: kube-cert
 kube_log_level: 2
 
 # Directory where credentials will be stored
-credentials_dir: "/inventory/mycluster/credentials/"
-artifacts_dir: "/inventory/mycluster/artifacts"
+# credentials_dir: "/inventory/mycluster/credentials/"
+# artifacts_dir: "/inventory/mycluster/artifacts"
 ## It is possible to activate / deactivate selected authentication methods (oidc, static token auth)
 # kube_oidc_auth: false
 # kube_token_auth: false

@@ -1,0 +1,78 @@
+name: ANSIBLE
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        default: 'UpgradeAddons'
+        options:
+          - UpgradeAddons
+          - ScaleNodes
+          - Upgrade
+          - Install
+          - Reset
+
+jobs:
+  ansible:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.ID_RSA }}
+          name: id_rsa
+          known_hosts: unnecessary
+          if_key_exists: fail
+
+      - name: Install Packages
+        run: pip install -r requirements.txt
+      
+      - name: Setup Ansible Roles
+        run: |
+          rm kubespray/playbooks/roles || true
+          ln -s ../roles kubespray/playbooks/roles
+
+      - name: Run PreAnsible Jobs
+        if: github.ref == 'refs/heads/main'
+        run: ansible-playbook -i inventory/sample/hosts.yaml additional.yml -b -v
+
+      - name: Run Ansible Kubespray
+        env:
+          CMD: ${{ github.event.inputs.action }}
+        run: |
+          CMD=${CMD:-"UpgradeAddons"}
+
+          ARGS=""
+          if [ "$CMD" == "Install" ]; then
+            ARGS="kubespray/cluster.yml -l kube_control_plane"
+          elif [ "$CMD" == "UpgradeAddons" ]; then
+            ARGS="kubespray/upgrade-cluster.yml --tags=apps"
+          elif [ "$CMD" == "ScaleNodes" ]; then
+            ARGS="kubespray/scale.yml"
+          elif [ "$CMD" == "Upgrade" ]; then
+            ARGS="kubespray/upgrade-cluster.yml"
+          elif [ "$CMD" == "Reset" ]; then
+            ARGS="kubespray/reset.yml -e reset_confirmation=yes"
+          fi
+
+          ansible-playbook -i inventory/sample/hosts.yaml $ARGS -b -v --private-key /inventory/id_rsa
+
+      - name: Run Post Install
+        if: github.ref == 'refs/heads/main'
+        run: ansible-playbook -i inventory/sample/hosts.yaml post_install.yml -b -v
