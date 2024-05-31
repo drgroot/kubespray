@@ -27,7 +27,7 @@ jobs:
       # get the admin conf from head node
       - name: Get admin.conf
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@192.168.1.10 "sudo cat /etc/kubernetes/admin.conf" > $TF_VAR_ADMIN_CONF
+          ssh -o StrictHostKeyChecking=no ubuntu@192.168.1.10 "sudo cat /etc/kubernetes/super-admin.conf" > $TF_VAR_ADMIN_CONF
           sed -i 's/127.0.0.1/192.168.1.10/g' $TF_VAR_ADMIN_CONF
 
       - name: Terraform Init
