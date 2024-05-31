@@ -1,6 +1,6 @@
 storage:
-  - name: onpremise
-    hostname: my-onpremise-hostname
+  - name: thorin
+    hostname: my-hostname
     folders:
       - name: backups
         backup: true
