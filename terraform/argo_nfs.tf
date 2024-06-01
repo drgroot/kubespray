@@ -30,10 +30,10 @@ resource "kubernetes_manifest" "application_nfs" {
               hostname: 192.168.1.3
               folders:
                 - name: dynamic
-                  mountPath: containerData
+                  mountPath: /containerData
                   subPath: dynamic
                 - name: backups
-                  mountPath: containerData
+                  mountPath: /containerData
                   subPath: backups
                 - name: photos
                   fixed: true
