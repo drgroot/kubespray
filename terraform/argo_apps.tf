@@ -153,7 +153,7 @@ resource "kubernetes_manifest" "application" {
           ballista:
             namespace: ballista
             repo: yusufali
-            maxExecutors: 5
+            maxExecutors: 2
 
           tenants:
             %{for tenant in local.tenants }
