@@ -95,6 +95,12 @@ spec:
           image: {{ .Values.ballista.repo }}/arrow-ballista-scheduler
           imagePullPolicy: Always
           args: ["--bind-port=50050"]
+          livenessProbe:
+            tcpSocket:
+              port: 50050
+          readinessProbe:
+            tcpSocket:
+              port: 50050
           ports:
             - containerPort: 50050
               name: flight
@@ -136,6 +142,12 @@ spec:
           ports:
             - containerPort: 50051
               name: flight
+          livenessProbe:
+            tcpSocket:
+              port: 50051
+          readinessProbe:
+            tcpSocket:
+              port: 50051
           volumeMounts:
             - mountPath: /mnt
               name: data
