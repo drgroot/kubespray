@@ -150,6 +150,11 @@ resource "kubernetes_manifest" "application" {
             namespace: default
             storageClass: nfs-thorin-dynamic
 
+          ballista:
+            namespace: ballista
+            repo: yusufali
+            maxExecutors: 5
+
           tenants:
             %{for tenant in local.tenants }
             - namespace: ${tenant.namespace}
