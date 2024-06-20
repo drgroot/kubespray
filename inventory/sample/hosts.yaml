@@ -12,8 +12,6 @@ all:
       ansible_user: ubuntu
       ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
       ip: 192.168.1.11
-      node_labels:
-        networkcable: fiber
   children:
     kube_control_plane:
       hosts:
