@@ -94,6 +94,10 @@ resource "kubernetes_manifest" "application" {
             version: ${local.versions.keda}
             namespace: keda
 
+          prometheus:
+            version: ${local.versions.prometheus}
+            namespace: monitoring
+
           rabbitmq:
             secretstore: vault
             replicaCount: 1
