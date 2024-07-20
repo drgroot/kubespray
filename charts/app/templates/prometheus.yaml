@@ -67,6 +67,24 @@ spec:
               external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
           
           prometheusSpec:
+            retention: 20d
+
+            serviceMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorSelector: {}
+            serviceMonitorNamespaceSelector: {}
+            
+            podMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelector: {}
+            podMonitorNamespaceSelector: {}
+
+            probeSelectorNilUsesHelmValues: false
+            probeSelector: {}
+            probeNamespaceSelector: {}
+            
+            scrapeConfigSelectorNilUsesHelmValues: false
+            scrapeConfigSelector: {}
+            scrapeConfigNamespaceSelector: {}
+
             storageSpec:
               volumeClaimTemplate:
                 spec:
