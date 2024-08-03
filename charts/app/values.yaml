@@ -79,7 +79,7 @@ coder:
   namespace: default
   version: 1.21.0
   workspaces:
-    namespace: workspaces
+    namespace: coder
   pvcs: []
 
 gitea:

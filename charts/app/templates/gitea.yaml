@@ -62,21 +62,27 @@ spec:
     kind: SecretStore
   target:
     name: gitea-postgres-secrets
-    template:
-      type: Opaque
-      data:
-        url: 'postgres://gitea:{{ printf "{{ .password }}" }}@{{ .Values.postgres.releaseName }}-pgpool.{{ .Values.postgres.namespace }}.svc.cluster.local/gitea'
-        password: '{{ printf "{{ .password }}" }}'
-        username: '{{ printf "{{ .username }}" }}'
   data:
     - remoteRef:
-        key: DB_POSTGRES
-        property:  PASSWORD
+        key: gitea-postgres-credentials
+        property: password
       secretKey: password
     - remoteRef:
-        key: DB_POSTGRES
-        property:  USERNAME
+        key: gitea-postgres-credentials
+        property: username
       secretKey: username
+    - remoteRef:
+        key: gitea-postgres-credentials
+        property: schema
+      secretKey: schema
+    - remoteRef:
+        key: gitea-postgres-credentials
+        property: hostname
+      secretKey: hostname
+    - remoteRef:
+        key: gitea-postgres-credentials
+        property: database
+      secretKey: database
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
@@ -162,9 +168,20 @@ spec:
             - name: GITEA__DATABASE__DB_TYPE
               value: postgres
             - name: GITEA__DATABASE__HOST
-              value: {{ .Values.postgres.releaseName }}-pgpool.{{ .Values.postgres.namespace }}.svc.cluster.local
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-postgres-secrets
+                  key: hostname
             - name: GITEA__DATABASE__NAME
-              value: gitea
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-postgres-secrets
+                  key: database
+            - name: GITEA__DATABASE__SCHEMA
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-postgres-secrets
+                  key: schema
             - name: GITEA__DATABASE__USER
               valueFrom:
                 secretKeyRef:

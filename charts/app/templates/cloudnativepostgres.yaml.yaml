@@ -1,0 +1,242 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.cnpg.namespace }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "app.fullname" . }}-cnpg
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Values.cnpg.namespace }}
+    server: {{ .Values.spec.destination.server }}
+  project: {{ .Values.spec.project }}
+  source:
+    chart: cloudnative-pg
+    repoURL: https://cloudnative-pg.github.io/charts
+    targetRevision: {{ .Values.cnpg.version }}
+    helm:
+      releaseName: cnpg
+      values: |-
+        fullnameOverride: cnpg
+
+        resources: {}
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Fake
+metadata:
+  name: fake-main-key
+  namespace: {{ .Values.cnpg.namespace }}
+spec:
+  data:
+    username: main
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: postgres-credentials
+  namespace: {{ .Values.cnpg.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.cnpg.secretstore }}
+    kind: SecretStore
+  target:
+    name: postgres-credentials
+    template:
+      type: kubernetes.io/basic-auth
+      metadata:
+        labels:
+          cnpg.io/reload: "true"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Fake
+          name: fake-main-key
+  data:
+    - secretKey: password
+      remoteRef:
+        key: DB_POSTGRES
+        property:  PASSWORD
+---
+{{- range $schema := .Values.cnpg.mainCluster.defaultTenants }}
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Fake
+metadata:
+  name: fake-{{ $schema }}-key
+  namespace: {{ $.Values.cnpg.namespace }}
+spec:
+  data:
+    username: {{ $schema }}
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: postgres-credentials-{{ $schema }}
+  namespace: {{ $.Values.cnpg.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ $.Values.cnpg.secretstore }}
+    kind: SecretStore
+  target:
+    name: postgres-credentials-{{ $schema }}
+    template:
+      type: kubernetes.io/basic-auth
+      metadata:
+        labels:
+          cnpg.io/reload: "true"
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Fake
+          name: fake-{{ $schema }}-key
+  data:
+    - secretKey: password
+      remoteRef:
+        key: DB_POSTGRES
+        property:  PASSWORD-{{ $schema }}
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: postgres-credentials-{{ $schema }}
+  namespace: {{ $.Values.cnpg.namespace }}
+spec:
+  secretStoreRefs:
+    - name: {{ $.Values.secretStore.readWriteStore }}
+      kind: SecretStore
+  selector:
+    secret:
+      name: postgres-credentials-{{ $schema }}
+  template:
+    data:
+      password: "{{ `{{ .password }}` }}"
+      username: "{{ `{{ .username }}` }}"
+      schema: {{ $schema }}
+      database: postgres
+      hostname: main-rw.{{ $.Values.cnpg.namespace }}.svc.cluster.local
+      readhostname: main-ro.{{ $.Values.cnpg.namespace }}.svc.cluster.local
+      url: postgres://{{ `{{ .username }}` }}:{{ `{{ .password }}` }}@main-rw.{{ $.Values.cnpg.namespace }}.svc.cluster.local/postgres?sslmode=disable&options=-csearch_path%3D{{ $schema }}
+      readurl: postgres://{{ `{{ .username }}` }}:{{ `{{ .password }}` }}@main-ro.{{ $.Values.cnpg.namespace }}.svc.cluster.local/postgres?sslmode=disable&options=-csearch_path%3D{{ $schema }}
+  data:
+    - match:
+        secretKey: readurl
+        remoteRef:
+          remoteKey: {{ $schema }}-postgres-credentials
+          property: readurl
+    - match:
+        secretKey: url
+        remoteRef:
+          remoteKey: {{ $schema }}-postgres-credentials
+          property: url
+    - match:
+        secretKey: password
+        remoteRef:
+          remoteKey: {{ $schema }}-postgres-credentials
+          property: password
+    - match:
+        secretKey: username
+        remoteRef:
+          remoteKey: {{ $schema }}-postgres-credentials
+          property: username
+    - match:
+        secretKey: database
+        remoteRef:
+          remoteKey: {{ $schema }}-postgres-credentials
+          property: database
+    - match:
+        secretKey: hostname
+        remoteRef:
+          remoteKey: {{ $schema }}-postgres-credentials
+          property: hostname
+    - match:
+        secretKey: schema
+        remoteRef:
+          remoteKey: {{ $schema }}-postgres-credentials
+          property: schema
+    - match:
+        secretKey: readhostname
+        remoteRef:
+          remoteKey: {{ $schema }}-postgres-credentials
+          property: readhostname
+---
+{{- end}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "app.fullname" . }}-postgres-main
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Values.cnpg.namespace }}
+    server: {{ .Values.spec.destination.server }}
+  project: {{ .Values.spec.project }}
+  source:
+    path: charts/cluster
+    repoURL: https://github.com/drgroot/kubespray.git
+    targetRevision: HEAD
+    helm:
+      releaseName: main
+      values: |-
+        fullnameOverride: main
+        pushSecret:
+          enabled: true
+          secretstore: {{ .Values.secretStore.readWriteStore }}
+          remoteKey: postgres-main
+
+        instances: 3
+        # {{ .Values.cnpg.mainCluster.image }}
+
+        storage:
+          storageClass: {{ .Values.cnpg.storageClass }}
+        backup:
+          storageClass: {{ .Values.cnpg.backupStorageClass }}
+
+        bootstrap:
+          secretName: postgres-credentials
+          username: main
+          postgresInit:
+          {{- range $schema := .Values.cnpg.mainCluster.defaultTenants }}
+            - CREATE SCHEMA {{ $schema }}
+            - CREATE ROLE rw_{{ $schema }}
+            - GRANT ALL ON SCHEMA {{ $schema }} TO rw_{{ $schema }}
+            - GRANT pg_read_all_data TO main
+            - ALTER DEFAULT PRIVILEGES IN SCHEMA {{ $schema }} GRANT ALL PRIVILEGES ON TABLES TO main;
+            - ALTER DEFAULT PRIVILEGES IN SCHEMA {{ $schema }} GRANT ALL PRIVILEGES ON SEQUENCES TO main;
+          {{- end }}
+        
+        roles:
+          {{- range $schema := .Values.cnpg.mainCluster.defaultTenants }}
+          - name: {{ $schema }}
+            ensure: present
+            login: true
+            superuser: false
+            passwordSecret:
+              name: postgres-credentials-{{ $schema }}
+            inRoles:
+              - rw_{{ $schema }}
+          {{- end }}
+        
+        shared_buffers: {{ .Values.cnpg.mainCluster.sharedBuffers }}
+        resources:
+          {{- toYaml .Values.cnpg.mainCluster.resources | nindent 10 }}
+---

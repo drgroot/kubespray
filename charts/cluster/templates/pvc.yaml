@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "cluster.fullname" . }}-backup-pvc
+  labels:
+    {{- include "cluster.labels" . | nindent 4 }}
+  annotations:
+    nfs.io/storage-path: {{ include "cluster.fullname" . | quote }}
+spec:
+  storageClassName: {{ .Values.backup.storageClass }}
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.storage.size }}

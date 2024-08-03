@@ -7,9 +7,9 @@ locals {
   tenant_map = merge(
     { for tenant in local.tenants : tenant.namespace => tenant },
     {
-      default = { namespace = "default", flags = ["GIT", "DB_POSTGRES", "DOCKER_*", "RABBITMQ", "SMTP"] }
+      default = { namespace = "default", flags = ["GIT", "DB_POSTGRES", "DOCKER_*", "RABBITMQ", "SMTP", "redis:0", "rabbitmq:0", "gitea:0"] }
       certmanager = { namespace = "certmanager", flags = ["CLOUDFLARE"] }
-      workspaces = { namespace = "workspaces", flags = ["DOCKER_*", "DB_POSTGRES", "RABBITMQ"] }
+      coder = { namespace = "coder", flags = ["DOCKER_*", "rabbitmq:0", "redis:0"] }
       nfs = { namespace = "nfs", flags = ["RCLONE", "DOCKER_PRIVATE"] }
       argocd = { namespace = "argocd", flags = ["GIT"] }
     }
@@ -98,6 +98,29 @@ resource "kubernetes_manifest" "application" {
             version: ${local.versions.prometheus}
             namespace: monitoring
 
+          longhorn:
+            namespace: longhorn
+            version: ${local.versions.longhorn}
+
+          cnpg:
+            version: ${local.versions.cloudnativepg}
+            namespace: default
+            secretstore: vault
+            storageClass: longhorn
+            backupStorageClass: nfs-thorin-backups
+            mainCluster:
+              name: main
+              image: ${local.versions.postgres}
+              defaultTenants:
+                - mordor-bitwarden
+                - deafult-gitea
+                - coder
+              sharedBuffers: "512MB"
+              resources:
+                requests:
+                  memory: 2Gi
+                  cpu: 250m
+
           rabbitmq:
             secretstore: vault
             replicaCount: 1
@@ -141,8 +164,8 @@ resource "kubernetes_manifest" "application" {
             storageClass: nfs-thorin-dynamic
 
           coder:
-            secretstore: vault
-            namespace: workspaces
+            secretstore: kubernetes
+            namespace: coder
             pvcs:
               - name: workspace
                 storageClassName: nfs-thorin-dynamic
@@ -153,11 +176,6 @@ resource "kubernetes_manifest" "application" {
             secretstore: vault
             namespace: default
             storageClass: nfs-thorin-dynamic
-
-          ballista:
-            namespace: ballista
-            repo: yusufali
-            maxExecutors: 2
 
           tenants:
             %{for tenant in local.tenants }
