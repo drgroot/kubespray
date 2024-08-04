@@ -43,14 +43,14 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: postgres-credentials
+  name: postgres-credentials-main
   namespace: {{ .Values.cnpg.namespace }}
 spec:
   secretStoreRef:
     name: {{ .Values.cnpg.secretstore }}
     kind: SecretStore
   target:
-    name: postgres-credentials
+    name: postgres-credentials-main
     template:
       type: kubernetes.io/basic-auth
       metadata:
@@ -212,7 +212,7 @@ spec:
           storageClass: {{ .Values.cnpg.backupStorageClass }}
 
         bootstrap:
-          secretName: postgres-credentials
+          secretName: postgres-credentials-main
           username: main
           postgresInit:
           {{- range $schema := .Values.cnpg.mainCluster.defaultTenants }}

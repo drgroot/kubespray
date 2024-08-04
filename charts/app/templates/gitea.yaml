@@ -58,7 +58,7 @@ metadata:
   namespace: {{ .Values.gitea.namespace }}
 spec:
   secretStoreRef:
-    name: {{ .Values.gitea.secretstore }}
+    name: kubernetes
     kind: SecretStore
   target:
     name: gitea-postgres-secrets
