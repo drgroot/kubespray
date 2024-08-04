@@ -112,8 +112,8 @@ resource "kubernetes_manifest" "application" {
               name: main
               image: ${local.versions.postgres}
               defaultTenants:
-                - mordor-bitwarden
-                - deafult-gitea
+                - mordorbitwarden
+                - defaultgitea
                 - coder
               sharedBuffers: "512MB"
               resources:
