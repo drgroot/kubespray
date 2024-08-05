@@ -12,7 +12,7 @@ backup:
   schedule: "0 0 * * *"
 
 bootstrap:
-  database: postgres
+  database: app
   username: app
   secretName: password
   postgresInit: []
