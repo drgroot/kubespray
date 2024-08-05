@@ -61,6 +61,23 @@ spec:
           extraArgs:
             enable-ssl-passthrough: true
 
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - podAffinityTerm:
+                    labelSelector:
+                      matchExpressions:
+                        - key: app.kubernetes.io/component
+                          operator: In
+                          values:
+                            - controller
+                        - key: app.kubernetes.io/instance
+                          operator: In
+                          values:
+                            - ingress-nginx
+                    topologyKey: kubernetes.io/hostname
+                  weight: 100
+
         {{- with  .Values.ingress.nodeIps }}
         service:
           externalIPs: {{ toYaml . | nindent 12 }}

@@ -143,19 +143,6 @@ resource "kubernetes_manifest" "application" {
                 memory: 256Mi
                 cpu: 50m
 
-          postgres:
-            secretstore: vault
-            releaseName: postgres
-            replicaCount: 1
-            version: ${local.versions.postgres}
-            namespace: default
-            storageClass: nfs-thorin-ssd-raid0
-            backupStorageClass: nfs-thorin-backups
-            resources:
-              requests:
-                memory: 4096Mi
-                cpu: 512m
-
           gitea:
             secretstore: vault
             namespace: default

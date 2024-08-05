@@ -36,7 +36,7 @@ spec:
               args:
                 - -Fc
                 - -h
-                - {{ include "cluster.fullname" . }}-ro
+                - {{ include "cluster.fullname" . }}-r
                 - -U
                 - {{ .Values.bootstrap.username }}
                 - -d
