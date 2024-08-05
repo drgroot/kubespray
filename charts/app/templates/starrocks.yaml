@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "app.fullname" . }}-starrocks
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Values.starrocks.namespace }}
+    server: {{ .Values.spec.destination.server }}
+  project: {{ .Values.spec.project }}
+  source:
+    chart: operator
+    repoURL: https://starrocks.github.io/starrocks-kubernetes-operator
+    targetRevision: {{ .Values.starrocks.version }}
+    helm:
+      releaseName: starrocks
+      values: |-
+        timeZone: America/Toronto
+        starrocksOperator:
+          resources: {}
+          # namespaceOverride: {{ .Values.starrocks.namespace }}
+---
