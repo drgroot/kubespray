@@ -8,6 +8,11 @@ spec:
   instances: {{ .Values.instances }}
   imageName: {{ .Values.imageName }}
 
+  {{- with .Values.imagePullSecrets }}
+  imagePullSecrets:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
   postgresUID: {{ .Values.postgresUID }}
   postgresGID: {{ .Values.postgresGID }}
 
