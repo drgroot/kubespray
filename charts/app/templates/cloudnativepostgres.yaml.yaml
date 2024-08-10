@@ -212,6 +212,7 @@ spec:
           storageClass: {{ .Values.cnpg.backupStorageClass }}
 
         bootstrap:
+          database: postgres
           secretName: postgres-credentials-main
           username: main
           postgresInit:
