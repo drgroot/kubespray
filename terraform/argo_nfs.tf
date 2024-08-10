@@ -59,9 +59,6 @@ resource "kubernetes_manifest" "application_nfs" {
                 - name: ssd-raid0
                 - name: datalake
                   fixed: true
-                  backup:
-                    enabled: true
-                    schedule: "0 0 * * *"
           
           secretStore:
             name: vault
