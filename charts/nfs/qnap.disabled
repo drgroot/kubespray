@@ -1,0 +1,46 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: thorin-secrets
+  namespace: {{ $.Values.spec.destination.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ $.Values.secretStore.name }}
+    kind: {{ $.Values.secretStore.kind }}
+  target:
+    name: thorin-secrets
+    template:
+      type: Opaque
+  data:
+    - remoteRef:
+        key: ISCSI_INFORMATION
+        property: THORIN_PASSWORD
+      secretKey: password
+    - remoteRef:
+        key: ISCSI_INFORMATION
+        property: THORIN_USERNAME
+      secretKey: username
+    - remoteRef:
+        key: ISCSI_INFORMATION
+        property: THORIN_HOST
+      secretKey: storageAddress
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "nfs.fullname" $ }}-thorin
+  labels:
+    {{- include "nfs.labels" $ | nindent 4 }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  {{ toYaml $.Values.spec | nindent 2 }}
+  source:
+    path: Helm/trident
+    repoURL: https://github.com/qnap-dev/QNAP-CSI-PlugIn.git
+    targetRevision: v1.2.1
+    helm:
+      releaseName: {{ include "nfs.fullname" $ }}-thorin
+---

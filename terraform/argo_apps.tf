@@ -10,7 +10,7 @@ locals {
       default = { namespace = "default", flags = ["GIT", "DB_POSTGRES", "DOCKER_*", "RABBITMQ", "SMTP", "redis:0", "rabbitmq:0", "gitea:0"] }
       certmanager = { namespace = "certmanager", flags = ["CLOUDFLARE"] }
       coder = { namespace = "coder", flags = ["DOCKER_*", "rabbitmq:0", "redis:0"] }
-      nfs = { namespace = "nfs", flags = ["RCLONE", "DOCKER_PRIVATE"] }
+      nfs = { namespace = "nfs", flags = ["RCLONE", "DOCKER_PRIVATE","ISCSI_INFORMATION"] }
       argocd = { namespace = "argocd", flags = ["GIT"] }
     }
   )
