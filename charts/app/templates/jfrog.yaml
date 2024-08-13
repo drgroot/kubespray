@@ -1,0 +1,73 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "app.fullname" . }}-artifactory
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Values.registry.namespace }}
+    server: {{ .Values.spec.destination.server }}
+  project: {{ .Values.spec.project }}
+  source:
+    path: charts/helm
+    repoURL: https://github.com/drgroot/kubespray.git
+    targetRevision: HEAD
+    helm:
+      releaseName: artifactory
+      values: |-
+        fullnameOverride: artifactory
+
+        image:
+          name: sonatype/nexus3
+          tag: latest
+
+        ports:
+          - name: port-8081
+            containerPort: 8081
+
+        service:
+          ports:
+            - name: port-8081
+              port: 8081
+              targetPort: 8081
+        
+        ingress:
+          enabled: true
+          annotations:
+            nginx.ingress.kubernetes.io/client-body-buffer-size: 5000m
+            nginx.ingress.kubernetes.io/proxy-body-size: 5000m
+            kubernetes.io/ingress.class: nginx
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+            nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+            external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
+          tls:
+            - hosts:
+                - "*.yusufali.ca"
+              secretName: wildcard-yusufali
+          hosts:
+            - host: artifactory.yusufali.ca
+              paths:
+                - path: /
+                  pathType: Prefix
+
+        podSecurityContext:
+          runAsUser: 200
+          runAsGroup: 200
+
+        volumeMounts:
+          - name: data
+            mountPath: /nexus-data
+
+        pvc:
+          enabled: true
+          name: data
+          storageClass: {{ .Values.registry.storageClass }}
