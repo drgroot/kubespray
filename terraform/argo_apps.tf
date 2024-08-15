@@ -9,7 +9,6 @@ locals {
     {
       default = { namespace = "default", flags = ["GIT", "DB_POSTGRES", "DOCKER_*", "RABBITMQ", "SMTP", "redis:0", "rabbitmq:0", "gitea:0"] }
       certmanager = { namespace = "certmanager", flags = ["CLOUDFLARE"] }
-      coder = { namespace = "coder", flags = ["DOCKER_*", "rabbitmq:0", "redis:0"] }
       nfs = { namespace = "nfs", flags = ["RCLONE", "DOCKER_PRIVATE","ISCSI_INFORMATION"] }
       argocd = { namespace = "argocd", flags = ["GIT"] }
     }
@@ -118,7 +117,6 @@ resource "kubernetes_manifest" "application" {
               defaultTenants:
                 - mordorbitwarden
                 - defaultgitea
-                - coder
               sharedBuffers: "512MB"
               resources:
                 requests:
@@ -153,15 +151,6 @@ resource "kubernetes_manifest" "application" {
             version: ${local.versions.gitea}
             replicas: 1
             storageClass: nfs-thorin-dynamic
-
-          coder:
-            secretstore: kubernetes
-            namespace: coder
-            pvcs:
-              - name: workspace
-                storageClassName: nfs-thorin-dynamic
-              - name: datalake
-                storageClassName: nfs-thorin-datalake
           
           registry:
             secretstore: vault
