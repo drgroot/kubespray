@@ -5,12 +5,19 @@ metadata:
   name: {{ include "app.fullname" . }}-argocd
   namespace: argocd
   annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
 spec:
   ingressClassName: nginx
+  tls:
+    - secretName: argocd-ingress-http
+      hosts:
+        - argocd.yusufali.ca
   rules:
-    - host: argocd.k8s.private
+    - host: argocd.yusufali.ca
       http:
         paths:
           - path: /
@@ -19,4 +26,4 @@ spec:
               service:
                 name: argocd-server
                 port:
-                  name: http
+                  name: https
