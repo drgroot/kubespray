@@ -9,7 +9,7 @@ spec:
   schedule: {{ .Values.pvc.backup.cron }}
   concurrencyPolicy: Forbid
   failedJobsHistoryLimit: 1
-  successfulJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: {{ .Values.pvc.backup.history | default 0 }}
   jobTemplate:
     metadata:
       name: {{ include "app.fullname" . }}-backup
