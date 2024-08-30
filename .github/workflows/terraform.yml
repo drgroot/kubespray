@@ -1,6 +1,7 @@
 name: TERRAFORM
 on:
   push:
+  workflow_dispatch:
 
 env:
   TF_VAR_ADMIN_CONF: ${{ github.workspace }}/admin.conf
