@@ -26,6 +26,12 @@ resource "kubernetes_manifest" "application_nfs" {
             project: ${kubernetes_manifest.project.manifest.metadata.name}
 
           storage:
+            - name: gimli
+              hostname: 192.168.1.4
+              folders:
+                - name: media
+                  mountPath: /volume1/media
+                  fixed: true
             - name: thorin
               hostname: 192.168.1.3
               folders:
