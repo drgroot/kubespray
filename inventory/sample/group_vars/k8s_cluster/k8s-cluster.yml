@@ -17,7 +17,7 @@ kube_token_dir: "{{ kube_config_dir }}/tokens"
 kube_api_anonymous_auth: true
 
 ## Change this to use another Kubernetes version, e.g. a current beta release
-kube_version: v1.29.5
+kube_version: v1.30.4
 
 # Where the binaries will be downloaded.
 # Note: ensure that you've enough disk space (about 1G)
@@ -116,8 +116,8 @@ kube_pods_subnet_ipv6: fd85:ee78:d8a6:8607::1:0000/112
 kube_network_node_prefix_ipv6: 120
 
 # The port the API Server will be listening on.
-kube_apiserver_ip: "{{ kube_service_addresses | ipaddr('net') | ipaddr(1) | ipaddr('address') }}"
-kube_apiserver_port: 6443 # (https)
+kube_apiserver_ip: "{{ kube_service_addresses | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(1) | ansible.utils.ipaddr('address') }}"
+kube_apiserver_port: 6443  # (https)
 
 # Kube-proxy proxyMode configuration.
 # Can be ipvs, iptables
@@ -218,8 +218,8 @@ resolvconf_mode: host_resolvconf
 # Deploy netchecker app to verify DNS resolve as an HTTP service
 deploy_netchecker: false
 # Ip address of the kubernetes skydns service
-skydns_server: "{{ kube_service_addresses | ipaddr('net') | ipaddr(3) | ipaddr('address') }}"
-skydns_server_secondary: "{{ kube_service_addresses | ipaddr('net') | ipaddr(4) | ipaddr('address') }}"
+skydns_server: "{{ kube_service_addresses | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(3) | ansible.utils.ipaddr('address') }}"
+skydns_server_secondary: "{{ kube_service_addresses | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(4) | ansible.utils.ipaddr('address') }}"
 dns_domain: "{{ cluster_name }}"
 
 ## Container runtime
@@ -242,17 +242,9 @@ kubernetes_audit: false
 # kubelet_config_dir:
 default_kubelet_config_dir: "{{ kube_config_dir }}/dynamic_kubelet_dir"
 
-# pod security policy (RBAC must be enabled either by having 'RBAC' in authorization_modes or kubeadm enabled)
-podsecuritypolicy_enabled: false
-
-# Custom PodSecurityPolicySpec for restricted policy
-# podsecuritypolicy_restricted_spec: {}
-
-# Custom PodSecurityPolicySpec for privileged policy
-# podsecuritypolicy_privileged_spec: {}
-
 # Make a copy of kubeconfig on the host that runs Ansible in {{ inventory_dir }}/artifacts
 kubeconfig_localhost: true
+podsecuritypolicy_enabled: false
 # Use ansible_host as external api ip when copying over kubeconfig.
 # kubeconfig_localhost_ansible_host: false
 # Download kubectl onto the host that runs Ansible in {{ bin_dir }}
@@ -270,7 +262,7 @@ kubeconfig_localhost: true
 # kubelet_runtime_cgroups_cgroupfs: "/system.slice/{{ container_manager }}.service"
 # kubelet_kubelet_cgroups_cgroupfs: "/system.slice/kubelet.service"
 
-# Optionally reserve this space for kube daemons.
+# Whether to run kubelet and container-engine daemons in a dedicated cgroup.
 # kube_reserved: false
 ## Uncomment to override default values
 ## The following two items need to be set when kube_reserved is true
@@ -280,7 +272,7 @@ kubeconfig_localhost: true
 # kube_cpu_reserved: 100m
 # kube_ephemeral_storage_reserved: 2Gi
 # kube_pid_reserved: "1000"
-# Reservation for master hosts
+# Reservation for control plane hosts
 # kube_master_memory_reserved: 512Mi
 # kube_master_cpu_reserved: 200m
 # kube_master_ephemeral_storage_reserved: 2Gi
@@ -348,7 +340,7 @@ persistent_volumes_enabled: false
 #   - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 #   - TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
 #   - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-#   - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+#   - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
 #   - TLS_ECDHE_ECDSA_WITH_RC4_128_SHA
 #   - TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA
 #   - TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
@@ -356,7 +348,7 @@ persistent_volumes_enabled: false
 #   - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 #   - TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
 #   - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-#   - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+#   - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 #   - TLS_ECDHE_RSA_WITH_RC4_128_SHA
 #   - TLS_RSA_WITH_3DES_EDE_CBC_SHA
 #   - TLS_RSA_WITH_AES_128_CBC_SHA
