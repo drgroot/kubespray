@@ -19,6 +19,11 @@ all:
       ip: 192.168.1.12
       node_labels:
         networkcable: fiber
+    kubestorage:
+      ansible_host: 192.168.1.13
+      ansible_user: yusuf
+      ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
+      ip: 192.168.1.13
   children:
     kube_control_plane:
       hosts:
@@ -28,6 +33,7 @@ all:
         kube0:
         kube1:
         kube2:
+        kubestorage:
     etcd:
       hosts:
         kube0:
