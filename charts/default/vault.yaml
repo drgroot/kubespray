@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault
+  namespace: default
+  labels:
+    app: vault
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      volumes:
+        - name: vaultdata
+          nfs:
+            server: 192.168.1.3
+            path: /documents
+      containers:
+        - name: app
+          image: hashicorp/vault
+          ports:
+            - containerPort: 8200
+          livenessProbe:
+            httpGet:
+              path: /v1/sys/health?standbyok=true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: vaultdata
+              mountPath: /vault
+              subPath: vault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+  namespace: default
+  labels:
+    app: vault
+spec:
+  selector:
+    app: vault
+  ports:
+    - protocol: TCP
+      port: 8200
+      targetPort: 8200
+      nodePort: 8200
+  type: NodePort
