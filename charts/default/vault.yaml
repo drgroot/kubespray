@@ -23,11 +23,33 @@ spec:
       containers:
         - name: app
           image: hashicorp/vault
+          command:
+            - vault
+          args:
+            - server
+            - -config=/vault/config/config.hcl
           ports:
             - containerPort: 8200
+          env:
+            - name: VAULT_ADDR
+              value: http://127.0.0.1:8200
           livenessProbe:
             httpGet:
               path: /v1/sys/health?standbyok=true
+              port: 8200
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - vault status -tls-skip-verify
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -ec
+                  - /vault/unseal.sh
           resources:
             requests:
               cpu: 100m
