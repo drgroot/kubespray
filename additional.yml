@@ -9,6 +9,7 @@
           - nfs-common
           # - ufw
           # - open-iscsi
+          - cron
           - jq
         state: latest
 - name: Install kubectl software
