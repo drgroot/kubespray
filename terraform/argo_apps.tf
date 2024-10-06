@@ -101,10 +101,6 @@ resource "kubernetes_manifest" "application" {
             namespace: longhorn
             version: ${local.versions.longhorn}
 
-          starrocks:
-            namespace: default
-            version: ${local.versions.starrocks}
-
           cnpg:
             version: ${local.versions.cloudnativepg}
             namespace: default
