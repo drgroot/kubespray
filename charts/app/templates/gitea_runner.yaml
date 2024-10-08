@@ -85,3 +85,6 @@ spec:
             - name: runner-data
               mountPath: /toolcache
               subPath: toolcache
+            - name: runner-data
+              mountPath: /home/rootless/.cache/
+              subPath: rootcache
