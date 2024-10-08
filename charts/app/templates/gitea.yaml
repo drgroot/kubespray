@@ -84,23 +84,6 @@ spec:
         property: database
       secretKey: database
 ---
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: gitea-runner-secrets
-  namespace: {{ .Values.gitea.namespace }}
-spec:
-  secretStoreRef:
-    name: {{ .Values.gitea.secretstore }}
-    kind: SecretStore
-  target:
-    name: gitea-runner-secrets
-  data:
-    - remoteRef:
-        key: GIT
-        property: GITEA_RUNNER_TOKEN
-      secretKey: token
----
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -154,7 +137,7 @@ spec:
               secretName: wildcard-yusufali
         
         resources:
-            {{- toYaml .Values.gitea.resources | nindent 12 }}
+          {{- toYaml .Values.gitea.resources | nindent 10 }}
 
         deployment:
           env: []
