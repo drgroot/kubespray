@@ -1,0 +1,87 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gitea-runner-secrets
+  namespace: {{ .Values.gitea.namespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.gitea.secretstore }}
+    kind: SecretStore
+  target:
+    name: gitea-runner-secrets
+  data:
+    - remoteRef:
+        key: GIT
+        property: GITEA_RUNNER_TOKEN
+      secretKey: token
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: gitea-runner
+  namespace: {{ .Values.gitea.namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: {{ .Values.gitea.storageClass }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  lables:
+    app: gitea-runner
+  name: gitea-runner
+  namespace: {{ .Values.gitea.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitea-runner
+  template:
+    metadata:
+      labels:
+        app: gitea-runner
+    spec:
+      restartPolicy: Always
+      volumes:
+        - name: runner-data
+          persistentVolumeClaim:
+            claimName: gitea-runner
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: runner
+          image: gitea/act_runner:nightly-dind-rootless
+          imagePullPolicy: Always
+          env:
+            - name: DOCKER_HOST
+              value: tcp://localhost:2376
+            - name: DOCKER_CERT_PATH
+              value: /certs/client
+            - name: DOCKER_TLS_VERIFY
+              value: "1"
+            - name: GITEA_INSTANCE_URL
+              value: http://gitea-http.{{ .Values.gitea.namespace }}.svc.cluster.local:3000
+            - name: RUNNER_TOOL_CACHE
+              value: /toolcache
+            - name: GITEA_RUNNER_REGISTRATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-runner-secrets
+                  key: token
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: runner-data
+              mountPath: /data
+              subPath: data
+            - name: runner-data
+              mountPath: /opt/hostedtoolcache
+              subPath: stepcache
+            - name: runner-data
+              mountPath: /toolcache
+              subPath: toolcache
