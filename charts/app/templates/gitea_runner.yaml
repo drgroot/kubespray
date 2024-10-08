@@ -66,8 +66,6 @@ spec:
               value: "1"
             - name: GITEA_INSTANCE_URL
               value: http://gitea-http.{{ .Values.gitea.namespace }}.svc.cluster.local:3000
-            - name: RUNNER_TOOL_CACHE
-              value: /toolcache
             - name: GITEA_RUNNER_REGISTRATION_TOKEN
               valueFrom:
                 secretKeyRef:
