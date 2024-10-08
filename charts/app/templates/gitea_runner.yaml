@@ -32,7 +32,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  lables:
+  labels:
     app: gitea-runner
   name: gitea-runner
   namespace: {{ .Values.gitea.namespace }}
