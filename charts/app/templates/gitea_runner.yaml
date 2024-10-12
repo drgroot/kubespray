@@ -37,7 +37,7 @@ metadata:
   name: gitea-runner
   namespace: {{ .Values.gitea.namespace }}
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: gitea-runner
