@@ -102,7 +102,7 @@ spec:
         paths:
           - backend:
               service:
-                name: 8200
+                name: vault
                 port:
                   number: 8200
             path: /
