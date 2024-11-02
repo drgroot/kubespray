@@ -1,1 +1,4 @@
 namespace: kube-tools
+
+domains:
+  internal: k8s.private

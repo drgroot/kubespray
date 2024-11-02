@@ -33,17 +33,6 @@ jobs:
           ssh -o StrictHostKeyChecking=no ubuntu@192.168.1.10 "sudo cat /etc/kubernetes/super-admin.conf" > $TF_VAR_ADMIN_CONF
           sed -i 's/127.0.0.1/192.168.1.10/g' $TF_VAR_ADMIN_CONF
 
-      - name: Test Applying Base Charts
-        env:
-          KUBECONFIG: ${{ env.TF_VAR_ADMIN_CONF }}
-        run: kubectl apply -f charts/default/*.yaml --dry-run=client
-      
-      - name: Apply Base Charts
-        if: github.ref == 'refs/heads/main'
-        env:
-          KUBECONFIG: ${{ env.TF_VAR_ADMIN_CONF }}
-        run: kubectl apply -f charts/default/*.yaml
-
       - name: Terraform Init
         run: terraform -chdir=terraform init
 
