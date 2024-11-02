@@ -27,7 +27,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -76,3 +76,20 @@ jobs:
       - name: Run Post Install
         if: github.ref == 'refs/heads/main'
         run: ansible-playbook -i inventory/sample/hosts.yaml post_install.yml -b -v
+
+      - name: Get admin.conf
+        if: github.ref == 'refs/heads/main' && github.event.inputs.action == 'Install'
+        env:
+          KUBE_CONFIG: ${{ github.workspace }}/admin.conf
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@192.168.1.10 "sudo cat /etc/kubernetes/super-admin.conf" > $KUBE_CONFIG
+          sed -i 's/127.0.0.1/192.168.1.10/g' $KUBE_CONFIG
+
+      - name: Install Root Chart
+        uses: actions-hub/kubectl@master
+        if: github.ref == 'refs/heads/main' && github.event.inputs.action == 'Install'
+        env:
+          KUBE_CONFIG: ${{ github.workspace }}/admin.conf
+          CMD: ${{ github.event.inputs.action }}
+        with:
+          args: apply -f application.yaml
