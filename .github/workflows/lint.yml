@@ -1,0 +1,45 @@
+name: Helm Lint
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  get_scope:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Jq
+        uses: dcarbone/install-jq-action@v2.1.0
+        with:
+          version: 1.6
+
+      - id: get_scope
+        run: |
+          echo "charts=$(ls charts/ | jq -R '.' | jq -cs .)" >> $GITHUB_OUTPUT
+
+    outputs:
+      charts: ${{ steps.get_scope.outputs.charts }}
+
+  lint:
+    runs-on: ubuntu-latest
+
+    needs: get_scope
+
+    strategy:
+      fail-fast: true
+      matrix:
+        chart: ${{ fromJson(needs.get_scope.outputs.charts) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+
+      - name: Lint Chart
+        run: helm lint charts/${{ matrix.chart }}

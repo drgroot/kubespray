@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: bootstrap-main
+  namespace: argocd
+spec:
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  sourceRepos:
+    - '*'
+  syncWindows:
+    - applications:
+      - '*'
+      clusters:
+      - '*'
+      duration: 1h
+      kind: allow
+      manualSync: true
+      namespaces:
+      - '*'
+      schedule: 10 */4 * * *
+      timeZone: America/Toronto
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap-main
+  namespace: argocd
+spec:
+  destination:
+    namespace: argocd
+    server: https://kubernetes.default.svc
+  project: bootstrap-main
+  source:
+    helm:
+      values: |
+        dummy: true
+    path: charts/bootstrap
+    repoURL: https://github.com/drgroot/kubespray.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
