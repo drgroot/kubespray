@@ -86,10 +86,13 @@ jobs:
           sed -i 's/127.0.0.1/192.168.1.10/g' $KUBE_CONFIG
 
       - name: Install Root Chart
-        uses: actions-hub/kubectl@master
         if: github.ref == 'refs/heads/main' && github.event.inputs.action == 'Install'
         env:
-          KUBE_CONFIG: ${{ github.workspace }}/admin.conf
-          CMD: ${{ github.event.inputs.action }}
-        with:
-          args: apply -f application.yaml
+          KUBECONFIG: ${{ github.workspace }}/admin.conf
+        run: |
+          apt-get update
+          apt-get install -y curl
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+
+          ./kubectl apply -f application.yaml
