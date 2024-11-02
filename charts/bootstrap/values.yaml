@@ -1,4 +1,8 @@
 namespace: kube-tools
+project: bootstrap
+
+versions:
+  ingressnginx: 4.11.3
 
 domains:
   internal: k8s.private
