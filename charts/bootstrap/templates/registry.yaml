@@ -7,7 +7,7 @@ metadata:
 spec:
   secretStoreRef:
     name: external-infra
-    kind: clustersecretstore
+    kind: ClusterSecretStore
   target:
     name: registry-htpasswd
     template:
