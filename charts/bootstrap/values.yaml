@@ -1,9 +1,28 @@
 namespace: kube-tools
 project: bootstrap
 
+vault:
+  username: admin
+  secretName: vault-password
+  key: password
+
 versions:
   ingressnginx: 4.11.3
   keda: 2.15.2
+  externalsecrets: 0.10.5
 
 domains:
   internal: k8s.private
+
+htpasswdTemplate:
+  htpasswd: |-
+    {{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD }}
+dockerconfigTemplate:
+  .dockerconfigjson: |
+    {
+      "auths": {
+        {{ print .HOST | quote }}: {
+          "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
+        }
+      }
+    }
