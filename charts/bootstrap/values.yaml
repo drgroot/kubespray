@@ -2,7 +2,7 @@ namespace: kube-tools
 project: bootstrap
 
 vault:
-  username: admin
+  username: kubernetesadmin
   secretName: vault-password
   key: password
 
