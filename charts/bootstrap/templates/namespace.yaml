@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: {{ .Values.namespace }}
   labels:
-    {{- include "bootstrap.labels" . | nindent 4 }}
+    tenant: approved
