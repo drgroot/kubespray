@@ -30,7 +30,7 @@ jobs:
     needs: get_scope
 
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         chart: ${{ fromJson(needs.get_scope.outputs.charts) }}
 

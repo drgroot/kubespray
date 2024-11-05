@@ -1,28 +1,26 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: {{ .Values.certmanager.namespace }}
-  labels:
-    type: system
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ include "app.fullname" . }}-cert-manager
-  labels:
-    {{- include "app.labels" . | nindent 4 }}
+  name: bootstrap-external-certmanager
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
   destination:
-    namespace: {{ .Values.certmanager.namespace }}
-    server: {{ .Values.spec.destination.server }}
-  project: {{ .Values.spec.project }}
+    namespace: {{ .Values.namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
   source:
     chart: cert-manager
     repoURL: https://charts.jetstack.io
-    targetRevision: {{ .Values.certmanager.version }}
+    targetRevision: {{ .Values.versions.certmanager }}
     helm:
       releaseName: cert-manager
       values: |-
@@ -37,29 +35,33 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: cluster-cloudflare-secret
-  namespace: {{ .Values.certmanager.namespace }}
+  name: cloudflare
+  namespace: {{ .Values.namespace }}
 spec:
   secretStoreRef:
-    name: {{ .Values.certmanager.secretstore }}
-    kind: SecretStore
+    name: external-infra
+    kind: ClusterSecretStore
   target:
-    name: cluster-cloudflare-secret
+    name: cloudflare
   data:
+    - secretKey: CLOUDFLARE_SERVC_DOMAIN_NAME
+      remoteRef:
+        key: CLOUDFLARE
+        property: CLOUDFLARE_SERVC_DOMAIN_NAME
     - secretKey: CLOUDFLARE_PERSONAL_API_KEY
       remoteRef:
-        key: {{ .Values.secrets.cloudflare_api.key }}
-        property: {{ .Values.secrets.cloudflare_api.property }}
+        key: CLOUDFLARE
+        property: CLOUDFLARE_PERSONAL_API_KEY
     - secretKey: CLOUDFLARE_PERSONAL_DOMAIN_NAME
       remoteRef:
-        key: {{ .Values.secrets.cloudflare_domain.key }}
-        property: {{ .Values.secrets.cloudflare_domain.property }}
+        key: CLOUDFLARE
+        property: CLOUDFLARE_PERSONAL_DOMAIN_NAME
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: letsencrypt-prod
-  namespace: {{ .Values.certmanager.namespace }}
+  namespace: {{ .Values.namespace }}
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
@@ -71,14 +73,14 @@ spec:
           cloudflare:
             email: {{ .Values.certmanager.email }}
             apiKeySecretRef:
-              name: cluster-cloudflare-secret
+              name: cloudflare
               key: CLOUDFLARE_PERSONAL_API_KEY
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "app.fullname" . }}-dynamic-dns
-  namespace: {{ .Values.certmanager.namespace }}
+  name: cloudflare-dynamic-dns
+  namespace: {{ .Values.namespace }}
   labels:
     app: ddns
 spec:
@@ -102,34 +104,38 @@ spec:
             - name: CF_APIKEY
               valueFrom:
                 secretKeyRef:
-                  name: cluster-cloudflare-secret
+                  name: cloudflare
                   key: CLOUDFLARE_PERSONAL_API_KEY
             - name: CF_ZONES
               valueFrom:
                 secretKeyRef:
-                  name: cluster-cloudflare-secret
+                  name: cloudflare
                   key: CLOUDFLARE_PERSONAL_DOMAIN_NAME
             - name: CF_HOSTS
-              value: mordorhome.$(CF_ZONES)
+              value: mordorhome.{{ .Values.domains.external }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ include "app.fullname" . }}-external-dns
-  labels:
-    {{- include "app.labels" . | nindent 4 }}
+  name: bootstrap-external-externaldns
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
   destination:
-    namespace: {{ .Values.certmanager.namespace }}
-    server: {{ .Values.spec.destination.server }}
-  project: {{ .Values.spec.project }}
+    namespace: {{ .Values.namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
   source:
     chart: external-dns
     repoURL: https://kubernetes-sigs.github.io/external-dns
-    targetRevision: {{ .Values.externaldns.version }}
+    targetRevision: {{ .Values.versions.externaldns }}
     helm:
       releaseName: external-dns
       values: |-
@@ -137,16 +143,17 @@ spec:
           - name: CF_API_KEY
             valueFrom:
               secretKeyRef:
-                name: cluster-cloudflare-secret
+                name: cloudflare
                 key: CLOUDFLARE_PERSONAL_API_KEY
           - name: CF_API_EMAIL
             value: {{ .Values.certmanager.email }}
         
         provider: cloudflare
         domainFilters:
-          - yusufali.ca
+          - {{ .Values.domains.external }}
+          - {{ .Values.domains.servc }}
         sources:
           - ingress
         extraArgs:
-          - --default-targets=mordorhome.yusufali.ca
+          - --default-targets=mordorhome.{{ .Values.domains.external }}
           - --managed-record-types=CNAME

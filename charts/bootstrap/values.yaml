@@ -10,10 +10,13 @@ versions:
   ingressnginx: 4.11.3
   keda: 2.15.2
   externalsecrets: 0.10.5
+  certmanager: 1.16.1
+  externaldns: 1.15.0
 
 domains:
   internal: k8s.private
   external: yusufali.ca
+  servc: servc.io
 
 htpasswdTemplate:
   htpasswd: |-
@@ -27,3 +30,6 @@ dockerconfigTemplate:
         }
       }
     }
+
+certmanager:
+  email: ali@yusuf.email
