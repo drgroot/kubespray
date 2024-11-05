@@ -19,6 +19,6 @@ spec:
   source:
     chart: keda
     repoURL: https://kedacore.github.io/charts
-    targetRevision: {{ .Values.versions.ingressnginx }}
+    targetRevision: {{ .Values.versions.keda }}
     helm:
       releaseName: keda
