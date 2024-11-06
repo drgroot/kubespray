@@ -1,0 +1,65 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: postgres-credentials-main
+  namespace: {{ .Values.namespace }}
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: postgres-credentials-main
+  data:
+    - secretKey: password
+      remoteRef:
+        key: DB_POSTGRES
+        property:  PASSWORD
+    - secretKey: gitea-password
+      remoteRef:
+        key: DB_POSTGRES
+        property:  PASSWORD-defaultgitea
+    - secretKey: bitwarden-password
+      remoteRef:
+        key: DB_POSTGRES
+        property:  PASSWORD-mordorbitwarden
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: main-postgres
+  lnamespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Values.namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    path: "charts/postgres"
+    repoURL: "https://github.com/drgroot/kubespray.git"
+    targetRevision: feature/helm
+    helm:
+      releaseName: main
+      values: |-
+        fullnameOverride: main
+
+        additionalUsers:
+          - name: bitwarden
+            passwordkey: bitwarden-password
+            schema: bitwarden
+          - name: gitea
+            passwordkey: gitea-password
+            schema: gitea
+
+        pushsecret:
+          enabled: true
+          secretstore: kubernetes
+          secretStoreKind: ClusterSecretStore
+          remoteKey: main-postgres-credentials
