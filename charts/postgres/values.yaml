@@ -27,4 +27,4 @@ pushsecret:
 
 backup:
   schedule: "0 0 * * *"
-  storageClass: nfs-thorin-backups
+  storageclass: nfs-thorin-backups

@@ -5,17 +5,29 @@ metadata:
   labels:
     {{- include "postgres.labels" . | nindent 4 }}
 data:
-  init-user-db.sh: |
-    #!/bin/bash
+  restore.sh: |
+    #!/bin/sh
+    
+    if [ -f /backup/backup.sql ]; then
+      echo "Restoring database from backup"
+      pg_restore -U {{ .Values.server.username }} -Fc -d {{ .Values.server.databasename }} < /backup/backup.sql
+      if [ $? -eq 0 ]; then
+        echo "Database restored successfully"
+        exit 0
+      else
+        echo "Database restore failed"
+        rm -rf /var/lib/postgresql/data
+        exit 1
+      fi
+    fi
 
     {{- range $account := .Values.server.additionalUsers }}
-      psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -c "CREATE USER {{ $account.name }} WITH PASSWORD '"${{ $account.passwordKey }}"';"
-      psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-        USE {{ .Values.server.databasename }};
+      psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -c "CREATE USER {{ $account.name }} WITH PASSWORD '"${{ $account.passwordkey }}"';"
+      psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
         CREATE SCHEMA {{ $account.schema }};
         GRANT ALL ON SCHEMA {{ $account.schema }} TO {{ $account.name }};
         GRANT ALL ON SCHEMA {{ $account.schema }} TO {{ $.Values.server.username }};
-      EOSQL
+    EOSQL
 
       if [ $? -eq 0 ]; then
         echo "User '{{ $account.name }}' created"
@@ -25,21 +37,6 @@ data:
         exit 1
       fi
     {{- end }}
-
-  restore.sh: |
-    #!/bin/sh
-    
-    if [ -f /backup/backup.pgdump ]; then
-      echo "Restoring database from backup"
-      pg_restore -U {{ .Values.server.username }} -Ft -C -d {{ .Values.server.databasename }} < /backup/backup.pgdump
-      if [ $? -eq 0 ]; then
-        echo "Database restored successfully"
-      else
-        echo "Database restore failed"
-        rm -rf /var/lib/postgresql/data
-        exit 1
-      fi
-    fi
   backup: |
     #!/bin/sh
     set -e

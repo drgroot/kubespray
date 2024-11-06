@@ -51,6 +51,8 @@ spec:
         fullnameOverride: main
 
         server:
+          password:
+            secretname: postgres-credentials-main
           additionalUsers:
             - name: bitwarden
               passwordkey: bitwarden-password
