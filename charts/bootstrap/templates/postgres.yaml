@@ -50,13 +50,14 @@ spec:
       values: |-
         fullnameOverride: main
 
-        additionalUsers:
-          - name: bitwarden
-            passwordkey: bitwarden-password
-            schema: bitwarden
-          - name: gitea
-            passwordkey: gitea-password
-            schema: gitea
+        server:
+          additionalUsers:
+            - name: bitwarden
+              passwordkey: bitwarden-password
+              schema: bitwarden
+            - name: gitea
+              passwordkey: gitea-password
+              schema: gitea
 
         pushsecret:
           enabled: true
