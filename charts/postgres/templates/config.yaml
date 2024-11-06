@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "postgres.fullname" . }}-scripts
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+data:
+  init-user-db.sh: |
+    #!/bin/bash
+
+    {{- range $account := .Values.server.additionalUsers }}
+      psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -c "CREATE USER {{ $account.name }} WITH PASSWORD '"${{ $account.passwordKey }}"';"
+      psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        USE {{ .Values.server.databasename }};
+        CREATE SCHEMA {{ $account.schema }};
+        GRANT ALL ON SCHEMA {{ $account.schema }} TO {{ $account.name }};
+        GRANT ALL ON SCHEMA {{ $account.schema }} TO {{ $.Values.server.username }};
+      EOSQL
+
+      if [ $? -eq 0 ]; then
+        echo "User '{{ $account.name }}' created"
+      else
+        echo "User '{{ $account.name }}' could not be created"
+        rm -rf /var/lib/postgresql/data
+        exit 1
+      fi
+    {{- end }}
+
+  restore.sh: |
+    #!/bin/sh
+    
+    if [ -f /backup/backup.pgdump ]; then
+      echo "Restoring database from backup"
+      pg_restore -U {{ .Values.server.username }} -Ft -C -d {{ .Values.server.databasename }} < /backup/backup.pgdump
+      if [ $? -eq 0 ]; then
+        echo "Database restored successfully"
+      else
+        echo "Database restore failed"
+        rm -rf /var/lib/postgresql/data
+        exit 1
+      fi
+    fi
+  backup: |
+    #!/bin/sh
+    set -e
+    echo "Backing up database"
+    pg_dump -h $PG_HOST -U {{ .Values.server.username }} -Fc {{ .Values.server.databasename }} > /backup/backup.pgdump

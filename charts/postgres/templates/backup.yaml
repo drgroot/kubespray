@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "postgres.fullname" . }}-backup
+  labels:
+    {{- include "postgres.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule }}
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    metadata:
+      name: {{ include "postgres.fullname" . }}-backup
+      labels:
+        {{- include "postgres.labels" . | nindent 8 }}
+    spec:
+      parallelism: 1
+      template:
+        metadata:
+          name: {{ include "postgres.fullname" . }}-backup
+          labels:
+            {{- include "postgres.labels" . | nindent 12 }}
+        spec:
+          containers:
+            - name: app
+              image: {{ .Values.image }}
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.server.password.secretname }}
+                      key: {{ .Values.server.password.key }}
+              command:
+                - pg_dump
+              args:
+                - -Fc
+                - -h
+                - {{ include "postgres.fullname" . }}
+                - -U
+                - {{ .Values.server.username }}
+                - -d
+                - {{ .Values.server.databasename }}
+                - -f
+                - /backup/backup.sql
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: {{ include "postgres.fullname" . }}-backup
+          restartPolicy: Never
