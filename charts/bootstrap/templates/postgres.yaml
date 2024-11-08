@@ -62,7 +62,6 @@ spec:
               schema: gitea
 
         pushsecret:
-          enabled: true
           secretstore: kubernetes
           secretStoreKind: ClusterSecretStore
           remoteKey: main-postgres-credentials
