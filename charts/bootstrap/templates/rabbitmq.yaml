@@ -118,7 +118,7 @@ spec:
           enabled: false
 
         persistence:
-          storageClass: nfs-thorin-dynamic
+          storageClass: {{ .Values.storage.default }}
         persistentVolumeClaimRetentionPolicy:
           whenDeleted: Delete
 

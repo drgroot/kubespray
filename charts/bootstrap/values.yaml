@@ -5,6 +5,11 @@ vault:
   secretName: vault-password
   key: password
 
+storage:
+  default: thorin-dynamic
+  backup: thorin-backup
+  ssd: thorin-ssd
+
 versions:
   ingressnginx: 4.11.3
   keda: 2.15.2
@@ -14,24 +19,23 @@ versions:
   rabbitmq: 15.0.5
   redis: 20.2.1
   prometheus: 65.8.1
+  nfsprovisioner: 4.0.18
 
 domains:
   internal: k8s.private
   external: yusufali.ca
   servc: servc.io
 
-htpasswdTemplate:
-  htpasswd: |-
-    {{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD }}
-dockerconfigTemplate:
-  .dockerconfigjson: |
-    {
-      "auths": {
-        {{ print .HOST | quote }}: {
-          "auth": {{ b64enc (print .USERNAME ":" .PASSWORD ) | quote }}
-        }
-      }
-    }
-
 certmanager:
   email: ali@yusuf.email
+
+storageClasses:
+  - name: thorin-dynamic
+    hostname: 192.168.1.3
+    mountPath: /dynamic
+  - name: thorin-backup
+    hostname: 192.168.1.3
+    mountPath: /backup
+  - name: thorin-ssd
+    hostname: 192.168.1.3
+    mountPath: /ssd-raid0
