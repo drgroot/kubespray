@@ -4,3 +4,5 @@ metadata:
   name: {{ .Release.Namespace }}
   labels:
     tenant: approved
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
