@@ -135,7 +135,7 @@ spec:
 
         persistence:
           enabled: true
-          storageClass: nfs-thorin-dynamic
+          storageClass: {{ .Values.storage.default }}
         
         gitea:
           additionalConfigFromEnvs:

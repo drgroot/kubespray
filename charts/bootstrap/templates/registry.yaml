@@ -11,10 +11,8 @@ spec:
     name: registry-htpasswd
     template:
       type: Opaque
-      {{- with $.Values.htpasswdTemplate }}
       data:
-{{ toYaml . | indent 8 }}
-      {{- end }}
+        httpasswd: "{{ `{{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD }}` }}"
   data:
     - remoteRef:
         key: DOCKER_PRIVATE
@@ -35,7 +33,7 @@ spec:
   resources:
     requests:
       storage: 20Gi
-  storageClassName: nfs-thorin-dynamic
+  storageClassName: {{ .Values.storage.default }}
 ---
 apiVersion: apps/v1
 kind: Deployment

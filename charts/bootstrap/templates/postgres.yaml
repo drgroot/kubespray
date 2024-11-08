@@ -49,6 +49,11 @@ spec:
       values: |-
         fullnameOverride: main
 
+        storageclass: {{ .Values.storage.ssd }}
+
+        backup:
+          storageclass: {{ .Values.storage.backup }}
+
         server:
           password:
             secretname: postgres-credentials-main
