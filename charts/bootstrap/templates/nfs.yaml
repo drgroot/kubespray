@@ -31,7 +31,7 @@ spec:
           server: {{ $storageClass.hostname }}
           path: {{ $storageClass.mountPath }}
         storageClass:
-          name: nfs-{{ $storageClass.name }}
+          name: {{ $storageClass.name }}
           provisionerName: nfs.io/nfs-{{ $storageClass.name }}
           accessModes: ReadWriteMany
           onDelete: retain
