@@ -35,13 +35,13 @@ metadata:
   namespace: argocd
 spec:
   destination:
-    namespace: argocd
+    namespace: kube-tools
     server: https://kubernetes.default.svc
   project: bootstrap-main
   source:
     helm:
       values: |
-        dummy: true
+        project: bootstrap-main
     path: charts/bootstrap
     repoURL: https://github.com/drgroot/kubespray.git
     targetRevision: HEAD
