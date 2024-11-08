@@ -14,13 +14,13 @@ server:
   databasename: postgres
   username: postgres
 
-  additionalUsers: []
-    # - name: test
-    #   passwordkey: password
-    #   schema: test
+  additionalUsers:
+    - name: test
+      passwordkey: password-test
+      schema: test
 
 pushsecret:
-  enabled: false
+  enabled: true
   secretstore: default
   secretStoreKind: SecretStore
   remoteKey: postgres-credentials
