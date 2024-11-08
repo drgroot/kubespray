@@ -2,7 +2,6 @@ apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: postgres-credentials-main
-  namespace: {{ .Values.namespace }}
 spec:
   secretStoreRef:
     name: external-infra
@@ -38,7 +37,7 @@ spec:
     syncOptions:
       - ServerSideApply=true
   destination:
-    namespace: {{ .Values.namespace }}
+    namespace: {{ .Release.Namespace }}
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:

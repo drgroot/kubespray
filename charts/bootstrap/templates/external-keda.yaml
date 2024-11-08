@@ -13,7 +13,7 @@ spec:
     syncOptions:
       - ServerSideApply=true
   destination:
-    namespace: {{ .Values.namespace }}
+    namespace: {{ .Release.Namespace }}
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:

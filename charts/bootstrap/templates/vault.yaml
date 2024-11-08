@@ -2,7 +2,6 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: vault
-  namespace: {{ .Values.namespace }}
 spec:
   accessModes:
     - ReadWriteOnce
@@ -15,7 +14,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vault
-  namespace: {{ .Values.namespace }}
   labels:
     app: vault
 spec:
@@ -77,7 +75,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: vault
-  namespace: {{ .Values.namespace }}
   labels:
     app: vault
 spec:
@@ -93,7 +90,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: vault
-  namespace: {{ .Values.namespace }}
 spec:
   ingressClassName: nginx
   rules:
