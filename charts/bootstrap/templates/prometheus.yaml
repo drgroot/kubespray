@@ -1,35 +1,29 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: {{ .Values.prometheus.namespace }}
-  labels:
-    type: system
----
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: prometheus
-  labels:
-    {{- include "app.labels" . | nindent 4 }}
+  name: bootstrap-external-prometheus
   namespace: argocd
   finalizers:
-  - resources-finalizer.argocd.argoproj.io
+    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - ServerSideApply=true
   destination:
-    namespace: {{ .Values.prometheus.namespace }}
-    server: {{ .Values.spec.destination.server }}
-  project: {{ .Values.spec.project }}
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
   source:
     chart: kube-prometheus-stack
     repoURL: https://prometheus-community.github.io/helm-charts
-    targetRevision: {{ .Values.prometheus.version }}
+    targetRevision: {{ .Values.versions.prometheus }}
     helm:
       releaseName: prometheus
       values: |-
-        namespaceOverride: {{ .Values.prometheus.namespace }}
+        namespaceOverride: {{ .Release.Namespace }}
 
         defaultRules:
           rules:
@@ -45,10 +39,10 @@ spec:
             paths:
               - /
             hosts:
-              - grafana.k8s.private
+              - grafana.{{ .Values.domains.internal }}
             annotations:
               nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-              external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
+              external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
           persistence:
             enabled: true
             storageClassName: nfs-thorin-dynamic
@@ -61,10 +55,10 @@ spec:
             paths:
               - /
             hosts:
-              - prometheus.k8s.private
+              - prometheus.{{ .Values.domains.internal }}
             annotations:
               nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-              external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
+              external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
           
           prometheusSpec:
             retention: 20d
