@@ -1,20 +1,11 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: {{ .Values.gitea.namespace }}
-  labels:
-    type: system
-    dockerpublic: okay
----
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: gitea-email-secrets
-  namespace: {{ .Values.gitea.namespace }}
 spec:
   secretStoreRef:
-    name: {{ .Values.gitea.secretstore }}
-    kind: SecretStore
+    name: external-infra
+    kind: ClusterSecretStore
   target:
     name: gitea-email-secrets
   data:
@@ -55,52 +46,53 @@ apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: gitea-postgres-secrets
-  namespace: {{ .Values.gitea.namespace }}
 spec:
   secretStoreRef:
     name: kubernetes
-    kind: SecretStore
+    kind: ClusterSecretStore
   target:
     name: gitea-postgres-secrets
   data:
     - remoteRef:
-        key: defaultgitea-postgres-credentials
+        key: main-postgres-credentials
         property: password
       secretKey: password
     - remoteRef:
-        key: defaultgitea-postgres-credentials
+        key: main-postgres-credentials
         property: username
       secretKey: username
     - remoteRef:
-        key: defaultgitea-postgres-credentials
+        key: main-postgres-credentials
         property: schema
       secretKey: schema
     - remoteRef:
-        key: defaultgitea-postgres-credentials
+        key: main-postgres-credentials
         property: hostname
       secretKey: hostname
     - remoteRef:
-        key: defaultgitea-postgres-credentials
+        key: main-postgres-credentials
         property: database
       secretKey: database
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ include "app.fullname" . }}-gitea
-  labels:
-    {{- include "app.labels" . | nindent 4 }}
+  metadata:
+  name: bootstrap-external-gitea
   namespace: argocd
   finalizers:
-  - resources-finalizer.argocd.argoproj.io
+    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - ServerSideApply=true
   destination:
-    namespace: {{ .Values.gitea.namespace }}
-    server: {{ .Values.spec.destination.server }}
-  project: {{ .Values.spec.project }}
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
   source:
     path: .
     repoURL: https://gitea.com/gitea/helm-chart.git
@@ -108,7 +100,7 @@ spec:
     helm:
       releaseName: gitea
       values: |-
-        replicaCount: {{ .Values.gitea.replicas }}
+        replicaCount: 1
 
         strategy:
           type: Recreate
@@ -121,7 +113,7 @@ spec:
           enabled: true
           className: nginx
           hosts:
-            - host: git.yusufali.ca
+            - host: git.{{ .Values.domains.external }}
               paths:
                 - path: /
                   pathType: Prefix
@@ -130,21 +122,20 @@ spec:
             cert-manager.io/cluster-issuer: letsencrypt-prod
             nginx.ingress.kubernetes.io/ssl-redirect: "true"
             nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-            external-dns.alpha.kubernetes.io/target: "mordorhome.yusufali.ca"
+            external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
           tls:
             - hosts:
-                - "*.yusufali.ca"
+                - "*.{{ .Values.domains.external }}"
               secretName: wildcard-yusufali
         
-        resources:
-          {{- toYaml .Values.gitea.resources | nindent 10 }}
+        resources: {}
 
         deployment:
           env: []
 
         persistence:
           enabled: true
-          storageClass: {{ .Values.gitea.storageClass }}
+          storageClass: nfs-thorin-dynamic
         
         gitea:
           additionalConfigFromEnvs:
@@ -208,9 +199,9 @@ spec:
               DEFAULT_ORG_VISIBILITY: limited
 
             server:
-              DOMAIN: git.yusufali.ca
-              ROOT_URL: https://git.yusufali.ca
-              SSH_DOMAIN: gitea-ssh.{{ .Values.gitea.namespace }}.svc.cluster.local
+              DOMAIN: git.{{ .Values.domains.external }}
+              ROOT_URL: https://git.{{ .Values.domains.external }}
+              SSH_DOMAIN: gitea-ssh.{{ .Release.Namespace }}.svc.cluster.local
               MINIMUM_KEY_SIZE_CHECK: false
               SSH_PORT: 2222
               SSH_LISTEN_PORT: 2222
@@ -236,14 +227,14 @@ spec:
 
             queue:
               TYPE: redis
-              CONN_STR: redis://{{ .Values.redis.releaseName }}-headless.{{ .Values.redis.namespace }}.svc.cluster.local:6379/0
+              CONN_STR: redis://redis-headless.{{ .Release.Namespace }}.svc.cluster.local:6379/0
             session:
               PROVIDER: redis
-              PROVIDER_CONFIG: redis://{{ .Values.redis.releaseName }}-headless.{{ .Values.redis.namespace }}.svc.cluster.local:6379/0
+              PROVIDER_CONFIG: redis://redis-headless.{{ .Release.Namespace }}.svc.cluster.local:6379/0
             cache:
               ENABLED: true
               ADAPTER: redis
-              HOST: redis://{{ .Values.redis.releaseName }}-headless.{{ .Values.redis.namespace }}.svc.cluster.local:6379/0
+              HOST: redis://redis-headless.{{ .Release.Namespace }}.svc.cluster.local:6379/0
             
             ssh:
               minimum_key_sizes:
