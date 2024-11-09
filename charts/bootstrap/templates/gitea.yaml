@@ -54,23 +54,23 @@ spec:
     name: gitea-postgres-secrets
   data:
     - remoteRef:
-        key: main-postgres-credentials
+        key: main-postgres-credentials-gitea
         property: password
       secretKey: password
     - remoteRef:
-        key: main-postgres-credentials
+        key: main-postgres-credentials-gitea
         property: username
       secretKey: username
     - remoteRef:
-        key: main-postgres-credentials
+        key: main-postgres-credentials-gitea
         property: schema
       secretKey: schema
     - remoteRef:
-        key: main-postgres-credentials
+        key: main-postgres-credentials-gitea
         property: hostname
       secretKey: hostname
     - remoteRef:
-        key: main-postgres-credentials
+        key: main-postgres-credentials-gitea
         property: database
       secretKey: database
 ---
