@@ -12,7 +12,7 @@ spec:
     template:
       type: Opaque
       data:
-        httpasswd: "{{ `{{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD }}` }}"
+        htpasswd: "{{ `{{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD }}` }}"
   data:
     - remoteRef:
         key: DOCKER_PRIVATE
