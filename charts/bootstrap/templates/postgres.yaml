@@ -13,11 +13,11 @@ spec:
       remoteRef:
         key: DB_POSTGRES
         property:  PASSWORD
-    - secretKey: gitea-password
+    - secretKey: giteapassword
       remoteRef:
         key: DB_POSTGRES
         property:  PASSWORD-defaultgitea
-    - secretKey: bitwarden-password
+    - secretKey: bitwardenpassword
       remoteRef:
         key: DB_POSTGRES
         property:  PASSWORD-mordorbitwarden
@@ -59,10 +59,10 @@ spec:
             secretname: postgres-credentials-main
           additionalUsers:
             - name: bitwarden
-              passwordkey: bitwarden-password
+              passwordkey: bitwardenpassword
               schema: bitwarden
             - name: gitea
-              passwordkey: gitea-password
+              passwordkey: giteapassword
               schema: gitea
 
         pushsecret:
