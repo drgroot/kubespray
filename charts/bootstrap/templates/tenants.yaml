@@ -97,7 +97,7 @@ spec:
   source:
     repoURL: {{ $tenant.chart.url }}
     targetRevision: HEAD
-    path: {{ $tenant.chart.path }}
+    path: {{ $tenant.chart.path | default "." }}
     helm:
       releaseName: {{ $tenant.name }}
       values: |
