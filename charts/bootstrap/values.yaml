@@ -46,3 +46,8 @@ tenants:
     chart: 
       url: https://git.yusufali.ca/drgroot/mordor.git
       path: ""
+  - name: lake
+    namespace: lake
+    chart: 
+      url: https://github.com/drgroot/kubespray.git
+      path: "charts/lake"
