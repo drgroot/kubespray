@@ -39,3 +39,10 @@ storageClasses:
   - name: thorin-ssd
     hostname: 192.168.1.3
     mountPath: /ssd-raid0
+
+tenants:
+  - name: mordor
+    namespace: mordor
+    chart: 
+      url: https://git.yusufali.ca/drgroot/mordor.git
+      path: ""

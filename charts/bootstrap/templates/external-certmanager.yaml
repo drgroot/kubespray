@@ -4,8 +4,6 @@ kind: Application
 metadata:
   name: bootstrap-external-certmanager
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:
@@ -113,8 +111,6 @@ kind: Application
 metadata:
   name: bootstrap-external-externaldns
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:

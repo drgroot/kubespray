@@ -71,8 +71,6 @@ kind: Application
 metadata:
   name: bootstrap-external-rabbitmq
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:
