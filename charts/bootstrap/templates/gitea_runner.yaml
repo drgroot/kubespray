@@ -3,11 +3,10 @@ apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: gitea-runner-secrets
-  namespace: {{ .Values.gitea.namespace }}
 spec:
   secretStoreRef:
-    name: {{ .Values.gitea.secretstore }}
-    kind: SecretStore
+    name: external-infra
+    kind: ClusterSecretStore
   target:
     name: gitea-runner-secrets
   data:
@@ -20,14 +19,13 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: gitea-runner
-  namespace: {{ .Values.gitea.namespace }}
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
-  storageClassName: {{ .Values.gitea.storageClass }}
+  storageClassName: {{ .Values.storage.default }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -35,9 +33,8 @@ metadata:
   labels:
     app: gitea-runner
   name: gitea-runner
-  namespace: {{ .Values.gitea.namespace }}
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: gitea-runner
@@ -65,7 +62,7 @@ spec:
             - name: DOCKER_TLS_VERIFY
               value: "1"
             - name: GITEA_INSTANCE_URL
-              value: http://gitea-http.{{ .Values.gitea.namespace }}.svc.cluster.local:3000
+              value: http://gitea-http.{{ .Release.Namespace }}.svc.cluster.local:3000
             - name: RUNNER_TOOL_CACHE
               value: /toolcache
             - name: GITEA_RUNNER_REGISTRATION_TOKEN
