@@ -27,8 +27,6 @@ kind: Application
 metadata:
   name: main-postgres
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:

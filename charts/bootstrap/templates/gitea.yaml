@@ -80,8 +80,6 @@ metadata:
   metadata:
   name: bootstrap-external-gitea
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:
