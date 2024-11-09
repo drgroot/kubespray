@@ -38,6 +38,8 @@ metadata:
   name: {{ $tenant.namespace }}
   labels:
     tenant: approved
+    client: t
+    name: {{ $tenant.name }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
@@ -102,7 +104,15 @@ spec:
       releaseName: {{ $tenant.name }}
       values: |
         namespace: {{ $tenant.namespace }}
-        argoproject: tenant-{{ $tenant.name }}
-        spec:
-          project: tenant-{{ $tenant.name }}
+        project: tenant-{{ $tenant.name }}
+
+        {{- with $.Values.storage }}
+        storage:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+
+        {{- with $.Values.domains }}
+        domains:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
 {{- end }}

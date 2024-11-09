@@ -1,50 +1,6 @@
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: gitea-email-secrets
-spec:
-  secretStoreRef:
-    name: external-infra
-    kind: ClusterSecretStore
-  target:
-    name: gitea-email-secrets
-  data:
-    - remoteRef:
-        key: SMTP
-        property: SMTP_HOST
-      secretKey: SMTP_HOST
-    - remoteRef:
-        key: SMTP
-        property: SMTP_PASSWORD
-      secretKey: SMTP_PASSWORD
-    - remoteRef:
-        key: SMTP
-        property: SMTP_PORT
-      secretKey: SMTP_PORT
-    - remoteRef:
-        key: SMTP
-        property: SMTP_SECURITY
-      secretKey: SMTP_SECURITY
-    - remoteRef:
-        key: SMTP
-        property: SMTP_USERNAME
-      secretKey: SMTP_USERNAME
-    - remoteRef:
-        key: SMTP
-        property: SMTP_FROM_DOMAIN
-      secretKey: SMTP_FROM_DOMAIN
-    - remoteRef:
-        key: SMTP
-        property: SMTP_FROM_EMAIL
-      secretKey: SMTP_FROM_EMAIL
-    - remoteRef:
-        key: SMTP
-        property: SMTP_FROM_USER
-      secretKey: SMTP_FROM_USER
----
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
   name: gitea-postgres-secrets
 spec:
   secretStoreRef:
@@ -168,27 +124,27 @@ spec:
             - name: GITEA__MAILER__SMTP_ADDR
               valueFrom:
                 secretKeyRef:
-                  name: gitea-email-secrets
+                  name: cluster-smtp-secrets
                   key: SMTP_HOST
             - name: GITEA__MAILER__SMTP_PORT
               valueFrom:
                 secretKeyRef:
-                  name: gitea-email-secrets
+                  name: cluster-smtp-secrets
                   key: SMTP_PORT
             - name: GITEA__MAILER__USER
               valueFrom:
                 secretKeyRef:
-                  name: gitea-email-secrets
+                  name: cluster-smtp-secrets
                   key: SMTP_USERNAME
             - name: GITEA__MAILER__PASSWD
               valueFrom:
                 secretKeyRef:
-                  name: gitea-email-secrets
+                  name: cluster-smtp-secrets
                   key: SMTP_PASSWORD
             - name: GITEA__MAILER__FROM
               valueFrom:
                 secretKeyRef:
-                  name: gitea-email-secrets
+                  name: cluster-smtp-secrets
                   key: SMTP_FROM_EMAIL
 
           config:
