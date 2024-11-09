@@ -1,0 +1,59 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: s3
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: seaweedfs
+    repoURL: https://seaweedfs.github.io/seaweedfs/helm
+    targetRevision: 4.0.379
+    helm:
+      releaseName: s3
+      values: |-
+        global:
+          createClusterRole: false
+          automountServiceAccountToken: false
+
+        master:
+          replicas: 3
+
+          logs:
+            type: emptyDir
+
+          data:
+            type: "persistentVolumeClaim"
+            size: "5Gi"
+            storageClass: "{{ .Values.storageClass.name }}"
+
+        volume:
+          resizeHook:
+            enabled: false
+
+          dataDirs:
+            - name: data
+              type: "persistentVolumeClaim"
+              size: "5Gi"
+              storageClass: "{{ .Values.storageClass.name }}"
+        
+        filer:
+          s3:
+            enabled: true
+            domainName: {{ .Values.domains.external }}
+
+          logs:
+            type: emptyDir
+
+          data:
+            type: "persistentVolumeClaim"
+            size: "5Gi"
+            storageClass: "{{ .Values.storageClass.name }}"
