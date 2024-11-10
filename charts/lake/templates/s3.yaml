@@ -116,8 +116,16 @@ metadata:
     nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
     nginx.ingress.kubernetes.io/client_max_body_size: 512m
     nginx.ingress.kubernetes.io/proxy-body-size: 512m
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
   name: s3
 spec:
+  tls:
+    - hosts:
+      - '*.{{ .Values.domains.external }}'
+      - '*.s3.{{ .Values.domains.external }}'
+      secretName: wildcard-external
   ingressClassName: nginx
   rules:
     - host: "*.s3.{{ .Values.domains.external }}"
