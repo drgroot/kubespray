@@ -16,7 +16,7 @@ spec:
   source:
     chart: seaweedfs
     repoURL: https://seaweedfs.github.io/seaweedfs/helm
-    targetRevision: 4.0.379
+    targetRevision: {{ .Values.versions.seaweedfs }}
     helm:
       releaseName: s3
       values: |-
