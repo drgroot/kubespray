@@ -49,7 +49,6 @@ spec:
                   name: catalog-postgres-credentials
                   key: hostname
             - name: CATALOG_URI
-            - name: POSTGRES_DATABASE
               value: jdbc:postgresql://$(POSTGRES_HOSTNAME)/$(POSTGRES_DATABASE)
 ---
 apiVersion: v1
