@@ -53,7 +53,7 @@ spec:
 
           s3:
             enabled: true
-            domainName: s3.{{ .Values.domains.external }}
+            domainName: s3.{{ .Values.domains.internal }}
             port: 8333
             allowEmptyFolder: true
 
@@ -69,18 +69,15 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
     nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
     nginx.ingress.kubernetes.io/client_max_body_size: 512m
     nginx.ingress.kubernetes.io/proxy-body-size: 512m
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
   name: s3
 spec:
   ingressClassName: nginx
   rules:
-    - host: "*.s3.{{ .Values.domains.external }}"
+    - host: "*.s3.{{ .Values.domains.internal }}"
       http:
         paths:
           - backend:
@@ -90,7 +87,7 @@ spec:
                   number: 8333
             path: /
             pathType: Prefix
-    - host: s3.{{ .Values.domains.external }}
+    - host: s3.{{ .Values.domains.internal }}
       http:
         paths:
           - backend:
@@ -100,8 +97,3 @@ spec:
                   number: 8333
             path: /
             pathType: Prefix
-  tls:
-    - hosts:
-        - '*.{{ .Values.domains.external }}'
-        - '*.s3.{{ .Values.domains.external }}'
-      secretName: wildcard-tls
