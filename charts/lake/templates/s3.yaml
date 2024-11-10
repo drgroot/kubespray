@@ -53,7 +53,7 @@ spec:
 
           s3:
             enabled: true
-            domainName: {{ .Values.domains.external }}
+            domainName: s3.{{ .Values.domains.external }}
             port: 8333
             allowEmptyFolder: true
 
