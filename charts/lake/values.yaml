@@ -10,6 +10,11 @@ storageClass:
   hostname: 192.168.1.3
   mountPath: /lake
 
+storage:
+  default: default
+  backup: default
+  ssd: default
+
 domains:
   internal: example.com
   external: example.com
