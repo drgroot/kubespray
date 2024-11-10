@@ -14,10 +14,10 @@ server:
   databasename: postgres
   username: postgres
 
-  additionalUsers:
-    - name: test
-      passwordkey: password-test
-      schema: test
+  additionalUsers: []
+    # - name: test
+    #   passwordkey: password-test
+    #   schema: test
 
 pushsecret:
   enabled: true
