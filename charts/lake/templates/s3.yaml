@@ -80,6 +80,14 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
+    - host: "*.s3.{{ .Values.domains.external }}"
+      http:
+        paths:
+        - backend:
+            service:
+              name: seaweedfs-s3
+              port:
+                number: 8333
     - host: s3.{{ .Values.domains.external }}
       http:
         paths:
@@ -92,5 +100,6 @@ spec:
           pathType: Prefix
   tls:
     - hosts:
-      - '*.yusufali.ca'
+        - '*.{{ .Values.domains.external }}'
+        - '*.s3.{{ .Values.domains.external }}'
       secretName: wildcard-tls
