@@ -43,3 +43,6 @@ jobs:
 
       - name: Lint Chart
         run: helm lint charts/${{ matrix.chart }}
+
+      - name: Template Chart
+        run: helm template charts/${{ matrix.chart }}
