@@ -83,21 +83,23 @@ spec:
     - host: "*.s3.{{ .Values.domains.external }}"
       http:
         paths:
-        - backend:
-            service:
-              name: seaweedfs-s3
-              port:
-                number: 8333
+          - backend:
+              service:
+                name: seaweedfs-s3
+                port:
+                  number: 8333
+            path: /
+            pathType: Prefix
     - host: s3.{{ .Values.domains.external }}
       http:
         paths:
-        - backend:
-            service:
-              name: seaweedfs-s3
-              port:
-                number: 8333
-          path: /
-          pathType: Prefix
+          - backend:
+              service:
+                name: seaweedfs-s3
+                port:
+                  number: 8333
+            path: /
+            pathType: Prefix
   tls:
     - hosts:
         - '*.{{ .Values.domains.external }}'
