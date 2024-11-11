@@ -4,6 +4,7 @@ metadata:
   name: spark-defaults
 stringData:
   sparkdefaults: |
+    spark.master spark://spark-master-svc.{{ .Release.Namespace }}:7077
     spark.jars.packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.7.0,org.apache.iceberg:iceberg-aws-bundle:1.7.0,io.delta:delta-spark_2.12:3.2.0
     spark.sql.extensions org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,io.delta.sql.DeltaSparkSessionExtension
     spark.sql.catalog.spark_catalog org.apache.iceberg.spark.SparkSessionCatalog
