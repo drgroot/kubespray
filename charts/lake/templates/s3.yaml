@@ -11,6 +11,8 @@ spec:
     name: s3-root-credential
     template:
       data:
+        accesskey: "{{ `{{ .accesskey }}` }}"
+        secretkey: "{{ `{{ .secretkey }}` }}"
         seaweedfs_s3_config: |
           {
             "identities": [
