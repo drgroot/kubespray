@@ -115,13 +115,3 @@ spec:
                   number: 8888
             path: /
             pathType: Prefix
-    - host: jupyter-spark.{{ .Values.domains.external }}
-      http:
-        paths:
-          - backend:
-              service:
-                name: jupyter
-                port:
-                  number: 4040
-            path: /
-            pathType: Prefix
