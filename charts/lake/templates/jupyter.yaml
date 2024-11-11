@@ -1,0 +1,115 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jupyter
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: {{ .Values.storage.default }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyter
+  template:
+    metadata:
+      labels:
+        app: jupyter
+    spec:
+      volumes:
+        - name: home
+          persistentVolumeClaim:
+            claimName: jupyter
+        - name: spark-defaults
+          secret:
+            secretName: spark-defaults
+      containers:
+        - name: app
+          image: quay.io/jupyter/all-spark-notebook:spark-{{ .Values.versions.spark }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8888
+            - containerPort: 4040
+          env: 
+            - name: AWS_REGION
+              value: us-east-1
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-root-credential
+                  key: accesskey
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-root-credential
+                  key: secretkey
+          volumeMounts:
+            - name: home
+              mountPath: /home/jovyan
+            - name: spark-defaults
+              mountPath: /usr/local/spark/conf/spark-defaults.conf
+              subPath: sparkdefaults
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyter
+spec:
+   type: ClusterIP
+   selector:
+      app: jupyter
+   ports:
+      - port: 8888
+        targetPort: 8888
+      - port: 4040
+        targetPort: 4040
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: juptyer
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
+    nginx.ingress.kubernetes.io/client_max_body_size: 512m
+    nginx.ingress.kubernetes.io/proxy-body-size: 512m
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+    - hosts:
+      - '*.{{ .Values.domains.external }}'
+      - '*.s3.{{ .Values.domains.external }}'
+      secretName: wildcard-external
+  ingressClassName: nginx
+  rules:
+    - host: jupyter.{{ .Values.domains.external }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: jupyter
+                port:
+                  number: 8888
+            path: /
+            pathType: Prefix
+    - host: jupyter-spark.{{ .Values.domains.external }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: jupyter
+                port:
+                  number: 4040
+            path: /
+            pathType: Prefix
