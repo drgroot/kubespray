@@ -39,7 +39,9 @@ spec:
           ports:
             - containerPort: 8888
             - containerPort: 4040
-          env: 
+          env:
+            - name: JUPYTER_PORT
+              value: "8888"
             - name: CHOWN_HOME
               value: "yes"
             - name: CHOWN_HOME_OPTS
