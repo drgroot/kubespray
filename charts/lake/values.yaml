@@ -4,6 +4,8 @@ project: myproject
 versions:
   nfsprovisioner: 4.0.18
   seaweedfs: 4.0.379
+  sparkchart: 9.2.14
+  spark: 3.5.0
 
 storageClass:
   name: lake
