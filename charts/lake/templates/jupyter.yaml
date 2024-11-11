@@ -40,6 +40,10 @@ spec:
             - containerPort: 8888
             - containerPort: 4040
           env: 
+            - name: CHOWN_HOME
+              value: "yes"
+            - name: CHOWN_HOME_OPTS
+              value: "-R"
             - name: AWS_REGION
               value: us-east-1
             - name: AWS_ACCESS_KEY_ID
@@ -54,7 +58,11 @@ spec:
                   key: secretkey
           volumeMounts:
             - name: home
-              mountPath: /home/jovyan
+              mountPath: /home/jovyan/work
+              subPath: work
+            - name: home
+              mountPath: /home/jovyan/.jupyter
+              subPath: dotjupyter
             - name: spark-defaults
               mountPath: /usr/local/spark/conf/spark-defaults.conf
               subPath: sparkdefaults
