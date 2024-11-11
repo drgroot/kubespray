@@ -68,9 +68,11 @@ spec:
    selector:
       app: jupyter
    ports:
-      - port: 8888
+      - name: web
+        port: 8888
         targetPort: 8888
-      - port: 4040
+      - name: spark
+        port: 4040
         targetPort: 4040
 ---
 apiVersion: networking.k8s.io/v1
