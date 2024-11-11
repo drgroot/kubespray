@@ -20,6 +20,20 @@ spec:
             - containerPort: 8181
               protocol: TCP
           env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-root-credential
+                  key: accesskey
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-root-credential
+                  key: secretkey
+            - name: AWS_SECRET_ACCESS_KEY
+              value: password
+            - name: AWS_REGION
+              value: us-east-1
             - name: CATALOG_WAREHOUSE
               value: s3://{{ .Values.storageClass.warehouse }}
             - name: CATALOG_IO__IMPL
