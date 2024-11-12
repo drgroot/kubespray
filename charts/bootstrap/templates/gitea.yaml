@@ -182,14 +182,19 @@ spec:
             queue:
               TYPE: redis
               CONN_STR: redis://redis-headless.{{ .Release.Namespace }}.svc.cluster.local:6379/0
+
             session:
               PROVIDER: redis
               PROVIDER_CONFIG: redis://redis-headless.{{ .Release.Namespace }}.svc.cluster.local:6379/0
+
             cache:
               ENABLED: true
               ADAPTER: redis
               HOST: redis://redis-headless.{{ .Release.Namespace }}.svc.cluster.local:6379/0
-            
+
+            actions:
+              ENABLED: true
+
             ssh:
               minimum_key_sizes:
                 RSA: 2048
