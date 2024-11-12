@@ -50,7 +50,7 @@ spec:
   source:
     path: .
     repoURL: https://gitea.com/gitea/helm-chart.git
-    targetRevision: HEAD
+    targetRevision: v10.5.0
     helm:
       releaseName: gitea
       values: |-
