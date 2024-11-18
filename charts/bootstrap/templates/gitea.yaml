@@ -219,6 +219,18 @@ spec:
           statefulset:
             resources: {}
 
+            actRunner:
+              config: |
+                log:
+                  level: debug
+                cache:
+                  enabled: false
+                runner:
+                  labels:
+                    - "ubuntu-latest:docker://catthehacker/ubuntu:full-latest"
+                    - "ubuntu-22.04:docker://catthehacker/ubuntu:ubuntu-22.04"
+                    - "ubuntu-20.04:docker://catthehacker/ubuntu:ubuntu-20.04"
+
           existingSecret: gitea-runner-secrets
           existingSecretKey: token
         
