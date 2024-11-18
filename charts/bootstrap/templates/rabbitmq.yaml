@@ -14,8 +14,8 @@ spec:
     data:
       password: "{{ `{{ .password }}` }}"
       username: user
-      hostname: rabbitmq-headless.{{ .Values.middleware.namespace }}.svc.cluster.local
-      url: "amqp://user:{{ `{{ .password }}` }}@rabbitmq-headless.{{ .Values.middleware.namespace }}.svc.cluster.local"
+      hostname: rabbitmq-middleware-headless.{{ .Values.middleware.namespace }}.svc.cluster.local
+      url: "amqp://user:{{ `{{ .password }}` }}@rabbitmq-middleware-headless.{{ .Values.middleware.namespace }}.svc.cluster.local"
   data:
     - match:
         secretKey: password
@@ -89,9 +89,9 @@ spec:
     repoURL: https://charts.bitnami.com/bitnami
     targetRevision: {{ .Values.versions.rabbitmq }}
     helm:
-      releaseName: rabbitmq
+      releaseName: rabbitmq-middleware
       values: |-
-        fullnameOverride: rabbitmq
+        fullnameOverride: rabbitmq-middleware
         replicaCount: 1
 
         image:
