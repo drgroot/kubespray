@@ -217,7 +217,13 @@ spec:
           enabled: true
 
           statefulset:
-            resources: {}
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "256m"
+              limits:
+                memory: "4.5Gi"
+                cpu: "4"
 
             actRunner:
               config: |
@@ -242,3 +248,22 @@ spec:
         
         postgresql:
           enabled: false
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gitea-runner
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: gitea-act-runner
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
