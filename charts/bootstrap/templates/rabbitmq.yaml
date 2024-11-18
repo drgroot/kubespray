@@ -2,6 +2,7 @@ apiVersion: external-secrets.io/v1alpha1
 kind: PushSecret
 metadata:
   name: rabbitmq-credentials
+  namespace: {{ .Values.middleware.namespace }}
 spec:
   secretStoreRefs:
     - name: kubernetes
@@ -13,8 +14,8 @@ spec:
     data:
       password: "{{ `{{ .password }}` }}"
       username: user
-      hostname: rabbitmq-headless.{{ .Release.Namespace }}.svc.cluster.local
-      url: "amqp://user:{{ `{{ .password }}` }}@rabbitmq-headless.{{ .Release.Namespace }}.svc.cluster.local"
+      hostname: rabbitmq-headless.{{ .Values.middleware.namespace }}.svc.cluster.local
+      url: "amqp://user:{{ `{{ .password }}` }}@rabbitmq-headless.{{ .Values.middleware.namespace }}.svc.cluster.local"
   data:
     - match:
         secretKey: password
@@ -46,6 +47,7 @@ apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: rabbitmq-credentials
+  namespace: {{ .Values.middleware.namespace }}
 spec:
   secretStoreRef:
     name: external-infra
@@ -79,7 +81,7 @@ spec:
     syncOptions:
       - ServerSideApply=true
   destination:
-    namespace: {{ .Release.Namespace }}
+    namespace: {{ .Values.middleware.namespace }}
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:

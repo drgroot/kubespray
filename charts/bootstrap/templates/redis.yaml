@@ -2,6 +2,7 @@ apiVersion: external-secrets.io/v1alpha1
 kind: PushSecret
 metadata:
   name: redis-credentials
+  namespace: {{ .Values.middleware.namespace }}
 spec:
   secretStoreRefs:
     - name: kubernetes
@@ -11,8 +12,8 @@ spec:
       name: rabbitmq-credentials
   template:
     data:
-      hostname: redis-headless.{{ .Release.Namespace }}.svc.cluster.local
-      url: "redis://redis-headless.{{ .Release.Namespace }}.svc.cluster.local:6379"
+      hostname: redis-headless.{{ .Values.middleware.namespace }}.svc.cluster.local
+      url: "redis://redis-headless.{{ .Values.middleware.namespace }}.svc.cluster.local:6379"
   data:
     - match:
         secretKey: hostname
@@ -43,7 +44,7 @@ spec:
     syncOptions:
       - ServerSideApply=true
   destination:
-    namespace: {{ .Release.Namespace }}
+    namespace: {{ .Values.middleware.namespace }}
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
