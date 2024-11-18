@@ -20,6 +20,7 @@ versions:
   redis: 20.2.1
   prometheus: 65.8.1
   nfsprovisioner: 4.0.18
+  gitea: v10.6.0
 
 domains:
   internal: k8s.private
