@@ -1,3 +1,20 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gitea-runner-secrets
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: gitea-runner-secrets
+  data:
+    - remoteRef:
+        key: GIT
+        property: GITEA_RUNNER_TOKEN
+      secretKey: token
+---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
@@ -50,7 +67,7 @@ spec:
   source:
     path: .
     repoURL: https://gitea.com/gitea/helm-chart.git
-    targetRevision: v10.5.0
+    targetRevision: {{ .Values.versions.gitea }}
     helm:
       releaseName: gitea
       values: |-
@@ -192,12 +209,18 @@ spec:
               ADAPTER: redis
               HOST: redis://redis-headless.{{ .Release.Namespace }}.svc.cluster.local:6379/0
 
-            actions:
-              ENABLED: true
-
             ssh:
               minimum_key_sizes:
                 RSA: 2048
+
+        actions:
+          enabled: true
+
+          statefulset:
+            resources: {}
+
+          existingSecret: gitea-runner-secrets
+          existingSecretKey: token
         
         redis-cluster:
           enabled: false
