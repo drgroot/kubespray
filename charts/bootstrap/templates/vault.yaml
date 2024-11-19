@@ -54,9 +54,9 @@ spec:
           readinessProbe:
             exec:
               command:
-                - /bin/sh
-                - -ec
-                - vault status -tls-skip-verify
+                - vault
+                - status
+                - -tls-skip-verify
           lifecycle:
             postStart:
               exec:
