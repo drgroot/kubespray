@@ -1,0 +1,208 @@
+{{- range $componentType, $components := .Values.components }}
+{{- range $component, $config := $components.list }}
+{{ $config := mustMergeOverwrite (deepCopy $.Values.globals) (deepCopy $components.globals) $config }}
+{{- if eq ($config.type | default "deployment") "deployment" }}
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}
+  labels:
+    {{- include "servc.labels" $ | nindent 4 }}
+    {{- with $config.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    type: deployment
+    component: {{ $componentType }}
+    {{ $componentType }}: {{ $component }}
+spec:
+  {{- if or (and ($config.keda).enabled (eq ($config.keda).type "object")) ($config.autoscaling).enabled }}
+  {{- else }}
+  replicas: {{ $config.replicas | default 1 }}
+  {{- end }}
+  {{- with $config.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      type: deployment
+      component: {{ $componentType }}
+      {{ $componentType }}: {{ $component }}
+  template:
+    metadata:
+      labels:
+        type: deployment
+        component: {{ $componentType }}
+        {{ $componentType }}: {{ $component }}
+    spec:
+      {{- with $config.dns }}
+        {{- toYaml .  | nindent 6 }}
+      {{- end }}
+      {{- with $config.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .  | nindent 8 }}
+      {{- end }}
+      {{- with $config.affinity }}
+      affinity:
+        {{- toYaml .  | nindent 8 }}
+      {{- end }}
+      {{- with $config.tolerations }}
+      tolerations:
+        {{- toYaml .  | nindent 8 }}
+      {{- end }}
+      {{- with $config.podSecurityContext }}
+      securityContext:
+        {{- toYaml .  | nindent 8 }}
+      {{- end }}
+      {{- if or (((($config.storage).config).backup).enabled) (len $config.initContainers) }}
+      initContainers:
+        {{- if ((($config.storage).config).backup).enabled }}
+        - name: restore
+          resources:
+            requests:
+              cpu: 50m
+              memory: 50Mi
+            limits:
+              cpu: 50m
+              memory: 50Mi
+          {{- with $config.storage.config.backup.securityContext }}
+          securityContext:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          image: {{ ((($config.storage).config).backup).restoreImage | default "registry.yusufali.ca/containers/backup-pvc" }}
+          {{- with $config.imagePullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
+          {{- with ((($config.storage).config).backup).env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: backup
+              mountPath: /backup
+              readOnly: true
+            - name: config
+              mountPath: {{ (($config.storage).config).mountPath | default "/config" }}
+        {{- end }}
+        {{- with $config.initContainers }}
+          {{- toYaml .  | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: app
+          image: {{ ($config.image).name }}:{{ ($config.image).prefix | default "" }}{{ ($config.image).tag | default "latest" }}{{ ($config.image).suffix | default "" }}
+          {{- with $config.imagePullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
+          {{- with $config.securityContext }}
+          securityContext:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          {{- with $config.probes }}
+            {{- toYaml .  | nindent 10 }}
+          {{- end }}
+          {{- with $config.command }}
+          command:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          {{- with $config.args }}
+          args:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          {{- with $config.envFrom }}
+          envFrom:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          {{- with $config.env }}
+          env:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          {{- with $config.resources }}
+          resources:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          {{- with $config.ports }}
+          ports:
+            {{- range $port := . }}
+            - containerPort: {{ $port.port }}
+              protocol: {{ $port.protocol | default "TCP" }}
+              name: {{ $port.name | default (print ($port.protocol | default "TCP") "-" $port.port) | lower }}
+            {{- end }}
+          {{- end }}
+          {{- if or ($config.volumeMounts) ($config.storage) ((($config.storage).config).enabled) }}
+          volumeMounts:
+            {{- range $volume, $volumeConfig := $config.storage }}
+            {{- if $volumeConfig.enabled }}
+            - name: {{ $volume }}
+              mountPath: {{ $volumeConfig.mountPath | default (print "/" $volume) }}
+              {{- with $volumeConfig.subPath }}
+              subPath: {{ . }}
+              {{- end }}
+              {{- with $volumeConfig.readOnly }}
+              readOnly: {{ . }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- with $config.volumeMounts }}
+              {{- toYaml .  | nindent 12 }}
+            {{- end }}
+          {{- end }}
+        {{- if ((($config.storage).config).backup).enabled }}
+        - name: backup
+          {{- with $config.storage.config.backup.securityContext }}
+          securityContext:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          image: {{ ((($config.storage).config).backup).restoreImage | default "registry.yusufali.ca/containers/backup-pvc" }}
+          {{- with $config.imagePullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
+          env:
+            - name: SERVER
+              value: "enable"
+            - name: PORT
+              value: "{{ ((($config.storage).config).backup).port | default 19999 }}"
+          {{- with ((($config.storage).config).backup).env }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: backuptcp
+              containerPort: {{ ((($config.storage).config).backup).port | default 19999 }}
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              readOnly: true
+              mountPath: {{ (($config.storage).config).mountPath | default "/config" }}
+        {{- end }}
+        {{- with $config.sideCars }}
+          {{- toYaml .  | nindent 8 }}
+        {{- end }}
+      volumes:
+        {{- range $volume, $volumeConfig := $config.storage }}
+        {{- if and $volumeConfig.enabled (ne $volume "config") }}
+        - name: {{ $volume }}
+          persistentVolumeClaim:
+            claimName: {{ include "servc.fullname" $ }}-{{ $volume }}
+        {{- end }}
+        {{- end }}
+        {{- if and (not ((($config.storage).config).backup).enabled ) (($config.storage).config).enabled }}
+        - name: config
+          persistentVolumeClaim:
+            claimName: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-config
+        {{- end }}
+        {{- if ((($config.storage).config).backup).enabled }}
+        - name: backup
+          persistentVolumeClaim:
+            claimName: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-backup-pvc
+        - name: config
+          emptyDir:
+            sizeLimit: {{ (($config.storage).config).size | default "5Gi" }}
+        {{- end }}
+        {{- with $config.volumes }}
+          {{- toYaml .  | nindent 8 }}
+        {{- end }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

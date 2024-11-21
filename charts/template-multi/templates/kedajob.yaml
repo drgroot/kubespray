@@ -1,0 +1,150 @@
+{{- range $componentType, $components := .Values.components }}
+{{- range $component, $config := $components.list }}
+{{ $config := mustMergeOverwrite (deepCopy $.Values.globals) (deepCopy $components.globals) $config }}
+{{- if eq ($config.type | default "deployment") "kedajob" }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-rabbitmq-auth
+spec:
+  secretTargetRef:
+    - parameter: host
+      name: {{ ($config.keda).rabbitmqSecretName }}
+      key: {{ ($config.keda).secretKey | default "BUS_URL" }}
+---
+kind: ScaledJob
+apiVersion: keda.sh/v1alpha1
+metadata:
+  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}
+  labels:
+    {{- include "servc.labels" $ | nindent 4 }}
+    {{- with $config.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    type: kedajob
+    component: {{ $componentType }}
+    {{ $componentType }}: {{ $component }}
+spec:
+  jobTargetRef:
+    parallelism: 1
+    completions: 1
+    backoffLimit: 6
+    template:
+      spec:
+        restartPolicy: {{ $config.restartPolicy | default "Never" }}
+        {{- with $config.imagePullSecrets }}
+        imagePullSecrets:
+          {{- toYaml .  | nindent 10 }}
+        {{- end }}
+        {{- with $config.affinity }}
+        affinity:
+          {{- toYaml .  | nindent 10 }}
+        {{- end }}
+        {{- with $config.tolerations }}
+        tolerations:
+          {{- toYaml .  | nindent 10 }}
+        {{- end }}
+        {{- with $config.podSecurityContext }}
+        securityContext:
+          {{- toYaml .  | nindent 10 }}
+        {{- end }}
+        {{- with $config.initContainers }}
+        initContainers:
+          {{- toYaml .  | nindent 10 }}
+        {{- end }}
+        containers:
+          - name: app
+            image: {{ ($config.image).name }}:{{ ($config.image).prefix | default "" }}{{ ($config.image).tag | default "latest" }}{{ ($config.image).suffix | default "" }}
+            {{- with $config.imagePullPolicy }}
+            imagePullPolicy: {{ . }}
+            {{- end }}
+            {{- with $config.securityContext }}
+            securityContext:
+              {{- toYaml .  | nindent 14 }}
+            {{- end }}
+            {{- with $config.probes }}
+              {{- toYaml .  | nindent 12 }}
+            {{- end }}
+            {{- with $config.command }}
+            command:
+              {{- toYaml .  | nindent 14 }}
+            {{- end }}
+            {{- with $config.args }}
+            args:
+              {{- toYaml .  | nindent 14 }}
+            {{- end }}
+            {{- with $config.env }}
+            env:
+              {{- toYaml .  | nindent 14 }}
+            {{- end }}
+            {{- with $config.resources }}
+            resources:
+              {{- toYaml .  | nindent 14 }}
+            {{- end }}
+            {{- if or ($config.volumeMounts) ($config.storage) }}
+            volumeMounts:
+              {{- range $volume, $volumeConfig := $config.storage }}
+              {{- if $volumeConfig.enabled }}
+              - name: {{ $volume }}
+                mountPath: {{ $volumeConfig.mountPath | default (print "/" $volume) }}
+                {{- with $volumeConfig.subPath }}
+                subPath: {{ . }}
+                {{- end }}
+                {{- with $volumeConfig.readOnly }}
+                readOnly: {{ . }}
+                {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- with $config.volumeMounts }}
+                {{- toYaml .  | nindent 14 }}
+              {{- end }}
+            {{- end }}
+          {{- with $config.sideCars }}
+            {{- toYaml .  | nindent 10 }}
+          {{- end }}
+        {{- if or $config.volumes $config.storage }}
+        volumes:
+          {{- range $volume, $volumeConfig := $config.storage }}
+          {{- if and $volumeConfig.enabled (ne $volume "config") }}
+          - name: {{ $volume }}
+            persistentVolumeClaim:
+              claimName: {{ include "servc.fullname" $ }}-{{ $volume }}
+          {{- end }}
+          {{- end }}
+          {{- with $config.volumes }}
+            {{- toYaml .  | nindent 10 }}
+          {{- end }}
+        {{- end }}
+  successfulJobsHistoryLimit: {{ $config.history | default 0 }}
+  failedJobsHistoryLimit: {{ $config.historyFailed | default 1 }}
+  {{- with ($config.keda).minReplicaCount }}
+  minReplicaCount: {{ . }}
+  {{- end }}
+  {{- with ($config.keda).maxReplicaCount }}
+  maxReplicaCount: {{ . }}
+  {{- end }}
+  {{- with ($config.keda).rollout }}
+  rollout: 
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with ($config.keda).scalingStrategy }}
+  scalingStrategy: 
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  triggers:
+    - type: rabbitmq
+      metadata:
+        protocol: amqp
+        mode: {{ ($config.keda).mode | default "QueueLength" }}
+        value: {{ quote ($config.keda).value }}
+        {{- with ($config.keda).activationValue }}
+        activationValue: {{ . }}
+        {{- end }}
+        queueName: {{ ($config.keda).queueName }}
+      authenticationRef:
+        name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-rabbitmq-auth
+---
+{{- end }}
+{{- end }}
+{{- end }}
