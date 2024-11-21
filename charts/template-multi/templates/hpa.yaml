@@ -1,0 +1,50 @@
+{{- range $componentType, $components := .Values.components }}
+{{- range $component, $config := $components.list }}
+{{ $config := mustMergeOverwrite (deepCopy $.Values.globals) (deepCopy $components.globals) $config }}
+{{- if eq ($config.type | default "deployment") "deployment" }}
+{{- if ($config.autoscaling).enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-hpa
+  labels:
+    {{- include "servc.labels" $ | nindent 4 }}
+    {{- with $config.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    type: hpa
+    component: {{ $componentType }}
+    {{ $componentType }}: {{ $component }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}
+  minReplicas: {{ $config.autoscaling.minReplicas | default $config.replicas | default 1 }}
+  maxReplicas: {{ $config.autoscaling.maxReplicas }}
+  metrics:
+  {{- if $config.autoscaling.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ $config.autoscaling.targetCPUUtilizationPercentage }}
+  {{- end }}
+  {{- if $config.autoscaling.targetMemoryUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ $config.autoscaling.targetMemoryUtilizationPercentage }}
+  {{- end }}
+  {{- with $config.autoscaling.metrics }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+---
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

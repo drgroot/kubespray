@@ -54,14 +54,19 @@ spec:
   sourceRepos:
     - "*"
   destinations:
+  {{- if not ($tenant.basic) }}
     - namespace: argocd
       server: https://kubernetes.default.svc
+  {{- end }}
     - namespace: {{ $tenant.namespace }}
       server: https://kubernetes.default.svc
   syncWindows:
     - schedule: "0 */4 * * *"
       duration: 1h
       namespaces:
+      {{- if not ($tenant.basic) }}
+        - argocd
+      {{- end }}
         - {{ $tenant.namespace }}
       applications:
         - "*"
@@ -96,23 +101,35 @@ spec:
     namespace: {{ $tenant.namespace }}
     server: https://kubernetes.default.svc
   project: tenant-{{ $tenant.name }}
-  source:
-    repoURL: {{ $tenant.chart.url }}
-    targetRevision: HEAD
-    path: {{ $tenant.chart.path | default "." }}
-    helm:
-      releaseName: {{ $tenant.name }}
-      values: |
-        namespace: {{ $tenant.namespace }}
-        project: tenant-{{ $tenant.name }}
+  sources:
+  {{- range $chart := $tenant.sources }}
+    - repoURL: {{ $chart.url }}
+      targetRevision: HEAD
+      path: {{ $chart.path | default "." }}
+      helm:
+        releaseName: {{ $tenant.name }}{{ $chart.name | default "" }}
+      {{- if $chart.valuesFile }}
+        valueFiles:
+          - $values/{{ $chart.valuesFile }} }}
+      {{- else }}
+        values: |
+          namespace: {{ $tenant.namespace }}
+          project: tenant-{{ $tenant.name }}
 
-        {{- with $.Values.storage }}
-        storage:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}
+          {{- with $.Values.storage }}
+          storage:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
-        {{- with $.Values.domains }}
-        domains:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}
+          {{- with $.Values.domains }}
+          domains:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- end }}
+    {{- if $chart.valuesRepo }}
+    - repoURL: {{ $chart.valuesRepo }}
+      targetRevision: HEAD
+      ref: values  
+    {{- end }}
+  {{- end }}
 {{- end }}
