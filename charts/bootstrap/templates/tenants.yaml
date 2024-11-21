@@ -110,7 +110,7 @@ spec:
         releaseName: {{ $tenant.name }}{{ $chart.name | default "" }}
       {{- if $chart.valuesFile }}
         valueFiles:
-          - $values/{{ $chart.valuesFile }} }}
+          - $values/{{ $chart.valuesFile }}
       {{- else }}
         values: |
           namespace: {{ $tenant.namespace }}
