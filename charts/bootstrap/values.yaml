@@ -12,6 +12,7 @@ storage:
   default: thorin-dynamic
   backup: thorin-backup
   ssd: thorin-ssd
+  nobackup: thorin-nobackup
 
 versions:
   ingressnginx: 4.11.3

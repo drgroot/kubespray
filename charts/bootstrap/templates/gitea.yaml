@@ -1,4 +1,16 @@
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitea-runner-cache
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: {{ .Values.storage.nobackup }}
+---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
@@ -50,7 +62,6 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  metadata:
   name: bootstrap-external-gitea
   namespace: argocd
 spec:
@@ -65,9 +76,9 @@ spec:
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
-    path: .
-    repoURL: https://gitea.com/gitea/helm-chart.git
-    targetRevision: {{ .Values.versions.gitea }}
+    path: charts/gitea
+    repoURL: https://github.com/drgroot/kubespray.git
+    targetRevision: HEAD
     helm:
       releaseName: gitea
       values: |-
@@ -216,16 +227,43 @@ spec:
         actions:
           enabled: true
 
+          extraVolumes:
+            - name: gitea-runner-cache
+              persistentVolumeClaim:
+                claimName: gitea-runner-cache
+            - name: docker-secret
+              secret:
+                secretName: cluster-docker-private
+
           statefulset:
-            resources:
-              requests:
-                memory: "1Gi"
-                cpu: "256m"
-              limits:
-                memory: "4.5Gi"
-                cpu: "4"
+            dind:
+              resources:
+                requests:
+                  memory: "512Mi"
+                  cpu: "256m"
+                limits:
+                  memory: "4.5Gi"
+                  cpu: "4"
+
+              extraVolumeMounts:
+                - name: docker-secret
+                  mountPath: /root/.docker/config.json
+                  subPath: .dockerconfigjson
 
             actRunner:
+              resources: {}
+
+              extraVolumeMounts:
+                - name: gitea-runner-cache
+                  mountPath: /opt/hostedtoolcache
+                  subPath: toolcache
+                - name: gitea-runner-cache
+                  mountPath: /root/.cache/act/
+                  subPath: act-cache
+                - name: gitea-runner-cache
+                  mountPath: /toolcache
+                  subPath: toolcache
+ 
               config: |
                 log:
                   level: debug
@@ -233,9 +271,8 @@ spec:
                   enabled: false
                 runner:
                   labels:
-                    - "ubuntu-latest:docker://catthehacker/ubuntu:full-latest"
-                    - "ubuntu-22.04:docker://catthehacker/ubuntu:ubuntu-22.04"
-                    - "ubuntu-20.04:docker://catthehacker/ubuntu:ubuntu-20.04"
+                    - "ubuntu-latest:docker://catthehacker/ubuntu:act-latest"
+                    - "ubuntu-slim://node:20-bookworm-slim"
 
           existingSecret: gitea-runner-secrets
           existingSecretKey: token
@@ -249,21 +286,21 @@ spec:
         postgresql:
           enabled: false
 ---
-# apiVersion: autoscaling/v2
-# kind: HorizontalPodAutoscaler
-# metadata:
-#   name: gitea-runner
-# spec:
-#   scaleTargetRef:
-#     apiVersion: apps/v1
-#     kind: StatefulSet
-#     name: gitea-act-runner
-#   minReplicas: 1
-#   maxReplicas: 10
-#   metrics:
-#     - type: Resource
-#       resource:
-#         name: cpu
-#         target:
-#           type: Utilization
-#           averageUtilization: 50
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gitea-runner
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: gitea-act-runner
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 50
