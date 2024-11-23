@@ -1,0 +1,111 @@
+suite: actions template | statefulset
+release:
+  name: gitea-unittests
+  namespace: testing
+templates:
+  - templates/gitea/act_runner/statefulset.yaml
+tests:
+  - it: doesn't renders a StatefulSet by default
+    template: templates/gitea/act_runner/statefulset.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: renders a StatefulSet (with given existingSecret/existingSecretKey)
+    template: templates/gitea/act_runner/statefulset.yaml
+    set:
+      actions:
+        enabled: true
+        existingSecret: "my-secret"
+        existingSecretKey: "my-secret-key"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - containsDocument:
+          kind: StatefulSet
+          apiVersion: apps/v1
+          name: gitea-unittests-act-runner
+      - equal:
+          path: spec.template.spec.containers[0].env[3]
+          value:
+            name: GITEA_RUNNER_REGISTRATION_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: "my-secret"
+                key: "my-secret-key"
+  - it: renders a StatefulSet (with secret reference defaults for enabled provisioning)
+    template: templates/gitea/act_runner/statefulset.yaml
+    set:
+      actions:
+        enabled: true
+        provisioning:
+          enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - containsDocument:
+          kind: StatefulSet
+          apiVersion: apps/v1
+          name: gitea-unittests-act-runner
+      - equal:
+          path: spec.template.spec.containers[0].env[3]
+          value:
+            name: GITEA_RUNNER_REGISTRATION_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: "gitea-unittests-actions-token"
+                key: "token"
+  - it: renders a StatefulSet (with correct GITEA_INSTANCE_URL env with default act-runner specific LOCAL_ROOT_URL)
+    template: templates/gitea/act_runner/statefulset.yaml
+    set:
+      actions:
+        enabled: true
+        existingSecret: "my-secret"
+        existingSecretKey: "my-secret-key"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - containsDocument:
+          kind: StatefulSet
+          apiVersion: apps/v1
+          name: gitea-unittests-act-runner
+      - equal:
+          path: spec.template.spec.containers[0].env[4]
+          value:
+            name: GITEA_INSTANCE_URL
+            value: "http://gitea-unittests-http:3000"
+  - it: renders a StatefulSet (with correct GITEA_INSTANCE_URL env from customized LOCAL_ROOT_URL)
+    template: templates/gitea/act_runner/statefulset.yaml
+    set:
+      gitea.config.server.LOCAL_ROOT_URL: "http://git.example.com"
+      actions:
+        enabled: true
+        existingSecret: "my-secret"
+        existingSecretKey: "my-secret-key"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - containsDocument:
+          kind: StatefulSet
+          apiVersion: apps/v1
+          name: gitea-unittests-act-runner
+      - equal:
+          path: spec.template.spec.containers[0].env[4]
+          value:
+            name: GITEA_INSTANCE_URL
+            value: "http://git.example.com"
+  - it: allows adding custom environment variables to the docker-in-docker container
+    template: templates/gitea/act_runner/statefulset.yaml
+    set:
+      actions:
+        enabled: true
+        statefulset:
+          dind:
+            extraEnvs:
+              - name: "CUSTOM_ENV_NAME"
+                value: "custom env value"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].env[3]
+          value:
+            name: "CUSTOM_ENV_NAME"
+            value: "custom env value"
