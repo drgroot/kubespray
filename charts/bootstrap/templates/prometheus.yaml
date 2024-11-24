@@ -1,7 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: netadata
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: bootstrap-external-prometheus
+  name: bootstrap-external-netadata
   namespace: argocd
 spec:
   syncPolicy:
@@ -11,78 +18,16 @@ spec:
     syncOptions:
       - ServerSideApply=true
   destination:
-    namespace: {{ .Release.Namespace }}
+    namespace: netadata
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
-    chart: kube-prometheus-stack
-    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: netdata
+    repoURL:  https://netdata.github.io/helmchart
     targetRevision: {{ .Values.versions.prometheus }}
     helm:
-      releaseName: prometheus
+      releaseName: netdata
       values: |-
-        namespaceOverride: {{ .Release.Namespace }}
-
-        defaultRules:
-          rules:
-            alertmanager: false
-        
-        alertmanager:
-          enabled: false
-
-        grafana:
-          ingress:
-            ingressClassName: nginx
-            enabled: true
-            paths:
-              - /
-            hosts:
-              - grafana.{{ .Values.domains.internal }}
-            annotations:
-              nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-              external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
-          persistence:
-            enabled: true
-            storageClassName: {{ .Values.storage.default }}
-
-        prometheus:
-          enabled: true
-          ingress:
-            ingressClassName: nginx
-            enabled: true
-            paths:
-              - /
-            hosts:
-              - prometheus.{{ .Values.domains.internal }}
-            annotations:
-              nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-              external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
-          
-          prometheusSpec:
-            retention: 20d
-
-            serviceMonitorSelectorNilUsesHelmValues: false
-            serviceMonitorSelector: {}
-            serviceMonitorNamespaceSelector: {}
-            
-            podMonitorSelectorNilUsesHelmValues: false
-            podMonitorSelector: {}
-            podMonitorNamespaceSelector: {}
-
-            probeSelectorNilUsesHelmValues: false
-            probeSelector: {}
-            probeNamespaceSelector: {}
-            
-            scrapeConfigSelectorNilUsesHelmValues: false
-            scrapeConfigSelector: {}
-            scrapeConfigNamespaceSelector: {}
-
-            storageSpec:
-              volumeClaimTemplate:
-                spec:
-                  accessModes:
-                    - ReadWriteOnce
-                  resources:
-                    requests:
-                      storage: 5Gi
-                  storageClassName: {{ .Values.storage.default }}
+        ingress:
+          hosts:
+            - netdata.{{ .Values.domains.internal }}
