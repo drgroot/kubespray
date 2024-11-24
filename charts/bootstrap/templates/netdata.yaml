@@ -31,3 +31,16 @@ spec:
         ingress:
           hosts:
             - netdata.{{ .Values.domains.internal }}
+
+        parent:
+          database:
+            storageClass: {{ .Values.storage.ssd }}
+        
+          alarms:
+            persistence:
+              enabled: false
+        
+        k8sState:
+          persistence:
+            storageClass: {{ .Values.storage.ssd }}
+          
