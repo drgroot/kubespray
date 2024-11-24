@@ -33,7 +33,7 @@ spec:
           provisionerName: nfs.io/nfs-{{ $storageClass.name }}
           accessModes: ReadWriteMany
           onDelete: retain
-          pathPattern: "${.PVC.namespace}/${.PVC.name}"
+          pathPattern: "{{ $storageClass.prefix }}${.PVC.namespace}/${.PVC.name}"
           mountOptions:
             - vers=4
 ---
