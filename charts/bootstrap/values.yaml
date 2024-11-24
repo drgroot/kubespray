@@ -12,7 +12,6 @@ storage:
   default: thorin-dynamic
   backup: thorin-backup
   ssd: thorin-ssd
-  nobackup: thorin-nobackup
 
 versions:
   ingressnginx: 4.11.3
@@ -35,36 +34,17 @@ certmanager:
   email: ali@yusuf.email
 
 storageClasses:
-  - name: thorin-nobackup
-    hostname: 192.168.1.3
-    mountPath: /nobackup
-    prefix: "."
   - name: thorin-dynamic
     hostname: 192.168.1.3
     mountPath: /dynamic
-    prefix: ""
   - name: thorin-backup
     hostname: 192.168.1.3
     mountPath: /backups
-    prefix: ""
   - name: thorin-ssd
     hostname: 192.168.1.3
     mountPath: /ssd-raid0
-    prefix: ""
 
 tenants:
-  - name: hpc
-    namespace: hpc
-    basic: true
-    sources:
-      - name: configs
-        url: https://git.yusufali.ca/drgroot/hpc.git
-        path: "chart"
-      - name: base
-        url: https://github.com/drgroot/kubespray.git
-        path: "charts/template-multi"
-        valuesRepo: https://git.yusufali.ca/drgroot/hpc.git
-        valuesFile: values.yaml
   - name: mordor
     namespace: mordor
     sources: 

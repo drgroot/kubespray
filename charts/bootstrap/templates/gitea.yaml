@@ -9,7 +9,7 @@ spec:
   resources:
     requests:
       storage: 20Gi
-  storageClassName: {{ .Values.storage.nobackup }}
+  storageClassName: {{ .Values.storage.ssd }}
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
