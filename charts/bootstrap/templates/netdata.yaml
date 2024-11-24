@@ -34,13 +34,12 @@ spec:
 
         parent:
           database:
-            storageClass: {{ .Values.storage.ssd }}
+            storageclass: {{ .Values.storage.ssd }}
         
           alarms:
-            persistence:
-              enabled: false
+            persistence: false
         
         k8sState:
           persistence:
-            storageClass: {{ .Values.storage.ssd }}
+            storageclass: {{ .Values.storage.ssd }}
           
