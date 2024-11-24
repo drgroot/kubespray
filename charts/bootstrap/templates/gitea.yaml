@@ -240,10 +240,10 @@ spec:
               resources:
                 requests:
                   memory: "512Mi"
-                  cpu: "256m"
+                  cpu: "200m"
                 limits:
                   memory: "4.5Gi"
-                  cpu: "4"
+                  cpu: "1"
 
               extraVolumeMounts:
                 - name: docker-secret
@@ -251,9 +251,18 @@ spec:
                   subPath: .dockerconfigjson
 
             actRunner:
-              resources: {}
+              resources:
+                requests:
+                  memory: "156Mi"
+                  cpu: "150m"
+                limits:
+                  memory: "156Mi"
+                  cpu: "300m"
 
               extraVolumeMounts:
+                - name: docker-secret
+                  mountPath: /root/.docker/config.json
+                  subPath: .dockerconfigjson
                 - name: gitea-runner-cache
                   mountPath: /opt/hostedtoolcache
                   subPath: toolcache

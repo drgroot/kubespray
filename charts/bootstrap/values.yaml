@@ -21,9 +21,8 @@ versions:
   externaldns: 1.15.0
   rabbitmq: 15.0.5
   redis: 20.2.1
-  prometheus: 65.8.1
   nfsprovisioner: 4.0.18
-  gitea: v10.6.0
+  netdata: 3.7.114
 
 domains:
   internal: k8s.private
