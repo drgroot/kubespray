@@ -24,7 +24,7 @@ spec:
   source:
     chart: netdata
     repoURL:  https://netdata.github.io/helmchart
-    targetRevision: {{ .Values.versions.prometheus }}
+    targetRevision: {{ .Values.versions.netdata }}
     helm:
       releaseName: netdata
       values: |-
