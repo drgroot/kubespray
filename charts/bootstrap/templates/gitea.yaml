@@ -253,10 +253,10 @@ spec:
             actRunner:
               resources:
                 requests:
-                  memory: "156Mi"
+                  memory: "256Mi"
                   cpu: "150m"
                 limits:
-                  memory: "156Mi"
+                  memory: "1Gi"
                   cpu: "300m"
 
               extraVolumeMounts:
