@@ -249,6 +249,8 @@ spec:
                 - name: docker-secret
                   mountPath: /root/.docker/config.json
                   subPath: .dockerconfigjson
+                - name: gitea-runner-cache
+                  mountPath: /var/lib/docker/volumes/act-toolcache/_data
 
             actRunner:
               resources:
@@ -263,10 +265,6 @@ spec:
                 - name: docker-secret
                   mountPath: /root/.docker/config.json
                   subPath: .dockerconfigjson
-                - name: gitea-runner-cache
-                  mountPath: /opt/hostedtoolcache
-                - name: gitea-runner-cache
-                  mountPath: /toolcache
  
               config: |
                 log:
