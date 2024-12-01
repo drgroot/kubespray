@@ -233,7 +233,7 @@ spec:
                 claimName: gitea-runner-cache
             - name: docker-secret
               secret:
-                secretName: cluster-docker-private
+                secretName: cluster-docker-public
 
           statefulset:
             dind:
@@ -249,6 +249,8 @@ spec:
                 - name: docker-secret
                   mountPath: /root/.docker/config.json
                   subPath: .dockerconfigjson
+                - name: gitea-runner-cache
+                  mountPath: /var/lib/docker/volumes/act-toolcache/_data
 
             actRunner:
               resources:
@@ -263,15 +265,6 @@ spec:
                 - name: docker-secret
                   mountPath: /root/.docker/config.json
                   subPath: .dockerconfigjson
-                - name: gitea-runner-cache
-                  mountPath: /opt/hostedtoolcache
-                  subPath: toolcache
-                - name: gitea-runner-cache
-                  mountPath: /root/.cache/act/
-                  subPath: act-cache
-                - name: gitea-runner-cache
-                  mountPath: /toolcache
-                  subPath: toolcache
  
               config: |
                 log:
