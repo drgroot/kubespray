@@ -4,7 +4,7 @@ description: Gitea Helm chart for Kubernetes
 type: application
 version: 0.0.0
 # renovate datasource=github-releases depName=go-gitea/gitea extractVersion=^v(?<version>.*)$
-appVersion: 1.22.3
+appVersion: 1.22.6
 icon: https://gitea.com/assets/img/logo.svg
 
 keywords:
@@ -36,12 +36,12 @@ dependencies:
   # https://github.com/bitnami/charts/blob/main/bitnami/postgresql
   - name: postgresql
     repository: oci://registry-1.docker.io/bitnamicharts
-    version: 15.5.20
+    version: 15.5.38
     condition: postgresql.enabled
   # https://github.com/bitnami/charts/blob/main/bitnami/postgresql-ha/Chart.yaml
   - name: postgresql-ha
     repository: oci://registry-1.docker.io/bitnamicharts
-    version: 14.2.16
+    version: 14.3.10
     condition: postgresql-ha.enabled
   # https://github.com/bitnami/charts/blob/main/bitnami/redis-cluster/Chart.yaml
   - name: redis-cluster

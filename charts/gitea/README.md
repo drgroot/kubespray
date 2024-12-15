@@ -30,6 +30,7 @@
   - [OAuth2 Settings](#oauth2-settings)
 - [Configure commit signing](#configure-commit-signing)
 - [Metrics and profiling](#metrics-and-profiling)
+  - [Secure Metrics Endpoint](#secure-metrics-endpoint)
 - [Pod annotations](#pod-annotations)
 - [Themes](#themes)
 - [Renovate](#renovate)
@@ -747,6 +748,21 @@ gitea:
       ENABLE_PPROF: true
 ```
 
+### Secure Metrics Endpoint
+
+Metrics endpoint `/metrics` can be secured by using `Bearer` token authentication.
+
+**Note:** Providing non-empty `TOKEN` value will also require authentication for `ServiceMonitor`.
+
+```yaml
+gitea:
+  metrics:
+    token: "secure-token"
+    enabled: true
+    serviceMonitor:
+      enabled: true
+```
+
 ## Pod annotations
 
 Annotations can be added to the Gitea pod.
@@ -1014,7 +1030,7 @@ To comply with the Gitea helm chart definition of the digest parameter, a "custo
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
 | `actions.enabled`                              | Create an act runner StatefulSet.                                                                                                           | `false`                        |
 | `actions.init.image.repository`                | The image used for the init containers                                                                                                      | `busybox`                      |
-| `actions.init.image.tag`                       | The image tag used for the init containers                                                                                                  | `1.36.1`                       |
+| `actions.init.image.tag`                       | The image tag used for the init containers                                                                                                  | `1.37.0`                       |
 | `actions.statefulset.annotations`              | Act runner annotations                                                                                                                      | `{}`                           |
 | `actions.statefulset.labels`                   | Act runner labels                                                                                                                           | `{}`                           |
 | `actions.statefulset.resources`                | Act runner resources                                                                                                                        | `{}`                           |
@@ -1053,6 +1069,7 @@ To comply with the Gitea helm chart definition of the digest parameter, a "custo
 | `gitea.admin.email`                          | Email for the Gitea admin user                                                                                                 | `gitea@local.domain` |
 | `gitea.admin.passwordMode`                   | Mode for how to set/update the admin user password. Options are: initialOnlyNoReset, initialOnlyRequireReset, and keepUpdated  | `keepUpdated`        |
 | `gitea.metrics.enabled`                      | Enable Gitea metrics                                                                                                           | `false`              |
+| `gitea.metrics.token`                        | used for `bearer` token authentication on metrics endpoint. If not specified or empty metrics endpoint is public.              | `nil`                |
 | `gitea.metrics.serviceMonitor.enabled`       | Enable Gitea metrics service monitor. Requires, that `gitea.metrics.enabled` is also set to true, to enable metrics generally. | `false`              |
 | `gitea.metrics.serviceMonitor.interval`      | Interval at which metrics should be scraped. If not specified Prometheus' global scrape interval is used.                      | `""`                 |
 | `gitea.metrics.serviceMonitor.relabelings`   | RelabelConfigs to apply to samples before scraping.                                                                            | `[]`                 |
