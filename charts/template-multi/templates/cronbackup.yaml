@@ -1,0 +1,84 @@
+{{- range $componentType, $components := .Values.components }}
+{{- range $component, $config := $components.list }}
+{{ $config := mustMergeOverwrite (deepCopy $.Values.globals) (deepCopy $components.globals) $config }}
+{{- if ((($config.storage).config).backup).enabled }}
+{{- $port := ((($config.storage).config).backup).port| default 19999 -}}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-backup-pvc
+  labels:
+    {{- include "servc.labels" $ | nindent 4 }}
+    {{- with $config.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    type: pvc
+    component: pvc-backup
+    pvc-backup: {{ $component }}
+spec:
+  accessModes:
+    - {{ ((($config.storage).config).backup).accessMode | default "ReadWriteMany" }}
+  resources:
+    requests:
+      storage: {{ (($config.storage).config).size | default "5Gi" }}
+  storageClassName: {{ ((($config.storage).config).backup).storageClass | default "default" }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-backup
+  labels:
+    {{- include "servc.labels" $ | nindent 4 }}
+    {{- with $config.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    type: backup-cronjob
+    component: {{ $componentType }}
+    {{ $componentType }}: {{ $component }}
+spec:
+  schedule: {{ ((($config.storage).config).backup).cron | default "5 */4 * * *" | quote }}
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: {{ ((($config.storage).config).backup).history | default 0 }}
+  jobTemplate:
+    metadata:
+      name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-backup
+      labels:
+        type: backup-cronjob
+        component: {{ $componentType }}
+        {{ $componentType }}: {{ $component }}
+    spec:
+      parallelism: 1
+      template:
+        metadata:
+          name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-backup
+          labels:
+            type: backup-cronjob
+            component: {{ $componentType }}
+            {{ $componentType }}: {{ $component }}
+        spec:
+          containers:
+            - name: backup
+              image: {{ ((($config.storage).config).backup).image | default "curlimages/curl" }}
+              {{- with $config.storage.config.backup.securityContext }}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              command:
+                - curl
+                - http://{{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-svc:{{ $port }}
+                - -o
+                - /backup/backup.tar.gz
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-backup-pvc
+          restartPolicy: Never
+---
+{{- end }}
+{{- end }}
+{{- end }}

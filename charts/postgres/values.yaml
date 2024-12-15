@@ -1,0 +1,30 @@
+image: postgres:16.3
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+resources: {}
+storageclass: nfs-thorin-ssd-raid0
+
+server:
+  password:
+    secretname: postgres-password
+    key: password
+  databasename: postgres
+  username: postgres
+
+  additionalUsers: []
+    # - name: test
+    #   passwordkey: password-test
+    #   schema: test
+
+pushsecret:
+  enabled: true
+  secretstore: default
+  secretStoreKind: SecretStore
+  remoteKey: postgres-credentials
+
+backup:
+  schedule: "0 0 * * *"
+  storageclass: nfs-thorin-backups

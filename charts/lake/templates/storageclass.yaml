@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nfs-{{ .Values.storageClass.name }}
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: bootstrap-main
+  source:
+    chart: nfs-subdir-external-provisioner
+    repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+    targetRevision: {{ .Values.versions.nfsprovisioner }}
+    helm:
+      releaseName: {{ .Values.storageClass.name }}
+      values: |-
+        nfs:
+          server: {{ .Values.storageClass.hostname }}
+          path: {{ .Values.storageClass.mountPath }}
+        storageClass:
+          name: {{ .Values.storageClass.name }}
+          provisionerName: nfs.io/nfs-{{ .Values.storageClass.name }}
+          accessModes: ReadWriteMany
+          onDelete: retain
+          pathPattern: "${.PVC.name}"
+          mountOptions:
+            - vers=4

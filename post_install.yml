@@ -1,0 +1,87 @@
+---
+- name: IP tables save
+  hosts: all
+  tasks:
+    # - name: Save current state of the firewall in system file
+    #   community.general.iptables_state:
+    #     state: saved
+    #     path: /etc/iptables/rules.v4
+    - name: reboot task
+      ansible.builtin.cron:
+        name: 'roboot when required'
+        special_time: hourly
+        job: 'if [ -f /var/run/reboot-required ]; then /usr/sbin/shutdown -r now; fi'
+        user: root
+    - name: swapoff task
+      ansible.builtin.cron:
+        name: 'disable swap at reboot'
+        special_time: reboot
+        job: 'swapoff -a'
+        user: root
+# - name: setup firewall
+#   hosts: all
+#   tasks:
+#     - name: ufw allow outgoing
+#       ufw:
+#         direction: outgoing
+#         proto: any
+#         policy: allow
+#       notify:
+#         - reload ufw
+
+#     - name: allow tcp ports
+#       ufw: "rule=allow port={{ item }} proto=tcp"
+#       loop:
+#         - 22
+#         - 53
+#         - 179
+#         - 443
+#         - 30370
+#         - 30371
+#         - 32400
+#       notify:
+#         - reload ufw
+
+#     - name: allow udp ports
+#       ufw: "rule=allow port={{ item }} proto=udp"
+#       loop:
+#         - 53
+#         - 51820
+#       notify:
+#         - reload ufw
+
+#     - name: allow all on devices
+#       ufw: "rule=allow interface={{ item }} direction=in"
+#       loop:
+#         - nodelocaldns
+#         - kube-ipvs0
+#         - tunl0@NONE
+#       notify:
+#         - reload ufw
+
+#     - name: Allow all access from RFC1918 networks to this host
+#       ufw:
+#         rule: allow
+#         src: "{{ item }}"
+#       loop:
+#         - 10.0.0.0/8
+#         - 172.16.0.0/12
+#       notify:
+#         - reload ufw
+
+#     - name: ufw deny incoming
+#       ufw:
+#         direction: incoming
+#         proto: any
+#         policy: deny
+#       notify:
+#         - reload ufw
+
+#     - name: set firewall default policy
+#       ufw: state=enabled
+#       become: true
+
+#   handlers:
+#     - name: reload ufw
+#       ufw:
+#         state: reloaded

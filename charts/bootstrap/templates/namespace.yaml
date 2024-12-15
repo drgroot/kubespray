@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  labels:
+    tenant: approved
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.middleware.namespace }}
+  labels:
+    tenant: approved

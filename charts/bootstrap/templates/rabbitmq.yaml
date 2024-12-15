@@ -1,0 +1,130 @@
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: rabbitmq-credentials
+  namespace: {{ .Values.middleware.namespace }}
+spec:
+  secretStoreRefs:
+    - name: kubernetes
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: rabbitmq-credentials
+  template:
+    data:
+      password: "{{ `{{ .password }}` }}"
+      username: user
+      hostname: rabbitmq-middleware-headless.{{ .Values.middleware.namespace }}.svc.cluster.local
+      url: "amqp://user:{{ `{{ .password }}` }}@rabbitmq-middleware-headless.{{ .Values.middleware.namespace }}.svc.cluster.local"
+  data:
+    - match:
+        secretKey: password
+        remoteRef:
+          remoteKey: rabbitmq
+          property: password
+    - match:
+        secretKey: username
+        remoteRef:
+          remoteKey: rabbitmq
+          property: username
+    - match:
+        secretKey: hostname
+        remoteRef:
+          remoteKey: rabbitmq
+          property: hostname
+    - match:
+        secretKey: url
+        remoteRef:
+          remoteKey: rabbitmq
+          property: url
+    - match:
+        secretKey: url
+        remoteRef:
+          remoteKey: rabbitmq
+          property: BUS_URL
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: rabbitmq-credentials
+  namespace: {{ .Values.middleware.namespace }}
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: rabbitmq-credentials
+  data:
+    - secretKey: rabbitmq-erlang-cookie
+      remoteRef:
+        key: RABBITMQ
+        property: rabbitmq-erlang-cookie
+    - secretKey: rabbitmq-password
+      remoteRef:
+        key: RABBITMQ
+        property:  rabbitmq-password
+    - secretKey: password
+      remoteRef:
+        key: RABBITMQ
+        property: rabbitmq-password
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap-external-rabbitmq
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Values.middleware.namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: rabbitmq
+    repoURL: https://charts.bitnami.com/bitnami
+    targetRevision: {{ .Values.versions.rabbitmq }}
+    helm:
+      releaseName: rabbitmq-middleware
+      values: |-
+        fullnameOverride: rabbitmq-middleware
+        replicaCount: 1
+
+        image:
+          pullSecrets:
+            - name: cluster-docker-public
+
+        auth:
+          username: user
+          existingPasswordSecret: rabbitmq-credentials
+          existingErlangSecret: rabbitmq-credentials
+
+        clustering:
+          rebalance: true
+
+        persistentVolumeClaimRetentionPolicy:
+          whenDeleted: Delete
+
+        resources: {}
+
+        serviceAccount:
+          create: false
+
+        networkPolicy:
+          enabled: false
+
+        persistence:
+          storageClass: {{ .Values.storage.default }}
+        persistentVolumeClaimRetentionPolicy:
+          whenDeleted: Delete
+
+        ingress:
+          enabled: true
+          hostname: rabbitmq.{{ .Values.domains.internal }}
+          ingressClassName: nginx
+        
+        ulimitNofiles: ""

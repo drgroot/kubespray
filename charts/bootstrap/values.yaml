@@ -1,0 +1,59 @@
+project: bootstrap
+
+vault:
+  username: kubernetesadmin
+  secretName: vault-password
+  key: password
+
+middleware:
+  namespace: default
+
+storage:
+  default: thorin-dynamic
+  backup: thorin-backup
+  ssd: thorin-ssd
+
+versions:
+  ingressnginx: 4.11.3
+  keda: 2.15.2
+  externalsecrets: 0.10.5
+  certmanager: 1.16.1
+  externaldns: 1.15.0
+  rabbitmq: 15.0.5
+  redis: 20.2.1
+  nfsprovisioner: 4.0.18
+  netdata: 3.7.114
+
+domains:
+  internal: k8s.private
+  external: yusufali.ca
+  servc: servc.io
+
+certmanager:
+  email: ali@yusuf.email
+
+storageClasses:
+  - name: thorin-dynamic
+    hostname: 192.168.1.3
+    mountPath: /dynamic
+    prefix: ""
+  - name: thorin-backup
+    hostname: 192.168.1.3
+    mountPath: /backups
+    prefix: ""
+  - name: thorin-ssd
+    hostname: 192.168.1.3
+    mountPath: /ssd-raid0
+    prefix: ""
+
+tenants:
+  - name: mordor
+    namespace: mordor
+    sources: 
+      - url: https://git.yusufali.ca/drgroot/mordor.git
+        path: ""
+  - name: lake
+    namespace: lake
+    sources: 
+      - url: https://github.com/drgroot/kubespray.git
+        path: "charts/lake"
