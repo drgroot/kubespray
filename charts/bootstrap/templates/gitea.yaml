@@ -260,7 +260,7 @@ spec:
                 runner:
                   labels:
                     - "ubuntu-latest:docker://catthehacker/ubuntu:act-latest"
-                    - "ubuntu-slim://node:20-bookworm-slim"
+                    - "ubuntu-slim:docker://node:20-bookworm-slim"
 
           existingSecret: gitea-runner-secrets
           existingSecretKey: token
