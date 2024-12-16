@@ -1,0 +1,49 @@
+name: Change Log
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  commitlint:
+    name: commitlint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install lint
+        run: |
+          if [ -f package.json ]; then
+            rm package*.json
+          fi
+          npm install -g @commitlint/cli @commitlint/config-conventional
+          if [ ! -f "commitlint.config.js" ]; then
+            echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
+          fi
+
+      - name: Lint Commit Message
+        if: github.event_name == 'push'
+        run: commitlint --from=HEAD~2 --verbose || true
+
+      - name: Lint Pull Request
+        if: github.event_name == 'pull_request'
+        run: commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+      - name: Conventional Changelog Action
+        if: github.ref_name == 'main'
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.github_token }}
+          skip-commit: "true"
+          tag-prefix: ""

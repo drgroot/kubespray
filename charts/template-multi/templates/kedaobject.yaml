@@ -1,0 +1,56 @@
+{{- range $componentType, $components := .Values.components }}
+{{- range $component, $config := $components.list }}
+{{ $config := mustMergeOverwrite (deepCopy $.Values.globals) (deepCopy $components.globals) $config }}
+{{- if and ($config.keda).enabled (eq ($config.keda).type "object") }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-rabbitmq-auth
+spec:
+  secretTargetRef:
+    - parameter: host
+      name: {{ ($config.keda).rabbitmqSecretName }}
+      key: {{ ($config.keda).secretKey | default "BUS_URL" }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}
+  labels:
+    {{- include "servc.labels" $ | nindent 4 }}
+    {{- with $config.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    type: keda-scaledobject
+    component: {{ $componentType }}
+    {{ $componentType }}: {{ $component }}
+spec:
+  scaleTargetRef:
+    name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}
+  {{- with ($config.keda).minReplicaCount }}
+  minReplicaCount: {{ . }}
+  {{- end }}
+  {{- with ($config.keda).maxReplicaCount }}
+  maxReplicaCount: {{ . }}
+  {{- end }}
+  {{- with ($config.keda).fallback }}
+  fallback: 
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  triggers:
+    - type: rabbitmq
+      metadata:
+        protocol: amqp
+        mode: {{ ($config.keda).mode | default "QueueLength" }}
+        value: {{ quote ($config.keda).value }}
+        {{- with ($config.keda).activationValue }}
+        activationValue: {{ . }}
+        {{- end }}
+        queueName: {{ ($config.keda).queueName }}
+      authenticationRef:
+        name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-rabbitmq-auth
+---
+{{- end }}
+{{- end }}
+{{- end }}

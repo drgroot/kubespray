@@ -1,0 +1,152 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: s3-root-credential
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: s3-root-credential
+    template:
+      data:
+        accesskey: "{{ `{{ .accesskey }}` }}"
+        secretkey: "{{ `{{ .secretkey }}` }}"
+        seaweedfs_s3_config: |
+          {
+            "identities": [
+              {
+                "name": "anvAdmin",
+                "credentials": [
+                  {
+                    "accessKey": {{ `{{ print .accesskey | quote }}` }},
+                    "secretKey": {{ `{{ print .secretkey | quote }}` }}
+                  }
+                ],
+                "actions": [
+                  "Admin",
+                  "Read",
+                  "Write"
+                ]
+              }
+            ]
+          }
+  data:
+    - secretKey: accesskey
+      remoteRef:
+        key: S3
+        property:  ACCESS_KEY
+    - secretKey: secretkey
+      remoteRef:
+        key: S3
+        property:  SECRET_KEY
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: s3
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: seaweedfs
+    repoURL: https://seaweedfs.github.io/seaweedfs/helm
+    targetRevision: {{ .Values.versions.seaweedfs }}
+    helm:
+      releaseName: s3
+      values: |-
+        global:
+          createClusterRole: false
+          automountServiceAccountToken: false
+
+        master:
+          replicas: 1
+
+          logs:
+            type: emptyDir
+
+          data:
+            type: "persistentVolumeClaim"
+            size: "5Gi"
+            storageClass: "{{ .Values.storage.ssd }}"
+
+        volume:
+          replicas: 3
+
+          resizeHook:
+            enabled: false
+
+          dataDirs:
+            - name: data
+              type: "persistentVolumeClaim"
+              size: "5Gi"
+              storageClass: "{{ .Values.storageClass.name }}"
+        
+        filer:
+          replicas: 3
+          enablePVC: true
+
+          s3:
+            enabled: true
+            domainName: s3.{{ .Values.domains.external }}
+            port: 8333
+            enableAuth: true
+            allowEmptyFolder: true
+            existingConfigSecret: s3-root-credential
+
+          logs:
+            type: emptyDir
+
+          data:
+            type: "persistentVolumeClaim"
+            size: "5Gi"
+            storageClass: "{{ .Values.storage.ssd }}"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
+    nginx.ingress.kubernetes.io/client_max_body_size: 512m
+    nginx.ingress.kubernetes.io/proxy-body-size: 512m
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  name: s3
+spec:
+  tls:
+    - hosts:
+      - '*.{{ .Values.domains.external }}'
+      - '*.s3.{{ .Values.domains.external }}'
+      secretName: wildcard-external
+  ingressClassName: nginx
+  rules:
+    - host: "*.s3.{{ .Values.domains.external }}"
+      http:
+        paths:
+          - backend:
+              service:
+                name: seaweedfs-s3
+                port:
+                  number: 8333
+            path: /
+            pathType: Prefix
+    - host: s3.{{ .Values.domains.external }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: seaweedfs-s3
+                port:
+                  number: 8333
+            path: /
+            pathType: Prefix
