@@ -36,6 +36,7 @@ spec:
           command:
             - pypi-server
           args:
+            - run
             - --port
             - "8080"
             - --authenticate
