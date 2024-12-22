@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pypi
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: {{ .Values.storage.default }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pypi
+  labels:
+    app: pypi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pypi
+  template:
+    metadata:
+      labels:
+        app: pypi
+    spec:
+      volumes:
+        - name: pypidata
+          persistentVolumeClaim:
+            claimName: pypi
+      containers:
+        - name: app
+          image: pypiserver/pypiserver
+          command:
+            - pypi-server
+          args:
+            - --port
+            - "8080"
+            - --authenticate
+            - '.'
+            - --passwords
+            - '.'
+            - /data/packages
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: pypidata
+              mountPath: /data/packages
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pypi
+  labels:
+    app: pypi
+spec:
+  selector:
+    app: pypi
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pypi
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: pypi.{{ .Values.domains.internal }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: pypi
+                port:
+                  number: 8080
+            path: /
+            pathType: Prefix
