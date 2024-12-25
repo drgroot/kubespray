@@ -1,7 +1,29 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npm-config
+data:
+  config.yaml: |
+    listen: 0.0.0.0:4873
+    storage: /verdaccio/storage
+    auth:
+      htpasswd:
+        file: /htpasswd/htpasswd
+        max_users: -1
+    uplinks:
+      npmjs:
+        url: https://registry.npmjs.org/
+        cache: false
+    packages:
+      '@servc/*':
+        access: $all
+        publish: $authenticated
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: pypi
+  name: npm
 spec:
   accessModes:
     - ReadWriteOnce
@@ -13,80 +35,79 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pypi
+  name: npm
   labels:
-    app: pypi
+    app: npm
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pypi
+      app: npm
   template:
     metadata:
       labels:
-        app: pypi
+        app: npm
     spec:
       volumes:
-        - name: pypidata
+        - name: npmdata
           persistentVolumeClaim:
-            claimName: pypi
+            claimName: npm
+        - name: config
+          configMap:
+            name: npm-config
         - name: htppasswd
           secret:
             secretName: registry-htpasswd
       containers:
         - name: app
-          image: pypiserver/pypiserver
-          command:
-            - pypi-server
-          args:
-            - run
-            - --port
-            - "8080"
-            - --authenticate
-            - 'update'
-            - --passwords
-            - /htpasswd/htpasswd
-            - /data/packages
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: http
-            initialDelaySeconds: 5
+          image: verdaccio/verdaccio:6.0.5
           ports:
-            - containerPort: 8080
+            - containerPort: 4873
               name: http
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 50m
+              memory: 64Mi
             limits:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 50m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /-/ping
+              port: 4873
+            initialDelaySeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /-/ping
+              port: http
+            initialDelaySeconds: 5
           volumeMounts:
-            - name: htppasswd
+            - name: htpasswd
               mountPath: /htpasswd
-            - name: pypidata
-              mountPath: /data/packages
+            - name: npmdata
+              mountPath: /verdaccio/storage
+            - name: config
+              mountPath: /verdaccio/conf
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: pypi
+  name: npm
   labels:
-    app: pypi
+    app: npm
 spec:
   selector:
-    app: pypi
+    app: npm
   ports:
     - protocol: TCP
-      port: 8080
-      targetPort: 8080
+      port: 4873
+      targetPort: 4873
   type: ClusterIP
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: pypi
+  name: npm
   annotations:
     external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
     external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
@@ -98,13 +119,13 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: pypi.{{ .Values.domains.external }}
+    - host: npm.{{ .Values.domains.external }}
       http:
         paths:
           - backend:
               service:
-                name: pypi
+                name: npm
                 port:
-                  number: 8080
+                  number: 4873
             path: /
             pathType: Prefix
