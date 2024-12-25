@@ -68,8 +68,12 @@ tenants:
     sources: 
       - url: https://git.yusufali.ca/drgroot/mordor.git
         path: ""
-  - name: lake
-    namespace: lake
+  - name: servc
+    namespace: servc
     sources: 
-      - url: https://github.com/drgroot/kubespray.git
-        path: "charts/lake"
+      - name: infra
+        url: https://git.yusufali.ca/serv-c/charts.git
+        path: "charts/infra"
+      - name: servc
+        url: https://git.yusufali.ca/serv-c/charts.git
+        path: "charts/servc"
