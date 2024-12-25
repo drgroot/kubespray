@@ -5,9 +5,6 @@ vault:
   secretName: vault-password
   key: password
 
-middleware:
-  namespace: default
-
 storage:
   default: thorin-dynamic
   backup: thorin-backup
