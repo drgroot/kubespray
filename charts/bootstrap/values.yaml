@@ -62,6 +62,7 @@ tenants:
         valuesFile: values.yaml
   - name: mordor
     namespace: mordor
+    secure: true
     sources: 
       - url: https://git.yusufali.ca/drgroot/mordor.git
         path: ""
