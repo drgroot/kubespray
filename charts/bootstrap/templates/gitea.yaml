@@ -177,8 +177,8 @@ spec:
               SSH_LISTEN_PORT: 2222
             
             repository:
-              DISABLED_REPO_UNITS: repo.wiki,repo.projects,repo.packages,repo.ext_issues,repo.ext_wiki
-              DEFAULT_REPO_UNITS: repo.code,repo.releases,repo.pulls,repo.actions,repo.issues
+              DISABLED_REPO_UNITS: repo.wikirepo.packages,repo.ext_issues,repo.ext_wiki
+              DEFAULT_REPO_UNITS: repo.code,repo.pulls,repo.actions,repo.issues
               DISABLE_STARS: true
             
             packages:
