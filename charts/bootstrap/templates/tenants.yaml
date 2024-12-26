@@ -77,6 +77,7 @@ spec:
   clusterResourceBlacklist:
     - group: "*"
       kind: "*"
+  {{- if or $tenant.basic $tenant.secure }}
   namespaceResourceBlacklist:
     - group: rbac.authorization.k8s.io
       kind: '*'
@@ -84,6 +85,7 @@ spec:
       kind: '*'
     - group: authorization.k8s.io
       kind: '*'
+  {{- end }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
