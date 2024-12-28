@@ -14,6 +14,10 @@ spec:
         key: GIT
         property: GITEA_RUNNER_TOKEN
       secretKey: token
+    - remoteRef:
+        key: GIT
+        property: RENOVATE_TOKEN
+      secretKey: renovate-token
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
@@ -292,3 +296,44 @@ spec:
         target:
           type: Utilization
           averageUtilization: 50
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: renovate
+spec:
+  schedule: "0 0 * * *"
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 0
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    metadata:
+      name: renovate
+    spec:
+      parallelism: 1
+      template:
+        metadata:
+          name: renovate
+        spec:
+          containers:
+            - name: app
+              image: renovate/renovate
+              env:
+                - name: RENOVATE_GIT_AUTHOR
+                  value: 'Renovate Bot <bot@renovateapp.com>'
+                - name: LOG_LEVEL
+                  value: debug
+                - name: RENOVATE_SEMANTIC_COMMITS
+                  value: 'enabled'
+                - name: RENOVATE_COMMIT_MESSAGE_LOWER_CASE
+                  value: 'auto'
+                - name: RENOVATE_AUTODISCOVER
+                  value: 'true'
+                - name: RENOVATE_ENDPOINT
+                  value: "https://git.{{ .Values.domains.external }}/api/v1"
+                - name: RENOVATE_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: gitea-runner-secrets
+                      key: renovate-token
+          restartPolicy: Never
