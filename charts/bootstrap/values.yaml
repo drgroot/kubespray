@@ -53,12 +53,12 @@ tenants:
     basic: true
     sources:
       - name: configs
-        url: https://git.yusufali.ca/drgroot/media.git
+        url: https://git.yusufali.ca/argo_admin/media.git
         path: "chart"
       - name: base
         url: https://github.com/drgroot/kubespray.git
         path: "charts/template-multi"
-        valuesRepo: https://git.yusufali.ca/drgroot/media.git
+        valuesRepo: https://git.yusufali.ca/argo_admin/media.git
         valuesFile: values.yaml
   - name: mordor
     namespace: mordor
