@@ -33,19 +33,15 @@ storageClasses:
   - name: thorin-nobackup
     hostname: 192.168.1.3
     mountPath: /nobackup
-    prefix: "."
   - name: thorin-dynamic
     hostname: 192.168.1.3
     mountPath: /dynamic
-    prefix: ""
   - name: thorin-backup
     hostname: 192.168.1.3
     mountPath: /backups
-    prefix: ""
   - name: thorin-ssd
     hostname: 192.168.1.3
     mountPath: /ssd-raid0
-    prefix: ""
 
 tenants:
   - name: media
@@ -53,12 +49,12 @@ tenants:
     basic: true
     sources:
       - name: configs
-        url: https://git.yusufali.ca/argo_admin/media.git
+        url: https://git.yusufali.ca/drgroot/media.git
         path: "chart"
       - name: base
         url: https://github.com/drgroot/kubespray.git
         path: "charts/template-multi"
-        valuesRepo: https://git.yusufali.ca/argo_admin/media.git
+        valuesRepo: https://git.yusufali.ca/drgroot/media.git
         valuesFile: values.yaml
   - name: mordor
     namespace: mordor
