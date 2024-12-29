@@ -264,6 +264,7 @@ spec:
                 runner:
                   labels:
                     - "ubuntu-latest:docker://catthehacker/ubuntu:act-latest"
+                    - "chromium-latest:docker://registry.yusufali.ca/containers/chromium-runner"
                     - "ubuntu-slim:docker://node:20-bookworm-slim"
 
           existingSecret: gitea-runner-secrets
