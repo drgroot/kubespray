@@ -329,6 +329,8 @@ spec:
                   value: 'auto'
                 - name: RENOVATE_AUTODISCOVER
                   value: 'true'
+                - name: RENOVATE_PLATFORM
+                  value: gitea
                 - name: RENOVATE_ENDPOINT
                   value: "https://git.{{ .Values.domains.external }}/api/v1"
                 - name: RENOVATE_TOKEN
