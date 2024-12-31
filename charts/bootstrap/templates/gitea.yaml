@@ -263,7 +263,7 @@ spec:
                   enabled: false
                 runner:
                   labels:
-                    - "ubuntu-latest:docker://catthehacker/ubuntu:act-latest"
+                    - "ubuntu-latest:docker://registry.yusufali.ca/catthehacker/ubuntu"
                     - "chromium-latest:docker://registry.yusufali.ca/containers/chromium-runner"
                     - "ubuntu-slim:docker://node:20-bookworm-slim"
 
