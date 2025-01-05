@@ -71,7 +71,7 @@ tenants:
       - pvc
     sources: 
       - url: https://git.yusufali.ca/drgroot/gaming.git
-      - path: "chart"
+        path: "chart"
   - name: servc
     namespace: servc
     permissions:
