@@ -54,17 +54,21 @@ spec:
   sourceRepos:
     - "*"
   destinations:
-  {{- if not ($tenant.basic) }}
+    - namespace: '!kube-system'
+      server: '*'
+    - namespace: '!default'
+      server: '*'
+  {{- if has "argo" $tenant.permissions }}
     - namespace: argocd
-      server: https://kubernetes.default.svc
+      server: '*'
   {{- end }}
     - namespace: {{ $tenant.namespace }}
-      server: https://kubernetes.default.svc
+      server: '*'
   syncWindows:
-    - schedule: "0 */4 * * *"
+    - schedule: {{ $tenant.syncWindow | default "0 */4 * * *" | quote }}
       duration: 1h
       namespaces:
-      {{- if not ($tenant.basic) }}
+      {{- if has "argo" $tenant.permissions }}
         - argocd
       {{- end }}
         - {{ $tenant.namespace }}
@@ -77,8 +81,12 @@ spec:
   clusterResourceBlacklist:
     - group: "*"
       kind: "*"
-  {{- if or $tenant.basic $tenant.secure }}
   namespaceResourceBlacklist:
+  {{- if not (has "pvc" $tenant.permissions) }}
+    - group: ''
+      kind: PersistentVolumeClaim
+  {{- end }}
+  {{- if not (has "rbac" $tenant.permissions) }}
     - group: rbac.authorization.k8s.io
       kind: '*'
     - group: authentication.k8s.io

@@ -46,7 +46,8 @@ storageClasses:
 tenants:
   - name: media
     namespace: media
-    basic: true
+    permissions:
+      - pvc
     sources:
       - name: configs
         url: https://git.yusufali.ca/drgroot/media.git
@@ -58,12 +59,24 @@ tenants:
         valuesFile: values.yaml
   - name: mordor
     namespace: mordor
-    secure: true
+    permissions:
+      - argo
+      - pvc
     sources: 
       - url: https://git.yusufali.ca/drgroot/mordor.git
         path: ""
+  - name: gaming
+    namespace: gaming
+    permissions:
+      - pvc
+    sources: 
+      - url: https://git.yusufali.ca/drgroot/gaming.git
+      - path: "chart"
   - name: servc
     namespace: servc
+    permissions:
+      - rbac
+      - pvc
     sources: 
       - name: infra
         url: https://git.yusufali.ca/serv-c/charts.git
