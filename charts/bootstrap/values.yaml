@@ -75,6 +75,7 @@ tenants:
   - name: servc
     namespace: servc
     permissions:
+      - argo
       - rbac
       - pvc
     sources: 
