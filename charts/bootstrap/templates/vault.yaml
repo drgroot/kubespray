@@ -48,10 +48,14 @@ spec:
             - name: VAULT_ADDR
               value: http://127.0.0.1:8200
           livenessProbe:
+            timeoutSeconds: 5
+            periodSeconds: 15
             httpGet:
               path: /v1/sys/health?standbyok=true
               port: 8200
           readinessProbe:
+            timeoutSeconds: 5
+            periodSeconds: 30
             exec:
               command:
                 - vault
