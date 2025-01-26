@@ -101,6 +101,10 @@ metadata:
   name: tenant-{{ $tenant.name }}
   namespace: argocd
 spec:
+  {{- with $tenant.ignoreDifferences }}
+  ignoreDifferences:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   syncPolicy:
     automated:
       prune: true

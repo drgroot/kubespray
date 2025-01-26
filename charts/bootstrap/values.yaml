@@ -71,6 +71,11 @@ tenants:
       - argo
       - rbac
       - pvc
+    ignoreDifferences:
+      - group: apps
+        kind: Deployment
+        jsonPointers:
+          - /spec/replicas
     sources: 
       - name: infra
         url: https://git.yusufali.ca/serv-c/charts.git
