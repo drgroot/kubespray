@@ -1,8 +1,6 @@
 name: ANSIBLE
 on:
   push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       action:
@@ -57,11 +55,12 @@ jobs:
 
       - name: Run PreAnsible Jobs
         if: github.ref == 'refs/heads/main'
-        run: ansible-playbook -i inventory/sample/hosts.yaml additional.yml -b -v
+        run: ansible-playbook -i inventory/sample additional.yml -b -v
 
       - name: Run Ansible Kubespray
         env:
           CMD: ${{ github.event.inputs.action }}
+          CHECK: ${{ github.ref == 'refs/heads/main' && '' || '--check' }}
         run: |
           CMD=${CMD:-"UpgradeAddons"}
 
@@ -78,11 +77,11 @@ jobs:
             ARGS="kubespray/reset.yml -e reset_confirmation=yes"
           fi
 
-          ansible-playbook -i inventory/sample/hosts.yaml $ARGS -b -v
+          ansible-playbook -i inventory/sample $CHECK $ARGS -b -v
 
       - name: Run Post Install
         if: github.ref == 'refs/heads/main'
-        run: ansible-playbook -i inventory/sample/hosts.yaml post_install.yml -b -v
+        run: ansible-playbook -i inventory/sample post_install.yml -b -v
 
       - name: Get admin.conf
         if: github.ref == 'refs/heads/main' && (github.event.inputs.action == 'Install' || github.event.inputs.action == 'UpgradeAddons')
