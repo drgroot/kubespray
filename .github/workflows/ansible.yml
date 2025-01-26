@@ -60,7 +60,7 @@ jobs:
       - name: Run Ansible Kubespray
         env:
           CMD: ${{ github.event.inputs.action }}
-          CHECK: ${{ github.ref == 'refs/heads/main' && '' || '--check' }}
+          CHECK: ${{ github.ref != 'refs/heads/main' && '--check' || '' }}
         run: |
           CMD=${CMD:-"UpgradeAddons"}
 
