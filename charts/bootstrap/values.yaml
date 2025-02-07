@@ -20,6 +20,7 @@ versions:
   redis: 20.2.1
   nfsprovisioner: 4.0.18
   netdata: 3.7.114
+  gitea: 1d908965a8dbb3dd33fa07
 
 domains:
   internal: k8s.private

@@ -68,9 +68,9 @@ spec:
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
-    path: charts/gitea
-    repoURL: https://github.com/drgroot/kubespray.git
-    targetRevision: HEAD
+    path: .
+    repoURL: https://gitea.com/gitea/helm-chart.git
+    targetRevision: {{ .Values.versions.gitea }}
     helm:
       releaseName: gitea
       values: |-
@@ -219,12 +219,12 @@ spec:
         actions:
           enabled: true
 
-          extraVolumes:
-            - name: docker-secret
-              secret:
-                secretName: cluster-docker-secrets
-
           statefulset:
+            extraVolumes:
+              - name: docker-secret
+                secret:
+                  secretName: cluster-docker-secrets
+
             dind:
               resources:
                 requests:
@@ -238,9 +238,6 @@ spec:
                 - name: docker-secret
                   mountPath: /root/.docker/config.json
                   subPath: .dockerconfigjson
-                - name: data-act-runner
-                  mountPath: /var/lib/docker/volumes/act-toolcache/_data
-                  subPath: act-toolcache
 
             actRunner:
               resources:
@@ -264,8 +261,6 @@ spec:
                 runner:
                   labels:
                     - "ubuntu-latest:docker://registry.yusufali.ca/catthehacker/ubuntu"
-                    - "chromium-latest:docker://registry.yusufali.ca/containers/chromium-runner"
-                    - "ubuntu-slim:docker://node:20-bookworm-slim"
 
           existingSecret: gitea-runner-secrets
           existingSecretKey: token
