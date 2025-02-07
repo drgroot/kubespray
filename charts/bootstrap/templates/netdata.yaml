@@ -22,24 +22,14 @@ spec:
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
-    chart: netdata
-    repoURL:  https://netdata.github.io/helmchart
-    targetRevision: {{ .Values.versions.netdata }}
+    chart: prometheus
+    repoURL:  https://prometheus-community.github.io/helm-charts
+    targetRevision: {{ .Values.versions.prometheus }}
     helm:
-      releaseName: netdata
+      releaseName: prometheus
       values: |-
-        ingress:
-          hosts:
-            - netdata.{{ .Values.domains.internal }}
-
-        parent:
-          database:
-            storageclass: {{ .Values.storage.ssd }}
-        
-          alarms:
-            persistence: false
-        
-        k8sState:
-          persistence:
-            storageclass: {{ .Values.storage.ssd }}
-          
+        grafana:
+          ingress:
+            enabled: true
+            hosts:
+              - grafana.{{ .Values.domains.internal }}
