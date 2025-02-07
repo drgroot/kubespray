@@ -28,7 +28,18 @@ spec:
     helm:
       releaseName: kube-prom-stack
       values: |-
+        kube-state-metrics:
+          prometheus:
+            monitor:
+              enabled: true
+              additionalLabels:
+                release: prometheus
+
         grafana:
+          serviceMonitor: 
+            labels:
+              release: prometheus
+
           ingress:
             enabled: true
             hosts:
