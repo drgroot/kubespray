@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: netadata
+  name: monitoring
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: bootstrap-external-netadata
+  name: bootstrap-external-monitoring
   namespace: argocd
 spec:
   syncPolicy:
@@ -18,7 +18,7 @@ spec:
     syncOptions:
       - ServerSideApply=true
   destination:
-    namespace: netadata
+    namespace: monitoring
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
@@ -26,7 +26,7 @@ spec:
     repoURL:  https://prometheus-community.github.io/helm-charts
     targetRevision: {{ .Values.versions.prometheus }}
     helm:
-      releaseName: prometheus
+      releaseName: kube-prom-stack
       values: |-
         grafana:
           ingress:
