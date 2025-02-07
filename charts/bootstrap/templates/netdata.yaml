@@ -28,6 +28,10 @@ spec:
     helm:
       releaseName: prometheus
       values: |-
+        kubeEtcd:
+          service:
+            targetPort: 2379
+
         kube-state-metrics:
           prometheus:
             monitor:
