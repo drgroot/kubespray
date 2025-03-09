@@ -69,7 +69,7 @@ spec:
   project: {{ .Values.project }}
   source:
     path: .
-    repoURL: https://gitea.com/gitea/helm-chart.git
+    repoURL: https://gitea.com/gitea/helm-gitea.git
     targetRevision: {{ .Values.versions.gitea }}
     helm:
       releaseName: gitea
