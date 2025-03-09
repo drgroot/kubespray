@@ -220,19 +220,27 @@ spec:
           enabled: true
 
           statefulset:
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "200m"
+              limits:
+                memory: "4.5Gi"
+                cpu: "1"
+
             extraVolumes:
               - name: docker-secret
                 secret:
                   secretName: cluster-docker-secrets
 
             dind:
-              resources:
-                requests:
-                  memory: "512Mi"
-                  cpu: "200m"
-                limits:
-                  memory: "4.5Gi"
-                  cpu: "1"
+              # resources:
+              #   requests:
+              #     memory: "512Mi"
+              #     cpu: "200m"
+              #   limits:
+              #     memory: "4.5Gi"
+              #     cpu: "1"
 
               extraVolumeMounts:
                 - name: docker-secret
@@ -240,13 +248,13 @@ spec:
                   subPath: .dockerconfigjson
 
             actRunner:
-              resources:
-                requests:
-                  memory: "256Mi"
-                  cpu: "150m"
-                limits:
-                  memory: "1Gi"
-                  cpu: "300m"
+              # resources:
+              #   requests:
+              #     memory: "256Mi"
+              #     cpu: "150m"
+              #   limits:
+              #     memory: "1Gi"
+              #     cpu: "300m"
 
               extraVolumeMounts:
                 - name: docker-secret
