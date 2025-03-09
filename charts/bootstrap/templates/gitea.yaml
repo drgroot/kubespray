@@ -12,6 +12,10 @@ spec:
   data:
     - remoteRef:
         key: GIT
+        property: GITHUB_TOKEN
+      secretKey: github-token
+    - remoteRef:
+        key: GIT
         property: GITEA_RUNNER_TOKEN
       secretKey: token
     - remoteRef:
@@ -342,4 +346,41 @@ spec:
                     secretKeyRef:
                       name: gitea-runner-secrets
                       key: renovate-token
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: actions-templater
+spec:
+  schedule: "0 0 * * *"
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 0
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    metadata:
+      name: actions-templater
+    spec:
+      parallelism: 1
+      template:
+        metadata:
+          name: actions-templater
+        spec:
+          imagePullSecrets:
+            - name: cluster-docker-private
+          containers:
+            - name: app
+              image: registry.yusufali.ca/drgroot/actions-templater
+              imagePullPolicy: Always
+              env:
+                - name: GITEA_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: gitea-runner-secrets
+                      key: renovate-token
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: gitea-runner-secrets
+                      key: github-token
           restartPolicy: Never
