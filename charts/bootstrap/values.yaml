@@ -62,6 +62,14 @@ tenants:
         jsonPointers:
           - /spec/replicas
     sources: 
+      # chess app chart
+      - name: chess
+        url: https://git.yusufali.ca/chess/ui.git
+        path: "charts/chess"
+        valuesRepo: https://git.yusufali.ca/chess/ui.git
+        valuesFile: "charts/deploy.values.yaml"
+      
+      # PLATFORM CHARTS
       - name: infra
         url: https://git.yusufali.ca/serv-c/charts.git
         path: "charts/infra"
