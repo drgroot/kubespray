@@ -1,6 +1,5 @@
 name: ANSIBLE
 on:
-  push:
   workflow_dispatch:
     inputs:
       action:
@@ -80,11 +79,10 @@ jobs:
           ansible-playbook -i inventory/sample $CHECK $ARGS -b -v
 
       - name: Run Post Install
-        if: github.ref == 'refs/heads/main'
         run: ansible-playbook -i inventory/sample post_install.yml -b -v
 
       - name: Get admin.conf
-        if: github.ref == 'refs/heads/main' && (github.event.inputs.action == 'Install' || github.event.inputs.action == 'UpgradeAddons')
+        if: (github.event.inputs.action == 'Install' || github.event.inputs.action == 'UpgradeAddons')
         env:
           KUBE_CONFIG: ${{ github.workspace }}/admin.conf
         run: |
@@ -92,7 +90,7 @@ jobs:
           sed -i 's/127.0.0.1/192.168.1.10/g' $KUBE_CONFIG
 
       - name: Install Root Chart
-        if: github.ref == 'refs/heads/main' && (github.event.inputs.action == 'Install' || github.event.inputs.action == 'UpgradeAddons')
+        if: (github.event.inputs.action == 'Install' || github.event.inputs.action == 'UpgradeAddons')
         env:
           KUBECONFIG: ${{ github.workspace }}/admin.conf
         run: |
