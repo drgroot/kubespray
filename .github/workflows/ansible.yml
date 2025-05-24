@@ -98,6 +98,6 @@ jobs:
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl
 
-          ./kubectl get ns argocd ./kubectl create namespace argocd
+          ./kubectl get ns argocd || ./kubectl create namespace argocd
           ./kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
           ./kubectl apply -f application.yaml
