@@ -44,9 +44,11 @@ upstream_dns_servers:
 ## If set the possible values only 'external' after K8s v1.31.
 # cloud_provider:
 
-## When cloud_provider is set to 'external', you can set the cloud controller to deploy
-## Supported cloud controllers are: 'openstack', 'vsphere', 'huaweicloud' and 'hcloud'
-## When openstack or vsphere are used make sure to source in the required fields
+# External Cloud Controller Manager (Formerly known as cloud provider)
+# cloud_provider must be "external", otherwise this setting is invalid.
+# Supported external cloud controllers are: 'openstack', 'vsphere', 'oci', 'huaweicloud', 'hcloud' and 'manual'
+# 'manual' does not install the cloud controller manager used by Kubespray.
+# If you fill in a value other than the above, the check will fail.
 # external_cloud_provider:
 
 ## Set these proxy values in order to update package manager and docker daemon to use proxies and custom CA for https_proxy if needed
@@ -54,7 +56,7 @@ upstream_dns_servers:
 # https_proxy: ""
 # https_proxy_cert_file: ""
 
-## Refer to roles/kubespray-defaults/defaults/main/main.yml before modifying no_proxy
+## Refer to roles/kubespray_defaults/defaults/main/main.yml before modifying no_proxy
 # no_proxy: ""
 
 ## Some problems may occur when downloading files over https proxy due to ansible bug
@@ -130,7 +132,7 @@ ntp_servers:
   - "3.pool.ntp.org iburst"
 
 ## Used to control no_log attribute
-unsafe_show_logs: true
+unsafe_show_logs: false
 
 ## If enabled it will allow kubespray to attempt setup even if the distribution is not supported. For unsupported distributions this can lead to unexpected failures in some cases.
 allow_unsupported_distribution_setup: false
