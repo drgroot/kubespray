@@ -25,7 +25,10 @@ versions:
 domains:
   internal: k8s.private
   external: yusufali.ca
-  servc: servc.io
+
+otherdomains:
+  - pocketgm.ca
+  - servc.io
 
 certmanager:
   email: ali@yusuf.email
