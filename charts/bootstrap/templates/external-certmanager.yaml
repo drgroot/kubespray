@@ -141,7 +141,9 @@ spec:
         provider: cloudflare
         domainFilters:
           - {{ .Values.domains.external }}
-          - {{ .Values.domains.servc }}
+          {{- range $i := .Values.otherdomains }}
+          - {{ $i }}
+          {{- end }}
         sources:
           - ingress
         extraArgs:
