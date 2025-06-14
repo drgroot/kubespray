@@ -73,10 +73,10 @@ tenants:
 
       # chess app chart
       - name: chess
-        url: https://git.yusufali.ca/chess/ui.git
-        path: "charts/chess"
-        valuesRepo: https://git.yusufali.ca/chess/ui.git
-        valuesFile: "charts/deploy.values.yaml"
+        url: https://git.yusufali.ca/serv-c/charts.git
+        path: "charts/tenant"
+        valuesRepo: https://git.yusufali.ca/serv-c/tenants.git
+        valuesFile: "chess.values.yaml"
       
       # PLATFORM CHARTS
       - name: infra
