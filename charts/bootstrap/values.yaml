@@ -78,6 +78,7 @@ tenants:
 
   - name: media
     namespace: media
+    createNamespace: true
     permissions:
       - pvc
     sources:
