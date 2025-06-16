@@ -32,6 +32,7 @@ spec:
 ---
 {{- range $tenant := .Values.tenants }}
 ---
+{{- if $tenant.createNamespace }}
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -40,6 +41,7 @@ metadata:
     tenant: approved
     client: t
     name: {{ $tenant.name }}
+{{- end }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
