@@ -20,7 +20,7 @@ versions:
   redis: 20.2.1
   nfsprovisioner: 4.0.18
   prometheus: 69.1.2
-  gitea: c38703f21e
+  gitea: v12.1.0
 
 domains:
   internal: k8s.private
@@ -34,6 +34,9 @@ certmanager:
   email: ali@yusuf.email
 
 storageClasses:
+  - name: thorin-nobackup
+    hostname: 192.168.1.3
+    mountPath: /nobackup
   - name: thorin-dynamic
     hostname: 192.168.1.3
     mountPath: /dynamic
@@ -72,6 +75,21 @@ tenants:
         path: "charts/tenant"
         valuesRepo: https://git.yusufali.ca/serv-c/tenants.git
         valuesFile: "chess.values.yaml"
+
+  - name: media
+    namespace: media
+    createNamespace: true
+    permissions:
+      - pvc
+    sources:
+      - name: configs
+        url: https://git.yusufali.ca/drgroot/media.git
+        path: "chart"
+      - name: base
+        url: https://github.com/drgroot/kubespray.git
+        path: "charts/template-multi"
+        valuesRepo: https://git.yusufali.ca/drgroot/media.git
+        valuesFile: values.yaml
 
   - name: mordor
     namespace: mordor
