@@ -20,7 +20,7 @@ versions:
   redis: 20.2.1
   nfsprovisioner: 4.0.18
   prometheus: 69.1.2
-  gitea: v12.1.0
+  gitea: c38703f21e
 
 domains:
   internal: k8s.private
@@ -83,12 +83,12 @@ tenants:
       - pvc
     sources:
       - name: configs
-        url: https://git.yusufali.ca/drgroot/media.git
+        url: https://github.com/drgroot/media.git
         path: "chart"
       - name: base
         url: https://github.com/drgroot/kubespray.git
         path: "charts/template-multi"
-        valuesRepo: https://git.yusufali.ca/drgroot/media.git
+        valuesRepo: https://github.com/drgroot/media.git
         valuesFile: values.yaml
 
   - name: mordor
