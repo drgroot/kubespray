@@ -21,6 +21,7 @@ versions:
   nfsprovisioner: 4.0.18
   prometheus: 69.1.2
   gitea: c38703f21e
+  starrocks: 1.10.2
 
 domains:
   internal: k8s.private
