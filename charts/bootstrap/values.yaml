@@ -46,7 +46,7 @@ storageClasses:
     mountPath: /ssd-raid0
 
 tenants:
-  - name: tenant1-servc
+  - name: modlin-tenant
     namespace: servc
     ignoreDifferences:
       - group: apps
@@ -54,13 +54,13 @@ tenants:
         jsonPointers:
           - /spec/replicas
     sources:
-      - name: tenant1
+      - name: modlin
         url: https://git.yusufali.ca/serv-c/charts.git
         path: "charts/tenant"
-        valuesRepo: https://git.yusufali.ca/serv-c/tenants.git
-        valuesFile: "tenant1.values.yaml"
+        valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
+        valuesFile: "modlin.values.yaml"
 
-  - name: chess-servc
+  - name: chess-tenant
     namespace: servc
     ignoreDifferences:
       - group: apps
@@ -71,7 +71,7 @@ tenants:
       - name: chess
         url: https://git.yusufali.ca/serv-c/charts.git
         path: "charts/tenant"
-        valuesRepo: https://git.yusufali.ca/serv-c/tenants.git
+        valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
         valuesFile: "chess.values.yaml"
 
   - name: mordor
@@ -100,6 +100,10 @@ tenants:
       - name: infra
         url: https://git.yusufali.ca/serv-c/charts.git
         path: "charts/infra"
+        valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
+        valuesFile: "yusufsbasement.infra.yaml"
       - name: servc
         url: https://git.yusufali.ca/serv-c/charts.git
         path: "charts/servc"
+        valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
+        valuesFile: "yusufsbasement.platform.yaml"
