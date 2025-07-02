@@ -46,7 +46,7 @@ storageClasses:
     mountPath: /ssd-raid0
 
 tenants:
-  - name: modlin-tenant
+  - name: tenant-modlin
     namespace: servc
     ignoreDifferences:
       - group: apps
@@ -60,7 +60,7 @@ tenants:
         valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
         valuesFile: "modlin.values.yaml"
 
-  - name: chess-tenant
+  - name: tenant-chess
     namespace: servc
     ignoreDifferences:
       - group: apps
