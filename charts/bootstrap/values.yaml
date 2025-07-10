@@ -87,21 +87,6 @@ tenants:
       - url: https://git.yusufali.ca/drgroot/mordor.git
         path: ""
 
-  - name: media
-    namespace: media
-    createNamespace: true
-    permissions:
-      - pvc
-    sources:
-      - name: configs
-        url: https://github.com/drgroot/media.git
-        path: "chart"
-      - name: base
-        url: https://github.com/drgroot/kubespray.git
-        path: "charts/template-multi"
-        valuesRepo: https://github.com/drgroot/media.git
-        valuesFile: values.yaml
-
   - name: servc
     namespace: servc
     createNamespace: true
