@@ -85,9 +85,11 @@ spec:
       labels:
         app: ddns
     spec:
+      imagePullSecrets:
+        - name: cluster-docker-private
       containers:
         - name: app
-          image: hotio/cloudflareddns
+          image: registry.yusufali.ca/hotio/cloudflareddns
           env:
             - name: CF_USER
               value: {{ .Values.certmanager.email }}
