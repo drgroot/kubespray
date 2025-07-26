@@ -67,7 +67,7 @@ spec:
             type: ClusterIP
 
           ingress:
-            enabled: true
+            enable: true
             className: nginx
             host: coder.{{ .Values.domains.external }}
             wildcardHost: "*.coder.{{ .Values.domains.external }}"
