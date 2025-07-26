@@ -1,0 +1,85 @@
+{{ $coderNamespace := "coder" }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $coderNamespace }}
+  labels:
+    tenant: approved
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cloudflare
+spec:
+  secretStoreRef:
+    name: kubernetes
+    kind: ClusterSecretStore
+  target:
+    name: coder-postgres-secrets
+  data:
+    - remoteRef:
+        key: main-postgres-credentials-coder
+        property: url
+      secretKey: url
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap-external-coder
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ $coderNamespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: coder
+    repoURL: https://helm.coder.com/v2
+    targetRevision: {{ .Values.versions.coder }}
+    helm:
+      releaseName: coder
+      values: |-
+        coder:
+          env:
+            - name: CODER_ACCESS_URL
+              value: https://coder.{{ .Values.domains.external }}
+            - name: CODER_WILDCARD_ACCESS_URL
+              value: https://*.coder.{{ .Values.domains.external }}
+            - name: CODER_PG_CONNECTION_URL
+              valueFrom:
+                secretKeyRef:
+                  name: coder-postgres-secrets
+                  key: url
+            - name: CODER_OAUTH2_GITHUB_DEFAULT_PROVIDER_ENABLE
+              value: "false"
+          
+          service:
+            type: ClusterIP
+
+          ingress:
+            enabled: true
+            className: nginx
+            host: coder.{{ .Values.domains.external }}
+            wildcardHost: "*.coder.{{ .Values.domains.external }}"
+            annotations:
+              kubernetes.io/ingress.class: nginx
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              nginx.ingress.kubernetes.io/ssl-redirect: "true"
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+              external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
+            tls:
+              enable: true
+              secretName: coder-tls
+              wildcardSecretName: coder-wildcard-tls
+          
+
+---
