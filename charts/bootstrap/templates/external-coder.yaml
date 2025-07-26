@@ -12,7 +12,7 @@ metadata:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: cloudflare
+  name: coder-postgres-secrets
   namespace: {{ $coderNamespace }}
 spec:
   secretStoreRef:
