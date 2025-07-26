@@ -62,6 +62,9 @@ spec:
             - name: gitea
               passwordkey: giteapassword
               schema: gitea
+            - name: coder
+              passwordkey: password
+              schema: coder
 
         pushsecret:
           secretstore: kubernetes
