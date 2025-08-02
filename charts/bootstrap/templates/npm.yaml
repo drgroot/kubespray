@@ -109,14 +109,19 @@ kind: Ingress
 metadata:
   name: npm
   annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
-    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
     nginx.ingress.kubernetes.io/client_max_body_size: 512m
     nginx.ingress.kubernetes.io/proxy-body-size: 512m
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
+  tls:
+    - hosts:
+        - "*.{{ .Values.domains.external }}"
+      secretName: wildcard-yusufali
   ingressClassName: nginx
   rules:
     - host: npm.{{ .Values.domains.external }}
