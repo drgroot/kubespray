@@ -1,4 +1,28 @@
 ---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: npm-htpasswd
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: npm-htpasswd
+    template:
+      type: Opaque
+      data:
+        htpasswd: "{{ `{{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD }}` }}"
+  data:
+    - remoteRef:
+        key: DOCKER_PRIVATE
+        property: npmuser
+      secretKey: PRIVATE_USERNAME
+    - remoteRef:
+        key: DOCKER_PRIVATE
+        property: password
+      secretKey: PRIVATE_PASSWORD
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -57,7 +81,7 @@ spec:
             name: npm-config
         - name: htppasswd
           secret:
-            secretName: registry-htpasswd
+            secretName: npm-htpasswd
       containers:
         - name: app
           image: verdaccio/verdaccio:{{ .Values.versions.verdaccio }}
