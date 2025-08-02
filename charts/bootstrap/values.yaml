@@ -23,6 +23,7 @@ versions:
   gitea: c38703f21e
   starrocks: 1.10.2
   coder: 2.24.2
+  verdaccio: 6.0.5
 
 domains:
   internal: k8s.private
