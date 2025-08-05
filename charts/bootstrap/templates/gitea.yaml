@@ -101,6 +101,8 @@ spec:
             nginx.ingress.kubernetes.io/ssl-redirect: "true"
             nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
             external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
+            nginx.ingress.kubernetes.io/client-body-buffer-size: 20m
+            nginx.ingress.kubernetes.io/proxy-body-size: 20m
           tls:
             - hosts:
                 - "*.{{ .Values.domains.external }}"
