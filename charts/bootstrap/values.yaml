@@ -31,7 +31,6 @@ domains:
 
 otherdomains:
   - pocketgm.ca
-  - servc.io
 
 certmanager:
   email: ali@yusuf.email
