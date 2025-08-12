@@ -103,7 +103,7 @@ tenants:
         url: https://git.yusufali.ca/serv-c/charts.git
         path: "charts/infra"
         valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
-        valuesFile: "yusufsbasement.infra.yaml"
+        valuesFile: "nonprod/yusufsbasement.infra.yaml"
 
   - name: servc-platform
     namespace: servc
@@ -120,4 +120,4 @@ tenants:
         url: https://git.yusufali.ca/serv-c/charts.git
         path: "charts/servc"
         valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
-        valuesFile: "yusufsbasement.platform.yaml"
+        valuesFile: "nonprod/yusufsbasement.platform.yaml"
