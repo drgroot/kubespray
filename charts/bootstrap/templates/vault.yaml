@@ -113,3 +113,31 @@ spec:
                   number: 8200
             path: /
             pathType: Prefix
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vault-external
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: vault.{{ .Values.domains.external }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: vault
+                port:
+                  number: 8200
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+      - '*.{{ .Values.domains.external }}'
+      secretName: wildcard-external
