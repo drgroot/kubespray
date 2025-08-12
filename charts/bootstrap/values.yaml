@@ -47,20 +47,6 @@ storageClasses:
     mountPath: /ssd-raid0
 
 tenants:
-  - name: tenant-modlin
-    namespace: servc
-    ignoreDifferences:
-      - group: apps
-        kind: Deployment
-        jsonPointers:
-          - /spec/replicas
-    sources:
-      - name: modlin
-        url: https://git.yusufali.ca/serv-c/charts.git
-        path: "charts/tenant"
-        valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
-        valuesFile: "modlin.values.yaml"
-
   - name: tenant-chess
     namespace: servc
     ignoreDifferences:
