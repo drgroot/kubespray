@@ -36,6 +36,9 @@ certmanager:
   email: ali@yusuf.email
 
 storageClasses:
+  - name: thorin-nobackup
+    hostname: 192.168.1.3
+    mountPath: /nobackup
   - name: thorin-dynamic
     hostname: 192.168.1.3
     mountPath: /dynamic
@@ -47,6 +50,21 @@ storageClasses:
     mountPath: /ssd-raid0
 
 tenants:
+  - name: media
+    namespace: media
+    createNamespace: true
+    permissions:
+      - pvc
+    sources:
+      - name: configs
+        url: https://github.com/drgroot/media.git
+        path: "chart"
+      - name: base
+        url: https://github.com/drgroot/kubespray.git
+        path: "charts/template-multi"
+        valuesRepo: https://github.com/drgroot/media.git
+        valuesFile: values.yaml
+
   - name: mordor
     namespace: mordor
     createNamespace: true
