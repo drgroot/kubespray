@@ -17,4 +17,4 @@ spec:
   source:
     path: manifests
     repoURL: https://github.com/argoproj-labs/argocd-image-updater.git
-    targetRevision: release-{{ .Values.argoupdater }}
+    targetRevision: release-{{ .Values.versions.argoupdater }}
