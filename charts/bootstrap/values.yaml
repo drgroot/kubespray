@@ -111,6 +111,21 @@ tenants:
         path: "charts/servc"
         valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
         valuesFile: "nonprod/yusufsbasement.platform.yaml"
+    updater:
+      - name: publisher
+        image: registry.yusufali.ca/serv-c/servc-core-publisher:latest
+      - name: dataservice
+        image: registry.yusufali.ca/serv-c/servc-core-data-service:latest
+      - name: orchestrator
+        image: registry.yusufali.ca/serv-c/servc-core-orchestrator:latest
+      - name: internalapi
+        image: registry.yusufali.ca/serv-c/servc-core-api:latest
+      - name: provisioner
+        image: registry.yusufali.ca/serv-c/servc-core-provisioner:latest
+      - name: api
+        image: registry.yusufali.ca/serv-c/servc-core-api:latest
+        helmImageName: services.external.api.image.name
+      
 
   - name: tenant-chess
     namespace: servc
@@ -125,3 +140,8 @@ tenants:
         path: "charts/tenant"
         valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
         valuesFile: "chess.values.yaml"
+    updater:
+      - name: ui
+        image: registry.yusufali.ca/servc-tenants/chess-ui:latest
+        helmImageName: image.repository
+        helmImageVersion: image.tag
