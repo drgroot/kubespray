@@ -97,11 +97,31 @@ spec:
       kind: '*'
   {{- end }}
 ---
+{{- $imagesToUpdate := list }}
+{{- range $image := $tenant.updater }}
+{{- $imagesToUpdate = append $imagesToUpdate (printf "%s=%s" $image.name $image.image) }}
+{{- end }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: tenant-{{ $tenant.name }}
   namespace: argocd
+  annotations:
+    argocd-image-updater.argoproj.io/pull-secret: pullsecret:argocd/cluster-docker-secrets
+    {{- if ne (len $imagesToUpdate) 0}}
+    argocd-image-updater.argoproj.io/image-list: {{ join ", " $imagesToUpdate }}
+    {{- end }}
+
+  {{- range $image := $tenant.updater }}
+    argocd-image-updater.argoproj.io/{{ $image.name }}.update-strategy: {{ $image.updateStrategy | default "digest" }}
+    argocd-image-updater.argoproj.io/{{ $image.name }}.helm.image-name: {{ $image.helmImageName | default (printf "services.internal.%s.image.name" $image.name) }}
+    argocd-image-updater.argoproj.io/{{ $image.name }}.helm.image-tag: {{ $image.helmImageVersion | default (printf "versions.%s" $image.name) }} 
+    argocd-image-updater.argoproj.io/{{ $image.name }}.force-update: "true"
+  {{- end }}
+
+  {{- with $tenant.annotations }}
+    {{- toYaml $tenant.annotations | nindent 4 }}
+  {{- end }}
 spec:
   {{- with $tenant.ignoreDifferences }}
   ignoreDifferences:
