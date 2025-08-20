@@ -118,6 +118,8 @@ tenants:
         image: registry.yusufali.ca/serv-c/servc-core-data-service:latest
       - name: orchestrator
         image: registry.yusufali.ca/serv-c/servc-core-orchestrator:latest
+      - name: llm
+        image: registry.yusufali.ca/serv-c/servc-core-llm:latest
       - name: internalapi
         image: registry.yusufali.ca/serv-c/servc-core-api:latest
       - name: provisioner
