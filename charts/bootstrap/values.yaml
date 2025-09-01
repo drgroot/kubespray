@@ -13,7 +13,7 @@ storage:
 versions:
   ingressnginx: 4.13.2
   keda: 2.17.2
-  externalsecrets: 0.19.2
+  externalsecrets: 0.10.5
   certmanager: 1.18.2
   externaldns: 1.18.0
   redis: 20.2.1
