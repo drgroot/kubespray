@@ -19,6 +19,7 @@ versions:
   redis: 20.2.1
   nfsprovisioner: 4.0.18
   gitea: c38703f21e
+  prometheus: 77.3.0
   starrocks: 1.11.1
   coder: 2.24.2
   verdaccio: 6.1.6
