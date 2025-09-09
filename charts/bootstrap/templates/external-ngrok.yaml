@@ -48,6 +48,9 @@ spec:
           ingressClass:
             create: false
 
+        bindings:
+          enabled: true
+
         credentials:
           secret:
             name: ngrok-operator-credentials
