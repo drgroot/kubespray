@@ -22,11 +22,11 @@ spec:
     - remoteRef:
         key: TAILSCALE
         property: client-id
-      secretKey: client-id
+      secretKey: client_id
     - remoteRef:
         key: TAILSCALE
         property: client-secret
-      secretKey: client-secret
+      secretKey: client_secret
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
