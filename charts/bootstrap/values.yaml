@@ -24,6 +24,7 @@ versions:
   coder: 2.24.2
   verdaccio: 6.1.6
   argoupdater: 0.16
+  ngrok: 0.20.0
 
 domains:
   internal: k8s.private
