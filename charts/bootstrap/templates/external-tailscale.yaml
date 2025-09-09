@@ -14,7 +14,7 @@ metadata:
   namespace: tailscale
 spec:
   secretStoreRef:
-    name: kubernetes
+    name: external-infra
     kind: ClusterSecretStore
   target:
     name: operator-oauth
