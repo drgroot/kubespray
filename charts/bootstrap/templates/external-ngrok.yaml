@@ -47,3 +47,7 @@ spec:
           enabled: false
           ingressClass:
             create: false
+
+        credentials:
+          secret:
+            name: ngrok-operator-credentials
