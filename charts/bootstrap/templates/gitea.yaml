@@ -72,8 +72,8 @@ spec:
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
-    path: .
-    repoURL: https://gitea.com/gitea/helm-gitea.git
+    chart: gitea
+    repoURL: https://dl.gitea.com/charts/
     targetRevision: {{ .Values.versions.gitea }}
     helm:
       releaseName: gitea
@@ -222,90 +222,17 @@ spec:
               minimum_key_sizes:
                 RSA: 2048
 
-        actions:
-          enabled: true
-
-          statefulset:
-            resources:
-              requests:
-                memory: "512Mi"
-                cpu: "200m"
-              limits:
-                memory: "4.5Gi"
-                cpu: "1"
-
-            extraVolumes:
-              - name: docker-secret
-                secret:
-                  secretName: cluster-docker-secrets
-
-            dind:
-              # resources:
-              #   requests:
-              #     memory: "512Mi"
-              #     cpu: "200m"
-              #   limits:
-              #     memory: "4.5Gi"
-              #     cpu: "1"
-
-              extraVolumeMounts:
-                - name: docker-secret
-                  mountPath: /root/.docker/config.json
-                  subPath: .dockerconfigjson
-
-            actRunner:
-              # resources:
-              #   requests:
-              #     memory: "256Mi"
-              #     cpu: "150m"
-              #   limits:
-              #     memory: "1Gi"
-              #     cpu: "300m"
-
-              extraVolumeMounts:
-                - name: docker-secret
-                  mountPath: /root/.docker/config.json
-                  subPath: .dockerconfigjson
- 
-              config: |
-                log:
-                  level: debug
-                cache:
-                  enabled: false
-                runner:
-                  labels:
-                    - "ubuntu-latest:docker://registry.yusufali.ca/catthehacker/ubuntu"
-
-          existingSecret: gitea-runner-secrets
-          existingSecretKey: token
-        
-        redis-cluster:
+        valkey-cluster:
           enabled: false
-        
+
+        valkey:
+          enabled: false
+
         postgresql-ha:
           enabled: false
         
         postgresql:
           enabled: false
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: gitea-runner
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: StatefulSet
-    name: gitea-act-runner
-  minReplicas: 1
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 50
 ---
 apiVersion: batch/v1
 kind: CronJob
