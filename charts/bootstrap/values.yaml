@@ -18,7 +18,7 @@ versions:
   externaldns: 1.18.0
   redis: 20.2.1
   nfsprovisioner: 4.0.18
-  gitea: c38703f21e
+  gitea: v12.3.0
   prometheus: 77.3.0
   starrocks: 1.11.1
   coder: 2.24.2
