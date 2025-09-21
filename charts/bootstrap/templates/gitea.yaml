@@ -257,6 +257,9 @@ spec:
     helm:
       releaseName: gitea-actions
       values: |-
+        global:
+          storageClass: {{ .Values.storage.ssd }}
+
         enabled: true
         existingSecret: gitea-runner-secrets
         existingSecretKey: token
