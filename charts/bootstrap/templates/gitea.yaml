@@ -234,6 +234,69 @@ spec:
         postgresql:
           enabled: false
 ---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap-external-gitea-actions
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: gitea-actions
+    repoURL: https://dl.gitea.com/charts/
+    targetRevision: {{ .Values.versions.giteaactions }}
+    helm:
+      releaseName: gitea-actions
+      values: |-
+        enabled: true
+        existingSecret: gitea-runner-secrets
+        existingSecretKey: token
+        giteaRootURL: https://git.{{ .Values.domains.external }}
+
+        statefulset:
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "4.5Gi"
+              cpu: "1"
+
+          extraVolumes:
+            - name: docker-secret
+              secret:
+                secretName: cluster-docker-secrets
+
+          dind:
+            extraVolumeMounts:
+              - name: docker-secret
+                mountPath: /root/.docker/config.json
+                subPath: .dockerconfigjson
+
+          actRunner:
+            extraVolumeMounts:
+              - name: docker-secret
+                mountPath: /root/.docker/config.json
+                subPath: .dockerconfigjson
+
+            config: |
+              log:
+                level: debug
+              cache:
+                enabled: false
+              runner:
+                labels:
+                  - "ubuntu-latest:docker://registry.yusufali.ca/catthehacker/ubuntu"
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
