@@ -77,6 +77,24 @@ tenants:
       - url: https://git.yusufali.ca/drgroot/mordor.git
         path: ""
 
+  - name: servc-prod
+    namespace: servc-prod
+    createNamespace: true
+    permissions:
+      - argo
+      - pvc
+    ignoreDifferences:
+      - group: apps
+        kind: Deployment
+        jsonPointers:
+          - /spec/replicas
+    sources:
+      - name: infra
+        url: https://git.yusufali.ca/serv-c/charts.git
+        path: "charts/infra"
+        valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
+        valuesFile: "prod/yusufsbasement.infra.yaml"
+
   - name: servc
     namespace: servc
     createNamespace: true
