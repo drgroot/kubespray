@@ -6,7 +6,8 @@ storage:
   ssd: asdasd
 
 versions:
-  redis: 20.2.1
+  redis: 8
+  verdaccio: 6.1.6
 
 domains:
   internal: asd

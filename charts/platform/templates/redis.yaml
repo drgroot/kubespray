@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: redis:8
+          image: redis:{{ .Values.versions.redis }}
           ports:
             - containerPort: 6379
           livenessProbe:
