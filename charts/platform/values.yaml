@@ -1,0 +1,13 @@
+project: boasdasdotstrap
+
+storage:
+  default: asdasd
+  backup: asdasd
+  ssd: asdasd
+
+versions:
+  redis: 20.2.1
+
+domains:
+  internal: asd
+  external: asd

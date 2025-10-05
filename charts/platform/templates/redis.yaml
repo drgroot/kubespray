@@ -1,0 +1,84 @@
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: redis-credentials
+spec:
+  secretStoreRefs:
+    - name: kubernetes
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: platform-fake-secret
+  template:
+    data:
+      hostname: redis.{{ .Release.Namespace }}.svc.cluster.local
+      url: "redis://redis.{{ .Release.Namespace }}.svc.cluster.local:6379"
+  data:
+    - match:
+        secretKey: hostname
+        remoteRef:
+          remoteKey: redis
+          property: hostname
+    - match:
+        secretKey: url
+        remoteRef:
+          remoteKey: redis
+          property: url
+    - match:
+        secretKey: url
+        remoteRef:
+          remoteKey: redis
+          property: CACHE_URL
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: app
+          image: redis:8
+          ports:
+            - containerPort: 6379
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - PING
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 50m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+  type: ClusterIP
