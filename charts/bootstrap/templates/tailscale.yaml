@@ -4,8 +4,6 @@ metadata:
   name: tailscale
   labels:
     tenant: approved
-  annotations:
-    argocd.argoproj.io/sync-wave: "-2"
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret

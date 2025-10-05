@@ -5,5 +5,5 @@ metadata:
   labels:
     tenant: approved
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"
+    argocd.argoproj.io/sync-wave: "-4"
 ---

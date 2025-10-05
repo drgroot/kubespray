@@ -3,7 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: vault
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   accessModes:
     - ReadWriteOnce
@@ -19,7 +19,7 @@ metadata:
   labels:
     app: vault
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   replicas: 1
   selector:
@@ -86,7 +86,7 @@ metadata:
   labels:
     app: vault
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   selector:
     app: vault
@@ -100,6 +100,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: vault
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   ingressClassName: nginx
   rules:

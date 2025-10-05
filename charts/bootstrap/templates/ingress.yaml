@@ -1,8 +1,19 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: networking
+  labels:
+    tenant: approved
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: bootstrap-external-ingress
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   syncPolicy:
     automated:
@@ -11,7 +22,7 @@ spec:
     syncOptions:
       - ServerSideApply=true
   destination:
-    namespace: {{ .Release.Namespace }}
+    namespace: networking
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
@@ -34,7 +45,7 @@ spec:
             minReplicas: 3
           
           metrics:
-            namespace: {{ .Release.Namespace }}
+            namespace: networking
             enabled: false
             serviceMonitor:
               enabled: true

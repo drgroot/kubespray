@@ -6,7 +6,7 @@ metadata:
   name: nfs-{{ $storageClass.name }}
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-10"
+    argocd.argoproj.io/sync-wave: "-3"
 spec:
   syncPolicy:
     automated:
