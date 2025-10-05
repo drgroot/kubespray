@@ -32,6 +32,14 @@ spec:
     - namespace: argocd
       server: '*'
   {{- end }}
+    - namespace: servc-nonprod
+      server: '*'
+    - namespace: servc-prod
+      server: '*'
+    - namespace: system-starrocks
+      server: '*'
+    - namespace: servc-prod
+      server: '*'
     - namespace: {{ $tenant.namespace }}
       server: '*'
   syncWindows:
