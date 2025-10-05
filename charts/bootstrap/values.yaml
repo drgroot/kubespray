@@ -87,6 +87,6 @@ tenants:
     sources:
       - name: infra
         url: https://git.yusufali.ca/serv-c/charts.git
-        path: "charts/infra"
+        path: "charts/aks"
         valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
         valuesFile: "platform/onpremise.yaml"
