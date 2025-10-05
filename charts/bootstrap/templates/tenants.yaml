@@ -50,8 +50,8 @@ metadata:
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 spec:
   sourceRepos:
     - "*"
@@ -107,6 +107,7 @@ metadata:
   name: tenant-{{ $tenant.name }}
   namespace: argocd
   annotations:
+    argocd.argoproj.io/sync-wave: "10"
     argocd-image-updater.argoproj.io/pull-secret: pullsecret:argocd/cluster-docker-secrets
     {{- if ne (len $imagesToUpdate) 0}}
     argocd-image-updater.argoproj.io/image-list: {{ join ", " $imagesToUpdate }}
