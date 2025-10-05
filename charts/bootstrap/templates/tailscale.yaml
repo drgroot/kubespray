@@ -1,15 +1,19 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: tailscale
+  name: kube-tailscale
   labels:
     tenant: approved
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: operator-oauth
-  namespace: tailscale
+  namespace: kube-tailscale
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   secretStoreRef:
     name: external-infra
@@ -39,7 +43,7 @@ spec:
     syncOptions:
       - ServerSideApply=true
   destination:
-    namespace: tailscale
+    namespace: kube-tailscale
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
