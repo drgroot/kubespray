@@ -20,6 +20,7 @@ versions:
   certmanager: 1.18.2
   externaldns: 1.18.0
   prometheus: 77.3.0
+  postgres: 0.26.0
 
 domains:
   internal: k8s.private

@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-postgres
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: system-postgres
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true
+  destination:
+    namespace: kube-postgres
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: cloudnative-pg
+    repoURL: https://cloudnative-pg.github.io/charts
+    targetRevision: {{ .Values.versions.postgres }}
+    helm:
+      releaseName: postgres
+      values: |-
+        crds:
+          create: true
