@@ -32,14 +32,10 @@ spec:
     - namespace: argocd
       server: '*'
   {{- end }}
-    - namespace: servc-nonprod
+  {{- if has "servc" $tenant.permissions }}
+    - namespace: '*'
       server: '*'
-    - namespace: servc-prod
-      server: '*'
-    - namespace: system-starrocks
-      server: '*'
-    - namespace: servc-prod
-      server: '*'
+  {{- end }}
     - namespace: {{ $tenant.namespace }}
       server: '*'
   syncWindows:
@@ -56,9 +52,11 @@ spec:
         - "*"
       kind: "allow"
       manualSync: true
+  {{- if not (has "servc" $tenant.permissions) }}
   clusterResourceBlacklist:
     - group: "*"
       kind: "*"
+  {{- end }}
   namespaceResourceBlacklist:
   {{- if not (has "pvc" $tenant.permissions) }}
     - group: ''
