@@ -72,24 +72,6 @@ tenants:
       - url: https://git.yusufali.ca/drgroot/mordor.git
         path: ""
 
-  - name: servc-prod
-    namespace: servc-prod
-    createNamespace: true
-    permissions:
-      - argo
-      - pvc
-    ignoreDifferences:
-      - group: apps
-        kind: Deployment
-        jsonPointers:
-          - /spec/replicas
-    sources:
-      - name: infra
-        url: https://git.yusufali.ca/serv-c/charts.git
-        path: "charts/infra"
-        valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
-        valuesFile: "prod/yusufsbasement.infra.yaml"
-
   - name: servc
     namespace: servc
     createNamespace: true
@@ -107,57 +89,4 @@ tenants:
         url: https://git.yusufali.ca/serv-c/charts.git
         path: "charts/infra"
         valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
-        valuesFile: "nonprod/yusufsbasement.infra.yaml"
-
-  - name: servc-platform
-    namespace: servc
-    permissions:
-      - argo
-      - pvc
-    ignoreDifferences:
-      - group: apps
-        kind: Deployment
-        jsonPointers:
-          - /spec/replicas
-    sources:
-      - name: servc
-        url: https://git.yusufali.ca/serv-c/charts.git
-        path: "charts/servc"
-        valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
-        valuesFile: "nonprod/yusufsbasement.platform.yaml"
-    updater:
-      - name: publisher
-        image: registry.yusufali.ca/serv-c/servc-core-publisher:latest
-      - name: dataservice
-        image: registry.yusufali.ca/serv-c/servc-core-data-service:latest
-      - name: orchestrator
-        image: registry.yusufali.ca/serv-c/servc-core-orchestrator:latest
-      - name: llm
-        image: registry.yusufali.ca/serv-c/servc-core-llm:latest
-      - name: internalapi
-        image: registry.yusufali.ca/serv-c/servc-core-api:latest
-      - name: provisioner
-        image: registry.yusufali.ca/serv-c/servc-core-provisioner:latest
-      - name: api
-        image: registry.yusufali.ca/serv-c/servc-core-api:latest
-        helmImageName: services.external.api.image.name
-      
-
-  - name: tenant-chess
-    namespace: servc
-    ignoreDifferences:
-      - group: apps
-        kind: Deployment
-        jsonPointers:
-          - /spec/replicas
-    sources:
-      - name: chess
-        url: https://git.yusufali.ca/serv-c/charts.git
-        path: "charts/tenant"
-        valuesRepo: https://git.yusufali.ca/servc-tenants/charts.git
-        valuesFile: "chess.values.yaml"
-    updater:
-      - name: ui
-        image: registry.yusufali.ca/servc-tenants/chess-ui:latest
-        helmImageName: image.repository
-        helmImageVersion: image.tag
+        valuesFile: "platform/onpremise.yaml"
