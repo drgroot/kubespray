@@ -207,16 +207,16 @@ spec:
 
             queue:
               TYPE: redis
-              CONN_STR: redis://redis-headless.{{ .Release.Namespace }}.svc.cluster.local:6379/0
+              CONN_STR: redis://redis.{{ .Release.Namespace }}.svc.cluster.local:6379/0
 
             session:
               PROVIDER: redis
-              PROVIDER_CONFIG: redis://redis-headless.{{ .Release.Namespace }}.svc.cluster.local:6379/0
+              PROVIDER_CONFIG: redis://redis.{{ .Release.Namespace }}.svc.cluster.local:6379/0
 
             cache:
               ENABLED: true
               ADAPTER: redis
-              HOST: redis://redis-headless.{{ .Release.Namespace }}.svc.cluster.local:6379/0
+              HOST: redis://redis.{{ .Release.Namespace }}.svc.cluster.local:6379/0
 
             ssh:
               minimum_key_sizes:
