@@ -16,6 +16,10 @@ versions:
   externalsecrets: 0.10.5
   nfsprovisioner: 4.0.18
   tailscale: 1.86.5
+  keda: 2.17.2
+  certmanager: 1.18.2
+  externaldns: 1.18.0
+  prometheus: 77.3.0
 
 domains:
   internal: k8s.private

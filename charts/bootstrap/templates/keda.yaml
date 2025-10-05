@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap-external-keda
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true
+  destination:
+    namespace: kube-keda
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: keda
+    repoURL: https://kedacore.github.io/charts
+    targetRevision: {{ .Values.versions.keda }}
+    helm:
+      releaseName: keda
