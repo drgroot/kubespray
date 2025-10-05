@@ -97,7 +97,7 @@ spec:
   tls:
     - hosts:
         - "*.{{ .Values.domains.external }}"
-      secretName: wildcard-yusufali
+      secretName: wildcard-external
   ingressClassName: nginx
   rules:
     - host: pypi.{{ .Values.domains.external }}

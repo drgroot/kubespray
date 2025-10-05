@@ -148,7 +148,7 @@ spec:
   tls:
     - hosts:
         - "*.{{ .Values.domains.external }}"
-      secretName: wildcard-yusufali
+      secretName: wildcard-external
   ingressClassName: nginx
   rules:
     - host: npm.{{ .Values.domains.external }}
