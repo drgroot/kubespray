@@ -79,6 +79,7 @@ tenants:
       - argo
       - rbac
       - pvc
+      - servc
     ignoreDifferences:
       - group: apps
         kind: Deployment
