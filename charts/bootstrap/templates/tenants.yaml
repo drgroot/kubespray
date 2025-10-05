@@ -52,6 +52,11 @@ spec:
         - "*"
       kind: "allow"
       manualSync: true
+  {{- if has "servc" $tenant.permissions }}
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  {{- end }}
   {{- if not (has "servc" $tenant.permissions) }}
   clusterResourceBlacklist:
     - group: "*"
