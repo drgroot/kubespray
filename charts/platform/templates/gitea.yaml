@@ -309,7 +309,7 @@ spec:
     apiVersion: apps/v1
     kind: StatefulSet
     name: gitea-actions-act-runner
-  minReplicas: 1
+  minReplicas: 2
   maxReplicas: 10
   metrics:
     - type: Resource
