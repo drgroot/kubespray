@@ -309,6 +309,9 @@ spec:
     apiVersion: apps/v1
     kind: StatefulSet
     name: gitea-actions-act-runner
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
   minReplicas: 2
   maxReplicas: 10
   metrics:
