@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Tailscale
         uses: tailscale/github-action@v3
+        env:
+          TS_DEBUG_FIREWALL_MODE: auto
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
