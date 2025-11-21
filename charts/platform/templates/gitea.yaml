@@ -327,7 +327,7 @@ kind: CronJob
 metadata:
   name: renovate
 spec:
-  schedule: "0 3 * * *"
+  schedule: "0 */4 * * *"
   failedJobsHistoryLimit: 1
   successfulJobsHistoryLimit: 0
   concurrencyPolicy: Forbid
