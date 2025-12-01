@@ -266,6 +266,7 @@ spec:
         giteaRootURL: https://git.{{ .Values.domains.external }}
 
         statefulset:
+          replicas: 5
           resources:
             requests:
               memory: "512Mi"
@@ -299,28 +300,6 @@ spec:
               runner:
                 labels:
                   - "ubuntu-latest:docker://registry.yusufali.ca/catthehacker/ubuntu"
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: gitea-runner
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: StatefulSet
-    name: gitea-actions-act-runner
-  behavior:
-    scaleDown:
-      stabilizationWindowSeconds: 300
-  minReplicas: 4
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 50
 ---
 apiVersion: batch/v1
 kind: CronJob
