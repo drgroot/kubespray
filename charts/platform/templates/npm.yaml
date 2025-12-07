@@ -44,6 +44,12 @@ data:
         cache: true
     packages:
       '@servc/*':
+        access: $authenticated
+        publish: $authenticated
+      '@*/*':
+        access: $all
+        publish: $authenticated
+      '**':
         access: $all
         publish: $authenticated
 ---
