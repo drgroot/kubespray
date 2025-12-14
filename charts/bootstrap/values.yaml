@@ -54,7 +54,7 @@ tenants:
       - pvc
     sources:
       - url: https://git.yusufali.ca/automation/charts.git
-        path: ""
+        path: "chart"
 
   - name: media
     namespace: media
