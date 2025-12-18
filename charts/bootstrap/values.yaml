@@ -52,6 +52,7 @@ tenants:
     createNamespace: true
     permissions:
       - pvc
+      - argo
     sources:
       - url: https://git.yusufali.ca/automation/charts.git
         path: "chart"
