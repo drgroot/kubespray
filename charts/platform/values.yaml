@@ -6,7 +6,6 @@ storage:
   ssd: asdasd
 
 versions:
-  redis: 8
   verdaccio: 6.1.6
   gitea: 12.4.0
   giteaactions: 0.0.2
@@ -14,3 +13,10 @@ versions:
 domains:
   internal: asd
   external: asd
+
+redis:
+  version: 8
+
+  resources:
+    cpu: 50m
+    memory: 256Mi
