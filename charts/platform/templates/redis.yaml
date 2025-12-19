@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: redis:{{ .Values.redis.versions }}
+          image: redis:{{ .Values.redis.version }}
           ports:
             - containerPort: 6379
           args:
