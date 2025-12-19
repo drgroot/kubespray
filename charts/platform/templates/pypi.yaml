@@ -8,7 +8,66 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  storageClassName: {{ .Values.storage.default }}
+  storageClassName: thorin-nobackup
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bandersnatch-config
+data:
+  bandersnatch.conf: |
+    [mirror]
+    directory = /data/packages
+    master = https://pypi.org
+    json = true
+    workers = 2
+    stop-on-error = true
+
+    [plugins]
+    enabled =
+        allowlist_project
+        allowlist_release
+
+    [allowlist]
+    packages =
+        requests
+        types-requests
+        alembic
+        pika
+        redis
+        types-redis
+        servc
+        simplejson
+        types-simplejson
+        flask
+        pyyaml
+        types-PyYAML
+        pyiceberg
+        pyarrow-stubs
+        pyarrow
+        sqlgot
+        pydantic
+        SQLAlchemy
+        psycopg2-binary
+        boto3
+        deltalake
+        pyspark
+        delta-spark
+        mypy
+        coverage
+        build
+        twine
+        mysql-connector-python
+        pandas
+        pandas-stubs
+        openpyxl
+        google-meridian
+        tensorflow
+        openai
+        langchain
+        langchain-core
+        langchain-openai
+        langgraph
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -33,6 +92,9 @@ spec:
         - name: htppasswd
           secret:
             secretName: registry-htpasswd
+        - name: bandersnatch-config
+          configMap:
+            name: bandersnatch-config
       containers:
         - name: app
           image: pypiserver/pypiserver
@@ -67,6 +129,31 @@ spec:
               mountPath: /htpasswd
             - name: pypidata
               mountPath: /data/packages
+        - name: bandersnatch
+          image: pypa/bandersnatch:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              while true; do
+                bandersnatch mirror --config /etc/bandersnatch/bandersnatch.conf
+                sleep 3600
+              done
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
+          volumeMounts:
+            - name: pypidata
+              mountPath: /data/packages
+            - name: bandersnatch-config
+              mountPath: /etc/bandersnatch
+              readOnly: true
 ---
 apiVersion: v1
 kind: Service
