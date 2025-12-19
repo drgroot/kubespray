@@ -108,7 +108,7 @@ spec:
             - 'update'
             - --passwords
             - /htpasswd/htpasswd
-            - /data/packages
+            - /data/packages/packages
           livenessProbe:
             httpGet:
               path: /health
