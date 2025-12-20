@@ -258,7 +258,7 @@ spec:
       releaseName: gitea-actions
       values: |-
         global:
-          storageClass: {{ .Values.storage.ssd }}
+          storageClass: {{ .Values.storage.fast }}
 
         enabled: true
         existingSecret: gitea-runner-secrets
