@@ -1,49 +1,33 @@
-name: Change Log
-
-on:
-  push:
-  pull_request:
-
-permissions:
-  contents: write
-
 jobs:
   commitlint:
     name: commitlint
-    runs-on: ubuntu-latest
-
+    runs-on:
+    - ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install lint
-        run: |
-          if [ -f package.json ]; then
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+        submodules: true
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 23.1
+    - name: Install commitlint
+      run: |
+        if [ -f package.json ]; then
             rm package*.json
-          fi
-          npm install -g @commitlint/cli @commitlint/config-conventional
-          if [ ! -f "commitlint.config.js" ]; then
+        fi
+        npm install -g @commitlint/cli @commitlint/config-conventional
+        if [ ! -f "commitlint.config.js" ]; then
             echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
-          fi
-
-      - name: Lint Commit Message
-        if: github.event_name == 'push'
-        run: commitlint --from=HEAD~2 --verbose || true
-
-      - name: Lint Pull Request
-        if: github.event_name == 'pull_request'
-        run: commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
-
-      - name: Conventional Changelog Action
-        if: github.ref_name == 'main'
-        uses: TriPSs/conventional-changelog-action@v5
-        with:
-          github-token: ${{ secrets.github_token }}
-          skip-commit: "true"
-          tag-prefix: ""
+        fi
+    - if: github.event_name == 'push'
+      name: Lint Commit Message
+      run: commitlint --from=HEAD~1 --verbose
+    - if: github.event_name == 'pull_request'
+      name: Lint Pull Request
+      run: commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+name: COMMIT LINT
+'on':
+  pull_request: {}
+run-name: COMMIT LINT
