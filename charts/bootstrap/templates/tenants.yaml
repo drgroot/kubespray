@@ -132,9 +132,9 @@ spec:
           namespace: {{ $tenant.namespace }}
           project: tenant-{{ $tenant.name }}
 
-          {{- with $.Values.storage }}
           storage:
-            {{- toYaml . | nindent 12 }}
+          {{- range $storageClass := $.Values.storageClasses }}
+            {{ $storageClass.name }}: {{ $storageClass.prefix }}{{ $storageClass.name }}
           {{- end }}
 
           {{- with $.Values.domains }}

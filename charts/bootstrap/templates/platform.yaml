@@ -30,9 +30,9 @@ spec:
       values: |
         project: {{ .Values.project }}
 
-        {{- with $.Values.storage }}
         storage:
-          {{- toYaml . | nindent 12 }}
+        {{- range $storageClass := .Values.storageClasses }}
+          {{ $storageClass.name }}: {{ $storageClass.prefix }}{{ $storageClass.name }}
         {{- end }}
 
         {{- with $.Values.domains }}

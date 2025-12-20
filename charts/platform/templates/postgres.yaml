@@ -47,10 +47,10 @@ spec:
       values: |-
         fullnameOverride: main
 
-        storageclass: {{ .Values.storage.ssd }}
+        storageclass: {{ .Values.storage.fast }}
 
         backup:
-          storageclass: {{ .Values.storage.backup }}
+          storageclass: {{ .Values.storage.default }}
 
         server:
           password:
