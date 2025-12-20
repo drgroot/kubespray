@@ -94,7 +94,7 @@ spec:
             name: bandersnatch-config
       initContainers:
         - name: mirror-packages
-          image: {{ .Values.bandersnatch.image.registry }}/{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
+          image: {{ .Values.bandersnatch.image.registry }}{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
           command:
             - bandersnatch
           args:
@@ -108,7 +108,7 @@ spec:
               mountPath: /etc/bandersnatch
       containers:
         - name: bandersnatch
-          image: {{ .Values.bandersnatch.image.registry }}/{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
+          image: {{ .Values.bandersnatch.image.registry }}{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
           resources:
             {{- with.Values.bandersnatch.resources }}
             requests:

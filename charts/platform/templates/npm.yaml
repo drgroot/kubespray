@@ -93,7 +93,7 @@ spec:
             secretName: npm-htpasswd
       containers:
         - name: app
-          image: {{ .Values.npm.image.registry }}/{{ .Values.npm.image.repository }}:{{ .Values.npm.image.tag }}
+          image: {{ .Values.npm.image.registry }}{{ .Values.npm.image.repository }}:{{ .Values.npm.image.tag }}
           ports:
             - containerPort: 4873
               name: http
