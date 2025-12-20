@@ -35,7 +35,7 @@ spec:
             secretName: registry-htpasswd
       containers:
         - name: app
-          image: {{ .Values.pypi.image.registry }}/{{ .Values.pypi.image.repository }}:{{ .Values.pypi.image.tag }}
+          image: {{ .Values.pypi.image.registry }}{{ .Values.pypi.image.repository }}:{{ .Values.pypi.image.tag }}
           command:
             - pypi-server
           args:

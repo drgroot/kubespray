@@ -68,7 +68,7 @@ spec:
                 enabled: false
               delete:
                 enabled: true
-          image: {{ .Values.registry.image.registry }}/{{ .Values.registry.image.repository }}:{{ .Values.registry.image.tag }}
+          image: {{ .Values.registry.image.registry }}{{ .Values.registry.image.repository }}:{{ .Values.registry.image.tag }}
           name: app
           resources:
             {{- with.Values.registry.resources }}
