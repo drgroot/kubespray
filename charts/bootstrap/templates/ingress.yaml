@@ -35,6 +35,10 @@ spec:
         controller:
           minAvailable: 2
 
+          allowSnippetAnnotations: true
+          config:
+            annotations-risk-level: "Critical"
+
           tolerations:
             - key: node-role.kubernetes.io/master
               operator: Equal
