@@ -16,7 +16,7 @@ domains:
 
 redis:
   image:
-    registry: registry-1.docker.io
+    registry: ""
     repository: redis
     tag: 8
 
@@ -26,7 +26,7 @@ redis:
 
 pypi:
   image:
-    registry: registry-1.docker.io
+    registry: ""
     repository: pypiserver/pypiserver
     tag: latest
 
@@ -36,7 +36,7 @@ pypi:
 
 npm:
   image:
-    registry: registry-1.docker.io
+    registry: ""
     repository: verdaccio/verdaccio
     tag: 6.1.6
 
@@ -46,7 +46,7 @@ npm:
 
 registry:
   image:
-    registry: registry-1.docker.io
+    registry: ""
     repository: registry
     tag: latest
 
@@ -55,9 +55,9 @@ registry:
 
 bandersnatch:
   image:
-    registry: quay.io
+    registry: ""
     repository: pypa/bandersnatch
-    tag: latest
+    tag: 3.14
 
   resources:
     cpu: 100m
