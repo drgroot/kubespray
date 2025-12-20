@@ -98,9 +98,9 @@ spec:
           command:
             - bandersnatch
           args:
-            - mirror
             - --config
             - /etc/bandersnatch/bandersnatch.conf
+            - mirror
           volumeMounts:
             - name: pypidata
               mountPath: /data/packages
