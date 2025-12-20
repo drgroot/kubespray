@@ -46,12 +46,10 @@ data:
       '@servc/*':
         access: $authenticated
         publish: $authenticated
-      '@*/*':
-        access: $all
-        publish: $authenticated
       '**':
         access: $all
         publish: $authenticated
+        proxy: npmjs
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
