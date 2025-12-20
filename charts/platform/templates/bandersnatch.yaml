@@ -1,0 +1,179 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bandersnatch
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: {{ .Values.storage.nobackup }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bandersnatch-config
+data:
+  bandersnatch.conf: |
+    [mirror]
+    directory = /data/packages
+    master = https://pypi.org
+    json = true
+    workers = 2
+    stop-on-error = true
+
+    [plugins]
+    enabled =
+        allowlist_project
+        allowlist_release
+
+    [allowlist]
+    packages =
+        requests
+        types-requests
+        alembic
+        pika
+        redis
+        types-redis
+        servc
+        simplejson
+        types-simplejson
+        flask
+        pyyaml
+        types-PyYAML
+        pyiceberg
+        pyarrow-stubs
+        pyarrow
+        sqlgot
+        pydantic
+        SQLAlchemy
+        psycopg2-binary
+        boto3
+        deltalake
+        pyspark
+        delta-spark
+        mypy
+        coverage
+        build
+        twine
+        mysql-connector-python
+        pandas
+        pandas-stubs
+        openpyxl
+        google-meridian
+        tensorflow
+        openai
+        langchain
+        langchain-core
+        langchain-openai
+        langgraph
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bandersnatch
+  labels:
+    app: bandersnatch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bandersnatch
+  template:
+    metadata:
+      labels:
+        app: bandersnatch
+    spec:
+      volumes:
+        - name: pypidata
+          persistentVolumeClaim:
+            claimName: bandersnatch
+        - name: bandersnatch-config
+          configMap:
+            name: bandersnatch-config
+      initContainers:
+        - name: mirror-packages
+          image: {{ .Values.bandersnatch.image.registry }}/{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
+          command:
+            - bandersnatch
+          args:
+            - mirror
+            - --config
+            - /etc/bandersnatch/bandersnatch.conf
+          volumeMounts:
+            - name: pypidata
+              mountPath: /data/packages
+            - name: bandersnatch-config
+              mountPath: /etc/bandersnatch
+      containers:
+        - name: bandersnatch
+          image: {{ .Values.bandersnatch.image.registry }}/{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
+          resources:
+            {{- with.Values.bandersnatch.resources }}
+            requests:
+              {{- toYaml . | nindent 14 }}
+            limits:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+          command:
+            - /bin/bash
+          args:
+            - -c
+            - python3 -m http.server 8080 --bind 0.0.0.0 --directory /data/packages
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+          volumeMounts:
+            - name: pypidata
+              mountPath: /data/packages
+            - name: bandersnatch-config
+              mountPath: /etc/bandersnatch
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bandersnatch
+  labels:
+    app: bandersnatch
+spec:
+  selector:
+    app: bandersnatch
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bandersnatch
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+    # external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+    - hosts:
+        - "*.{{ .Values.domains.external }}"
+      secretName: wildcard-external
+  ingressClassName: nginx
+  rules:
+    - host: bandersnatch.{{ .Values.domains.external }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: bandersnatch
+                port:
+                  number: 8080
+            path: /
+            pathType: Prefix

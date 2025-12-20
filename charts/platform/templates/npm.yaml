@@ -63,7 +63,7 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  storageClassName: {{ .Values.storage.default }}
+  storageClassName: {{ .Values.storage.nobackup }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -93,17 +93,17 @@ spec:
             secretName: npm-htpasswd
       containers:
         - name: app
-          image: verdaccio/verdaccio:{{ .Values.versions.verdaccio }}
+          image: {{ .Values.npm.image.registry }}/{{ .Values.npm.image.repository }}:{{ .Values.npm.image.tag }}
           ports:
             - containerPort: 4873
               name: http
           resources:
+            {{- with.Values.pypi.resources }}
             requests:
-              cpu: 50m
-              memory: 64Mi
+              {{- toYaml . | nindent 14 }}
             limits:
-              cpu: 50m
-              memory: 128Mi
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /-/ping

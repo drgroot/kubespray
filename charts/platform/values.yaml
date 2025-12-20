@@ -4,13 +4,61 @@ storage:
   default: asdasd
   backup: asdasd
   ssd: asdasd
+  nobackup: thorin-nobackup
 
 versions:
-  redis: 8
-  verdaccio: 6.1.6
   gitea: 12.4.0
   giteaactions: 0.0.2
 
 domains:
   internal: asd
   external: asd
+
+redis:
+  image:
+    registry: registry-1.docker.io
+    repository: redis
+    tag: 8
+
+  resources:
+    cpu: 50m
+    memory: 256Mi
+
+pypi:
+  image:
+    registry: registry-1.docker.io
+    repository: pypiserver/pypiserver
+    tag: latest
+
+  resources:
+    cpu: 100m
+    memory: 128Mi
+
+npm:
+  image:
+    registry: registry-1.docker.io
+    repository: verdaccio/verdaccio
+    tag: 6.1.6
+
+  resources:
+    cpu: 50m
+    memory: 128Mi
+
+registry:
+  image:
+    registry: registry-1.docker.io
+    repository: registry
+    tag: latest
+
+  resources:
+    memory: 64Mi
+
+bandersnatch:
+  image:
+    registry: quay.io
+    repository: pypa/bandersnatch
+    tag: latest
+
+  resources:
+    cpu: 100m
+    memory: 128Mi

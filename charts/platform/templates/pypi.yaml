@@ -8,7 +8,7 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  storageClassName: {{ .Values.storage.default }}
+  storageClassName: {{ .Values.storage.nobackup }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -35,7 +35,7 @@ spec:
             secretName: registry-htpasswd
       containers:
         - name: app
-          image: pypiserver/pypiserver
+          image: {{ .Values.pypi.image.registry }}/{{ .Values.pypi.image.repository }}:{{ .Values.pypi.image.tag }}
           command:
             - pypi-server
           args:
@@ -56,12 +56,12 @@ spec:
             - containerPort: 8080
               name: http
           resources:
+            {{- with.Values.pypi.resources }}
             requests:
-              cpu: 100m
-              memory: 128Mi
+              {{- toYaml . | nindent 14 }}
             limits:
-              cpu: 100m
-              memory: 128Mi
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
           volumeMounts:
             - name: htppasswd
               mountPath: /htpasswd

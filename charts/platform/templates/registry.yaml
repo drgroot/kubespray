@@ -33,7 +33,7 @@ spec:
   resources:
     requests:
       storage: 20Gi
-  storageClassName: {{ .Values.storage.default }}
+  storageClassName: {{ .Values.storage.nobackup }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,7 +41,6 @@ metadata:
   name: registry
 spec:
   replicas: 1
-  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app: registry
@@ -69,9 +68,15 @@ spec:
                 enabled: false
               delete:
                 enabled: true
-          image: registry:latest
-          imagePullPolicy: Always
+          image: {{ .Values.registry.image.registry }}/{{ .Values.registry.image.repository }}:{{ .Values.registry.image.tag }}
           name: app
+          resources:
+            {{- with.Values.registry.resources }}
+            requests:
+              {{- toYaml . | nindent 14 }}
+            limits:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
           ports:
             - containerPort: 5000
               name: port-5000

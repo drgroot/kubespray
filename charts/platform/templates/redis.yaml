@@ -48,9 +48,12 @@ spec:
     spec:
       containers:
         - name: app
-          image: redis:{{ .Values.versions.redis }}
+          image: {{ .Values.redis.image.registry }}/{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}
           ports:
             - containerPort: 6379
+          args:
+            - "--maxmemory-policy"
+            - "allkeys-lru"
           livenessProbe:
             exec:
               command:
@@ -61,12 +64,12 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
           resources:
+            {{- with.Values.redis.resources }}
             requests:
-              cpu: 50m
-              memory: 256Mi
+              {{- toYaml . | nindent 14 }}
             limits:
-              cpu: 50m
-              memory: 256Mi
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
 ---
 apiVersion: v1
 kind: Service
