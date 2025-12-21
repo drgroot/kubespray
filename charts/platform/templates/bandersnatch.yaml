@@ -30,44 +30,11 @@ data:
 
     [allowlist]
     packages =
-        requests
-        types-requests
-        alembic
-        pika
-        redis
-        types-redis
-        servc
-        simplejson
-        types-simplejson
-        flask
-        pyyaml
-        types-PyYAML
-        pyiceberg
-        pyarrow-stubs
-        pyarrow
-        sqlgot
-        pydantic
-        SQLAlchemy
-        psycopg2-binary
-        boto3
-        deltalake
-        pyspark
-        delta-spark
-        mypy
-        coverage
-        build
-        twine
-        mysql-connector-python
-        pandas
-        pandas-stubs
-        openpyxl
-        google-meridian
-        tensorflow
-        openai
-        langchain
-        langchain-core
-        langchain-openai
-        langgraph
+{{ if .Values.bandersnatch.packages }}
+{{- range sortAlpha .Values.bandersnatch.packages }}
+        {{ . }}
+{{- end }}
+{{ end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -76,7 +43,7 @@ metadata:
   labels:
     app: bandersnatch
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: bandersnatch
@@ -92,20 +59,6 @@ spec:
         - name: bandersnatch-config
           configMap:
             name: bandersnatch-config
-      initContainers:
-        - name: mirror-packages
-          image: {{ .Values.bandersnatch.image.registry }}{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
-          command:
-            - bandersnatch
-          args:
-            - --config
-            - /etc/bandersnatch/bandersnatch.conf
-            - mirror
-          volumeMounts:
-            - name: pypidata
-              mountPath: /data/packages
-            - name: bandersnatch-config
-              mountPath: /etc/bandersnatch
       containers:
         - name: bandersnatch
           image: {{ .Values.bandersnatch.image.registry }}{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
@@ -134,6 +87,46 @@ spec:
               mountPath: /data/packages
             - name: bandersnatch-config
               mountPath: /etc/bandersnatch
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: bandersnatch-sync
+  labels:
+    app: bandersnatch
+spec:
+  schedule: "0 0 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: bandersnatch
+            role: sync
+        spec:
+          restartPolicy: OnFailure
+          volumes:
+            - name: pypidata
+              persistentVolumeClaim:
+                claimName: bandersnatch
+            - name: bandersnatch-config
+              configMap:
+                name: bandersnatch-config
+          containers:
+            - name: mirror-packages
+              image: {{ .Values.bandersnatch.image.registry }}{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
+              command:
+                - bandersnatch
+              args:
+                - --config
+                - /etc/bandersnatch/bandersnatch.conf
+                - mirror
+              volumeMounts:
+                - name: pypidata
+                  mountPath: /data/packages
+                - name: bandersnatch-config
+                  mountPath: /etc/bandersnatch
 ---
 apiVersion: v1
 kind: Service
