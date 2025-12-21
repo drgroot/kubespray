@@ -31,7 +31,7 @@ pypi:
 
   resources:
     cpu: 100m
-    memory: 128Mi
+    memory: 64Mi
 
 npm:
   image:
@@ -60,4 +60,8 @@ bandersnatch:
 
   resources:
     cpu: 100m
-    memory: 128Mi
+    memory: 64Mi
+
+postgres:
+  resources:
+    memory: 512Mi

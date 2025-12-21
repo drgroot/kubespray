@@ -52,6 +52,14 @@ spec:
         backup:
           storageclass: {{ .Values.storage.default }}
 
+        resources:
+          {{- with.Values.postgres.resources }}
+          requests:
+            {{- toYaml . | nindent 12 }}
+          limits:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
         server:
           password:
             secretname: postgres-credentials-main
