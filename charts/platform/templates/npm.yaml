@@ -102,7 +102,7 @@ spec:
             - containerPort: 4873
               name: http
           resources:
-            {{- with.Values.pypi.resources }}
+            {{- with.Values.npm.resources }}
             requests:
               {{- toYaml . | nindent 14 }}
             limits:
