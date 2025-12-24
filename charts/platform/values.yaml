@@ -39,9 +39,7 @@ npm:
     repository: verdaccio/verdaccio
     tag: 6.1.6
 
-  resources:
-    cpu: 50m
-    memory: 128Mi
+  resources: {}
 
 registry:
   image:
