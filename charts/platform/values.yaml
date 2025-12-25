@@ -147,6 +147,7 @@ bandersnatch:
     - keras
     - kerberos
     - keyring
+    - kubernetes
     - langchain
     - langchain-anthropic
     - langchain-aws
