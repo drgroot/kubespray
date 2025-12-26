@@ -108,7 +108,13 @@ spec:
                 - "*.{{ .Values.domains.external }}"
               secretName: wildcard-yusufali
         
-        resources: {}
+        resources:
+          requests:
+            cpu: 150m
+            memory: 400Mi
+          limits:
+            cpu: 300m
+            memory: 400Mi
 
         deployment:
           env: []
@@ -269,10 +275,10 @@ spec:
           replicas: 5
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "200m"
+              memory: "2Gi"
+              cpu: "500m"
             limits:
-              memory: "4.5Gi"
+              memory: "4Gi"
               cpu: "1"
 
           extraVolumes:
