@@ -272,7 +272,7 @@ spec:
         giteaRootURL: https://git.{{ .Values.domains.external }}
 
         statefulset:
-          replicas: 5
+          replicas: 2
           resources:
             requests:
               memory: "2Gi"
