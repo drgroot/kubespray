@@ -150,6 +150,7 @@ bandersnatch:
     - kerberos
     - keyring
     - kubernetes
+    - lancedb
     - langchain
     - langchain-anthropic
     - langchain-aws
