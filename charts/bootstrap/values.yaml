@@ -41,16 +41,6 @@ storageClasses:
     mountPath: /ssd-raid0
 
 tenants:
-  - name: agents
-    namespace: agents
-    createNamespace: true
-    permissions:
-      - pvc
-      - argo
-    sources:
-      - url: https://git.yusufali.ca/automation/charts.git
-        path: "chart"
-
   - name: media
     namespace: media
     createNamespace: true
