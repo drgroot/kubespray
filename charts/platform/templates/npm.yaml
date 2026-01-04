@@ -58,11 +58,11 @@ data:
         publish: publishers
 
       '@*/*':
-        access: $all
+        access: $authenticated
         proxy: npmjs
 
       '**':
-        access: $all
+        access: $authenticated
         proxy: npmjs
 ---
 apiVersion: v1
