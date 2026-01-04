@@ -13,8 +13,8 @@ spec:
       type: Opaque
       data:
         htpasswd: |
-          "{{ `{{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD "publishers" }}` }}"
-          "{{ `{{ htpasswd .npm_read_user .npm_read_password "readers" }}` }}"
+          "{{ `{{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD }}` }}"
+          "{{ `{{ htpasswd .npm_read_user .npm_read_password }}` }}"
   data:
     - remoteRef:
         key: DOCKER_PRIVATE
@@ -55,7 +55,7 @@ data:
     packages:
       '@servc/*':
         access: $authenticated
-        publish: publishers
+        publish: lowercaseusername
 
       '@*/*':
         access: $authenticated
