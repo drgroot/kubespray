@@ -136,3 +136,8 @@ unsafe_show_logs: false
 
 ## If enabled it will allow kubespray to attempt setup even if the distribution is not supported. For unsupported distributions this can lead to unexpected failures in some cases.
 allow_unsupported_distribution_setup: false
+
+# limit journald size
+journald_system_max_use: 500M
+journald_runtime_max_use: 200M
+journald_max_file_sec: 7day
