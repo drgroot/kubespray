@@ -221,6 +221,8 @@ dns_domain: "{{ cluster_name }}"
 ## docker for docker, crio for cri-o and containerd for containerd.
 ## Default: containerd
 container_manager: containerd
+containerd_log_max_size: "10Mi"
+containerd_log_max_files: 3
 
 # Additional container runtimes
 kata_containers_enabled: false
