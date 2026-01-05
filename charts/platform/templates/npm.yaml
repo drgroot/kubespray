@@ -58,11 +58,11 @@ data:
         publish: lowercaseusername
 
       '@*/*':
-        access: $authenticated
+        access: $all
         proxy: npmjs
 
       '**':
-        access: $authenticated
+        access: $all
         proxy: npmjs
 ---
 apiVersion: v1
