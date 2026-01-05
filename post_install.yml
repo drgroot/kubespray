@@ -6,6 +6,12 @@
     #   community.general.iptables_state:
     #     state: saved
     #     path: /etc/iptables/rules.v4
+    - name: prune images
+      ansible.builtin.cron:
+        name: 'prune old images'
+        special_time: daily
+        job: '/usr/local/bin/crictl rmi --prune'
+        user: root
     - name: reboot task
       ansible.builtin.cron:
         name: 'roboot when required'
