@@ -13,8 +13,8 @@ spec:
       type: Opaque
       data:
         htpasswd: |
-          "{{ `{{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD }}` }}"
-          "{{ `{{ htpasswd .npm_read_user .npm_read_password }}` }}"
+          {{ `{{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD }}` }}
+          {{ `{{ htpasswd .npm_read_user .npm_read_password }}` }}
   data:
     - remoteRef:
         key: DOCKER_PRIVATE
