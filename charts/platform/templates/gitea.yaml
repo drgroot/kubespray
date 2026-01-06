@@ -367,6 +367,8 @@ spec:
                   value: debug
                 - name: RENOVATE_SEMANTIC_COMMITS
                   value: 'enabled'
+                - name: RENOVATE_SEMANTIC_COMMIT_TYPE_ALL
+                  value: 'fix'
                 - name: RENOVATE_COMMIT_MESSAGE_LOWER_CASE
                   value: 'auto'
                 - name: RENOVATE_AUTODISCOVER
