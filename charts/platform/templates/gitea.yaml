@@ -385,8 +385,8 @@ spec:
         activationTargetQueryValue: "1"
         query: |
           SELECT COUNT(*)::int
-          FROM action_run_job
-          WHERE stopped IS NULL;
+          FROM gitea.action_run_job
+          WHERE stopped = 0 AND status = 5;
       authenticationRef:
         name: gitea-db-auth
 ---
