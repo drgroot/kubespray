@@ -64,6 +64,10 @@ spec:
   data:
     - remoteRef:
         key: main-postgres-credentials-gitea
+        property: url
+      secretKey: url
+    - remoteRef:
+        key: main-postgres-credentials-gitea
         property: password
       secretKey: password
     - remoteRef:
@@ -287,7 +291,7 @@ spec:
   source:
     chart: actions
     repoURL: https://dl.gitea.com/charts/
-    targetRevision: {{ .Values.versions.giteaactions }}
+    targetRevision: {{ .Values.gitea.actions.version }}
     helm:
       releaseName: gitea-actions
       values: |-
@@ -300,14 +304,11 @@ spec:
         giteaRootURL: https://git.{{ .Values.domains.external }}
 
         statefulset:
-          replicas: 3
+          replicas: 0
+          {{- with .Values.gitea.actions.resources }}
           resources:
-            requests:
-              memory: "2Gi"
-              cpu: "500m"
-            limits:
-              memory: "4Gi"
-              cpu: "1"
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
           extraVolumes:
             - name: docker-secret
@@ -338,6 +339,56 @@ spec:
               runner:
                 labels:
                   - "ubuntu-latest:docker://registry.yusufali.ca/catthehacker/ubuntu"
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: gitea-db-auth
+spec:
+  secretTargetRef:
+    - parameter: connection
+      name: gitea-postgres-secrets
+      key: url
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: gitea-actions-act-runner
+spec:
+  scaleTargetRef:
+    name: gitea-actions-act-runner
+    kind: StatefulSet
+  pollingInterval: 10
+  cooldownPeriod: 180
+  minReplicaCount: 0
+  maxReplicaCount: {{ .Values.gitea.actions.maxRunners }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+            - type: Pods
+              value: 10
+              periodSeconds: 30
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Pods
+              value: 2
+              periodSeconds: 60
+
+  triggers:
+    - type: postgresql
+      metadata:
+        targetQueryValue: "1"
+        activationTargetQueryValue: "1"
+        query: |
+          SELECT COUNT(*)::int
+          FROM action_run_job
+          WHERE stopped IS NULL;
+      authenticationRef:
+        name: gitea-db-auth
 ---
 apiVersion: batch/v1
 kind: CronJob
