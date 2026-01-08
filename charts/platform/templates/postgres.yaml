@@ -47,9 +47,6 @@ spec:
       values: |-
         fullnameOverride: main
 
-        annotations:
-          tailscale.com/expose: "true"
-
         storageclass: {{ .Values.storage.fast }}
 
         backup:
