@@ -386,7 +386,7 @@ spec:
         query: |
           SELECT COUNT(*)::int
           FROM gitea.action_run_job
-          WHERE status IN (5, 6);
+          WHERE status != 4 and stopped = 0;
       authenticationRef:
         name: gitea-db-auth
 ---
