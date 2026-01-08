@@ -324,6 +324,7 @@ bandersnatch:
 
 postgres:
   resources:
+    cpu: 1.5
     memory: 512Mi
 
 gitea:
