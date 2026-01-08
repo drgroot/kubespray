@@ -330,7 +330,7 @@ postgres:
 gitea:
   actions:
     version: 0.0.2
-    maxRunners: 10
+    maxRunners: 5
 
     resources:
       requests:
