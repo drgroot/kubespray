@@ -4,6 +4,8 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+annotations: {}
+
 resources:
   requests:
     cpu: "250m"
