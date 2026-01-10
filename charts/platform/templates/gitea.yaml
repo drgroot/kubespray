@@ -382,7 +382,6 @@ spec:
     - type: postgresql
       metadata:
         targetQueryValue: "1"
-        activationTargetQueryValue: "1"
         query: |
           SELECT COUNT(*)::int
           FROM gitea.action_run_job
