@@ -472,7 +472,7 @@ kind: CronJob
 metadata:
   name: actions-templater
 spec:
-  schedule: "0 0 * * *"
+  schedule: "0 * * * *"
   failedJobsHistoryLimit: 1
   successfulJobsHistoryLimit: 0
   concurrencyPolicy: Forbid
