@@ -50,9 +50,11 @@ spec:
           
           metrics:
             namespace: kube-networking
-            enabled: false
+            enabled: true
             serviceMonitor:
               enabled: true
+              additionalLabels:
+                release: prometheus
               namespaceSelector:
                 any: true
 
