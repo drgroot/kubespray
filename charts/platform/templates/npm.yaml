@@ -192,8 +192,8 @@ spec:
     kind: Deployment
   pollingInterval: 10
   cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 10
+  minReplicaCount: 1
+  maxReplicaCount: 5
   triggers:
     - type: prometheus
       metadata:
