@@ -84,7 +84,6 @@ metadata:
   labels:
     app: npm
 spec:
-  replicas: 2
   selector:
     matchLabels:
       app: npm
@@ -182,3 +181,26 @@ spec:
                   number: 4873
             path: /
             pathType: Prefix
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: npm-web-rps
+spec:
+  scaleTargetRef:
+    name: npm
+    kind: Deployment
+  pollingInterval: 10
+  cooldownPeriod: 300
+  minReplicaCount: 2
+  maxReplicaCount: 10
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring.svc:9090
+        metricName: npm_web_rps_per_pod
+        threshold: "150"
+        query: |
+          sum(rate(nginx_ingress_controller_requests{namespace="{{ .Release.Namespace }}",ingress="npm"}[1m]))
+          /
+          count(kube_pod_info{namespace="{{ .Release.Namespace }}",pod=~"npm-.*"})
