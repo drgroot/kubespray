@@ -201,6 +201,6 @@ spec:
         metricName: npm_web_rps_per_pod
         threshold: "150"
         query: |
-          sum(rate(nginx_ingress_controller_requests{namespace="{{ .Release.Namespace }}",ingress="npm"}[1m]))
+          sum(rate(nginx_ingress_controller_requests{exported_namespace="{{ .Release.Namespace }}",ingress="npm"}[1m]))
           /
           count(kube_pod_info{namespace="{{ .Release.Namespace }}",pod=~"npm-.*"})
