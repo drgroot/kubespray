@@ -40,7 +40,7 @@ npm:
 
   resources:
     cpu: 750m
-    memory: 400Mi
+    memory: 800Mi
 
 registry:
   image:
