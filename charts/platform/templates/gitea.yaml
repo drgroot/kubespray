@@ -441,7 +441,9 @@ spec:
                 - name: RENOVATE_SEMANTIC_COMMITS
                   value: 'enabled'
                 - name: RENOVATE_SEMANTIC_COMMIT_TYPE_ALL
-                  value: 'fix'
+                  value: fix
+                - name: RENOVATE_COMMIT_MESSAGE_PREFIX
+                  value: fix
                 - name: RENOVATE_COMMIT_MESSAGE_LOWER_CASE
                   value: 'auto'
                 - name: RENOVATE_AUTODISCOVER
