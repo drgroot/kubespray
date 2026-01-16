@@ -54,6 +54,30 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
+  name: rennovate-secrets
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: rennovate-secrets
+    template:
+      data:
+        renovate-host-rules: >-
+          [{"hostType":"npm","matchHost":"npm.yusufali.ca","username":"{{ .npm_read_user }}","password":"{{ .npm_read_password }}"}]
+  data:
+    - remoteRef:
+        key: DOCKER_PRIVATE
+        property: npm-read-user
+      secretKey: npm_read_user
+    - remoteRef:
+        key: DOCKER_PRIVATE
+        property: npm-read-password
+      secretKey: npm_read_password
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
   name: gitea-postgres-secrets
 spec:
   secretStoreRef:
@@ -455,16 +479,11 @@ spec:
                     secretKeyRef:
                       name: gitea-runner-secrets
                       key: renovate-token
-                - name: NPM_USERNAME
+                - name: RENOVATE_HOST_RULES
                   valueFrom:
                     secretKeyRef:
-                      name: gitea-runner-secrets
-                      key: npm_read_user
-                - name: NPM_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: gitea-runner-secrets
-                      key: npm_read_password
+                      name: rennovate-secrets
+                      key: renovate-host-rules
           restartPolicy: Never
 ---
 apiVersion: batch/v1
