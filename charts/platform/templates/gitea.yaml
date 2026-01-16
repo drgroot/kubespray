@@ -62,9 +62,10 @@ spec:
   target:
     name: rennovate-secrets
     template:
+      engineVersion: v1
       data:
         renovate-host-rules: >-
-          [{"hostType":"npm","matchHost":"npm.yusufali.ca","username":"{{ .npm_read_user }}","password":"{{ .npm_read_password }}"}]
+          [{"hostType":"npm","matchHost":"npm.yusufali.ca","username":"{{ printf "%s" .npm_read_user }}","password":"{{ printf "%s" .npm_read_password }}"}]
   data:
     - remoteRef:
         key: DOCKER_PRIVATE
