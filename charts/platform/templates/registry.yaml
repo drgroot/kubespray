@@ -141,3 +141,26 @@ spec:
     - hosts:
       - '*.{{ .Values.domains.external }}'
       secretName: wildcard-external
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: registry-web-rps
+spec:
+  scaleTargetRef:
+    name: registry
+    kind: Deployment
+  pollingInterval: 10
+  cooldownPeriod: 300
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring.svc:9090
+        metricName: registry_web_rps_per_pod
+        threshold: "2.25"
+        query: |
+          sum(rate(nginx_ingress_controller_requests{exported_namespace="{{ .Release.Namespace }}",ingress="registry"}[1m]))
+          /
+          count(kube_pod_info{namespace="{{ .Release.Namespace }}",pod=~"registry-.*"})
