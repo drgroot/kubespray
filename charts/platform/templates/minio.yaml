@@ -113,6 +113,8 @@ metadata:
     external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 50000m
+    nginx.ingress.kubernetes.io/proxy-body-size: 50000m
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
