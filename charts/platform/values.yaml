@@ -51,6 +51,19 @@ registry:
   resources:
     memory: 128Mi
 
+minio:
+  image:
+    registry: ""
+    repository: minio/minio
+    tag: latest
+
+  storage:
+    size: 20Gi
+
+  resources:
+    cpu: 250m
+    memory: 512Mi
+
 bandersnatch:
   image:
     registry: ""

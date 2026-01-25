@@ -1,0 +1,161 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: minio-root
+spec:
+  secretStoreRef:
+    name: servc
+    kind: ClusterSecretStore
+  target:
+    name: minio-root
+  data:
+    - remoteRef:
+        key: gitea-creds
+        property: platform-s3-access
+      secretKey: MINIO_ROOT_USER
+    - remoteRef:
+        key: gitea-creds
+        property: platform-s3-password
+      secretKey: MINIO_ROOT_PASSWORD
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.minio.storage.size }}
+  storageClassName: {{ .Values.storage.default }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: {{ .Values.minio.image.registry }}{{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}
+          args:
+            - server
+            - /data
+            - --console-address
+            - ":9001"
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-root
+                  key: MINIO_ROOT_USER
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-root
+                  key: MINIO_ROOT_PASSWORD
+          ports:
+            - containerPort: 9000
+              name: s3
+              protocol: TCP
+            - containerPort: 9001
+              name: console
+              protocol: TCP
+          resources:
+            {{- with .Values.minio.resources }}
+            requests:
+              {{- toYaml . | nindent 14 }}
+            limits:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: minio
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+spec:
+  selector:
+    app: minio
+  ports:
+    - name: s3
+      port: 9000
+      targetPort: 9000
+    - name: console
+      port: 9001
+      targetPort: 9001
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: s3
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: s3-platform.{{ .Values.domains.external }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - "*.{{ .Values.domains.external }}"
+      secretName: wildcard-external
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-console
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: minio-platform.{{ .Values.domains.external }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: minio
+                port:
+                  number: 9001
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - "*.{{ .Values.domains.external }}"
+      secretName: wildcard-external
