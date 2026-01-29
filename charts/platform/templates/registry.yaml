@@ -51,6 +51,11 @@ spec:
     spec:
       containers:
         - env:
+          - name: REGISTRY_HTTP_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: registry-htpasswd
+                key: htpasswd
           - name: REGISTRY_AUTH
             value: htpasswd
           - name: REGISTRY_AUTH_HTPASSWD_REALM
