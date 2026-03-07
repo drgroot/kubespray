@@ -49,6 +49,8 @@ spec:
       labels:
         app: registry
     spec:
+      imagePullSecrets:
+        - name: cluster-docker-secrets
       containers:
         - env:
           - name: REGISTRY_HTTP_SECRET
@@ -73,7 +75,7 @@ spec:
                 enabled: false
               delete:
                 enabled: true
-          image: {{ .Values.registry.image.registry }}{{ .Values.registry.image.repository }}:{{ .Values.registry.image.tag }}
+          image: {{ tpl .Values.registry.image.registry . }}{{ .Values.registry.image.repository }}:{{ .Values.registry.image.tag }}
           name: app
           resources:
             {{- with.Values.registry.resources }}

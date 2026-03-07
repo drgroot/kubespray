@@ -47,9 +47,11 @@ spec:
       labels:
         app: docker-pull
     spec:
+      imagePullSecrets:
+        - name: cluster-docker-secrets
       containers:
         - name: app
-          image: {{ .Values.registry.image.registry }}{{ .Values.registry.image.repository }}:{{ .Values.registry.image.tag }}
+          image: docker.io/{{ .Values.registry.image.repository }}:{{ .Values.registry.image.tag }}
           env:
             - name: REGISTRY_HTTP_SECRET
               valueFrom:
