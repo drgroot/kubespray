@@ -1,4 +1,26 @@
 ---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: docker-pull-auth
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: docker-pull-auth
+    template:
+      type: Opaque
+  data:
+    - remoteRef:
+        key: DOCKER_PUBLIC
+        property: username
+      secretKey: USERNAME
+    - remoteRef:
+        key: DOCKER_PUBLIC
+        property: password
+      secretKey: PASSWORD
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -42,6 +64,16 @@ spec:
               value: /auth/htpasswd
             - name: REGISTRY_PROXY_REMOTEURL
               value: https://registry-1.docker.io
+            - name: REGISTRY_PROXY_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: docker-pull-auth
+                  key: USERNAME
+            - name: REGISTRY_PROXY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: docker-pull-auth
+                  key: PASSWORD
             - name: REGISTRY_PROXY_TTL
               value: 168h
             - name: REGISTRY_STORAGE_DELETE_ENABLED
