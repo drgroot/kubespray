@@ -320,6 +320,18 @@ spec:
           /
           count(kube_pod_info{namespace="{{ .Release.Namespace }}",pod=~"gitea-.*",pod!~"gitea-actions.*"})
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitea-actions-dind-daemon
+data:
+  daemon.json: |
+    {
+      "registry-mirrors": [
+        "https://dockerhub.{{ .Values.domains.external }}"
+      ]
+    }
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -362,12 +374,19 @@ spec:
             - name: docker-secret
               secret:
                 secretName: cluster-docker-secrets
+            - name: docker-daemon-config
+              configMap:
+                name: gitea-actions-dind-daemon
 
           dind:
             extraVolumeMounts:
               - name: docker-secret
                 mountPath: /root/.docker/config.json
                 subPath: .dockerconfigjson
+              - name: docker-daemon-config
+                mountPath: /etc/docker/daemon.json
+                subPath: daemon.json
+                readOnly: true
 
           actRunner:
             extraVolumeMounts:
