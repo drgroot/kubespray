@@ -75,7 +75,7 @@ spec:
                 enabled: false
               delete:
                 enabled: true
-          image: {{ tpl .Values.registry.image.registry . }}{{ .Values.registry.image.repository }}:{{ .Values.registry.image.tag }}
+          image: docker.io/{{ .Values.registry.image.repository }}:{{ .Values.registry.image.tag }}
           name: app
           resources:
             {{- with.Values.registry.resources }}
@@ -89,10 +89,8 @@ spec:
               name: port-5000
               protocol: TCP
           livenessProbe:
-            httpGet:
-              path: /v2/
+            tcpSocket:
               port: 5000
-              scheme: HTTP
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 5
