@@ -24,7 +24,7 @@ redis:
 
 pypi:
   image:
-    registry: ""
+    registry: "dockerhub.{{ .Values.domains.external }}/"
     repository: pypiserver/pypiserver
     tag: latest
 
@@ -34,7 +34,7 @@ pypi:
 
 npm:
   image:
-    registry: ""
+    registry: "dockerhub.{{ .Values.domains.external }}/"
     repository: verdaccio/verdaccio
     tag: 6.1.6
 
@@ -44,8 +44,8 @@ npm:
 
 registry:
   image:
-    registry: ""
-    repository: registry
+    registry: "dockerhub.{{ .Values.domains.external }}/"
+    repository: library/registry
     tag: latest
 
   resources:

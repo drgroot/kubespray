@@ -140,6 +140,12 @@ spec:
         strategy:
           type: Recreate
 
+        image:
+          registry: dockerhub.{{ .Values.domains.external }}
+
+        imagePullSecrets:
+          - name: cluster-docker-secrets
+
         service:
           ssh:
             port: 2222
@@ -357,6 +363,9 @@ spec:
       values: |-
         global:
           storageClass: {{ .Values.storage.fast }}
+          imageRegistry: dockerhub.{{ .Values.domains.external }}
+          imagePullSecrets:
+            - name: cluster-docker-secrets
 
         enabled: true
         existingSecret: gitea-runner-secrets
@@ -474,9 +483,11 @@ spec:
         metadata:
           name: renovate
         spec:
+          imagePullSecrets:
+            - name: cluster-docker-secrets
           containers:
             - name: app
-              image: renovate/renovate
+              image: dockerhub.{{ .Values.domains.external }}/renovate/renovate
               env:
                 - name: RENOVATE_GIT_AUTHOR
                   value: 'ChintanBot <chintanbot@servc.io>'
