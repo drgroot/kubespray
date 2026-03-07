@@ -363,7 +363,6 @@ spec:
       values: |-
         global:
           storageClass: {{ .Values.storage.fast }}
-          imageRegistry: dockerhub.{{ .Values.domains.external }}/gitea
           imagePullSecrets:
             - name: cluster-docker-secrets
 
