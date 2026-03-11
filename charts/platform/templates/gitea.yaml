@@ -387,6 +387,7 @@ spec:
                 name: gitea-actions-dind-daemon
 
           dind:
+            registry: dockerhub.{{ .Values.domains.external }}/library
             extraVolumeMounts:
               - name: docker-secret
                 mountPath: /root/.docker/config.json
@@ -414,6 +415,10 @@ spec:
               runner:
                 labels:
                   - "ubuntu-latest:docker://registry.yusufali.ca/catthehacker/ubuntu"
+
+        init:
+          image:
+            registry: dockerhub.{{ .Values.domains.external }}/library
 ---
 apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
