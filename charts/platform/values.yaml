@@ -6,7 +6,7 @@ storage:
   fast: asdasd
 
 versions:
-  gitea: 12.4.0
+  gitea: 12.5.0
 
 domains:
   internal: asd
@@ -342,7 +342,7 @@ postgres:
 
 gitea:
   actions:
-    version: 0.0.2
+    version: 0.0.3
     maxRunners: 5
 
     resources:
