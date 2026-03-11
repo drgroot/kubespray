@@ -387,6 +387,7 @@ spec:
                 name: gitea-actions-dind-daemon
 
           dind:
+            tag: 29.2-dind
             extraVolumeMounts:
               - name: docker-secret
                 mountPath: /root/.docker/config.json
