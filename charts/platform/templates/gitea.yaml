@@ -363,8 +363,6 @@ spec:
       values: |-
         global:
           storageClass: {{ .Values.storage.fast }}
-          imagePullSecrets:
-            - name: cluster-docker-secrets
 
         enabled: true
         existingSecret: gitea-runner-secrets
@@ -387,7 +385,8 @@ spec:
                 name: gitea-actions-dind-daemon
 
           dind:
-            registry: dockerhub.{{ .Values.domains.external }}/library
+            repository: dockerhub.{{ .Values.domains.external }}/library/docker
+            tag: 28.3.3-dind
             extraVolumeMounts:
               - name: docker-secret
                 mountPath: /root/.docker/config.json
@@ -398,6 +397,8 @@ spec:
                 readOnly: true
 
           actRunner:
+            repository: dockerhub.{{ .Values.domains.external }}/gitea/act_runner
+            tag: 0.2.13
             extraVolumeMounts:
               - name: docker-secret
                 mountPath: /root/.docker/config.json
@@ -408,17 +409,14 @@ spec:
                 level: debug
               cache:
                 enabled: false
-              container:
-                valid_volumes:
-                  - /var/run/docker.sock
-                options: -v /var/run/docker.sock:/var/run/docker.sock
               runner:
                 labels:
                   - "ubuntu-latest:docker://registry.yusufali.ca/catthehacker/ubuntu"
 
         init:
           image:
-            registry: dockerhub.{{ .Values.domains.external }}/library
+            repository: dockerhub.{{ .Values.domains.external }}/library/busybox
+            tag: "1.37.0"
 ---
 apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
