@@ -409,9 +409,9 @@ spec:
               cache:
                 enabled: false
               container:
-                valid_volumes:
-                  - /var/run/docker.sock
-                options: -v /var/run/docker.sock:/var/run/docker.sock
+                # valid_volumes:
+                #   - /var/run/docker.sock
+                # options: -v /var/run/docker.sock:/var/run/docker.sock
               runner:
                 labels:
                   - "ubuntu-latest:docker://registry.yusufali.ca/catthehacker/ubuntu"
