@@ -335,7 +335,8 @@ data:
     {
       "registry-mirrors": [
         "https://dockerhub.{{ .Values.domains.external }}"
-      ]
+      ],
+      "mtu": 1450
     }
 ---
 apiVersion: argoproj.io/v1alpha1
