@@ -387,8 +387,6 @@ spec:
                 name: gitea-actions-dind-daemon
 
           dind:
-            registry: dockerhub.{{ .Values.domains.external }}
-            repository: library/docker
             extraVolumeMounts:
               - name: docker-secret
                 mountPath: /root/.docker/config.json
