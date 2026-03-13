@@ -453,6 +453,7 @@ spec:
               value: 10
               periodSeconds: 30
         scaleDown:
+          selectPolicy: Disabled
           stabilizationWindowSeconds: 300
           policies:
             - type: Pods
