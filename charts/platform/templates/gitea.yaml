@@ -142,6 +142,7 @@ spec:
 
         image:
           registry: dockerhub.{{ .Values.domains.external }}/gitea
+          tag: 1.25.5
 
         imagePullSecrets:
           - name: cluster-docker-secrets
