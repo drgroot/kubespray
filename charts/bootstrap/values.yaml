@@ -4,6 +4,23 @@ vault:
   username: kubernetesadmin
   secretName: vault-password
   key: password
+  image:
+    repository: hashicorp/vault
+    tag: "1.19.5"
+    pullPolicy: IfNotPresent
+  probes:
+    startup:
+      failureThreshold: 30
+      periodSeconds: 5
+    liveness:
+      initialDelaySeconds: 60
+      failureThreshold: 3
+      periodSeconds: 15
+      timeoutSeconds: 5
+    readiness:
+      failureThreshold: 3
+      periodSeconds: 30
+      timeoutSeconds: 5
 
 versions:
   argoupdater: 0.16
