@@ -36,7 +36,8 @@ spec:
             claimName: vault
       containers:
         - name: app
-          image: hashicorp/vault
+          image: {{ .Values.vault.image.repository }}:{{ .Values.vault.image.tag }}
+          imagePullPolicy: {{ .Values.vault.image.pullPolicy }}
           command:
             - vault
           args:
@@ -47,15 +48,29 @@ spec:
           env:
             - name: VAULT_ADDR
               value: http://127.0.0.1:8200
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  vault status >/dev/null 2>&1
+                  rc=$?
+                  [ "$rc" -eq 0 ] || [ "$rc" -eq 2 ]
+            failureThreshold: {{ .Values.vault.probes.startup.failureThreshold }}
+            periodSeconds: {{ .Values.vault.probes.startup.periodSeconds }}
           livenessProbe:
-            timeoutSeconds: 5
-            periodSeconds: 15
+            initialDelaySeconds: {{ .Values.vault.probes.liveness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.vault.probes.liveness.timeoutSeconds }}
+            periodSeconds: {{ .Values.vault.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.vault.probes.liveness.failureThreshold }}
             httpGet:
               path: /v1/sys/health?standbyok=true
               port: 8200
           readinessProbe:
-            timeoutSeconds: 5
-            periodSeconds: 30
+            timeoutSeconds: {{ .Values.vault.probes.readiness.timeoutSeconds }}
+            periodSeconds: {{ .Values.vault.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.vault.probes.readiness.failureThreshold }}
             exec:
               command:
                 - vault
@@ -67,7 +82,21 @@ spec:
                 command:
                   - /bin/sh
                   - -ec
-                  - /vault/unseal.sh
+                  - |
+                    i=0
+                    until vault status >/dev/null 2>&1; do
+                      rc=$?
+                      if [ "$rc" -eq 0 ] || [ "$rc" -eq 2 ]; then
+                        break
+                      fi
+                      i=$((i + 1))
+                      if [ "$i" -ge 30 ]; then
+                        echo "Vault API did not become reachable in time"
+                        exit 1
+                      fi
+                      sleep 2
+                    done
+                    exec /vault/unseal.sh
           resources:
             requests:
               cpu: 100m
