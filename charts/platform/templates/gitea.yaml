@@ -62,10 +62,10 @@ spec:
   target:
     name: rennovate-secrets
     template:
-      engineVersion: v1
+      engineVersion: v2
       data:
         renovate-host-rules: >-
-          [{"hostType":"npm","matchHost":"npm.yusufali.ca","username":"{{ printf "%s" .npm_read_user }}","password":"{{ printf "%s" .npm_read_password }}"}]
+          {{ `[{"hostType":"npm","matchHost":"npm.yusufali.ca","username":"{{ .npm_read_user }}","password":"{{ .npm_read_password }}"}]` }}
   data:
     - remoteRef:
         key: DOCKER_PRIVATE
@@ -506,6 +506,9 @@ spec:
                   value: fix
                 - name: RENOVATE_COMMIT_MESSAGE_LOWER_CASE
                   value: 'auto'
+                - name: RENOVATE_PACKAGE_RULES
+                  value: >-
+                    [{"matchDatasources":["pypi"],"registryUrls":["https://bandersnatch.yusufali.ca/simple","https://pypi.yusufali.ca/simple"]}]
                 - name: RENOVATE_AUTODISCOVER
                   value: 'true'
                 - name: RENOVATE_PLATFORM
