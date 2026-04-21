@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pihole
+  namespace: kube-networking
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: thorin-default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pihole
+  namespace: kube-networking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pihole
+  template:
+    metadata:
+      labels:
+        app: pihole
+    spec:
+      initContainers:
+        - name: init-pihole-dirs
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /data/config /data/dns
+          volumeMounts:
+            - name: pihole-config
+              mountPath: /data
+      containers:
+        - name: pihole
+          image: pihole/pihole:latest
+          env:
+            - name: TZ
+              value: "America/Toronto"
+            - name: FTLCONF_webserver_api_password
+              value: "changeme"
+            - name: FTLCONF_misc_etc_dnsmasq_d
+              value: "true"
+            - name: WEBPASSWORD
+              value: "changeme"
+          ports:
+            - containerPort: 53
+              protocol: UDP
+            - containerPort: 53
+              protocol: TCP
+            - containerPort: 80
+          volumeMounts:
+            - name: pihole-config
+              mountPath: /etc/pihole
+              subPath: config
+            - name: pihole-config
+              mountPath: /etc/dnsmasq.d
+              subPath: dns
+      volumes:
+        - name: pihole-config
+          persistentVolumeClaim:
+            claimName: pihole
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole
+  namespace: kube-networking
+spec:
+  type: NodePort
+  selector:
+    app: pihole
+  ports:
+    - name: dns-udp
+      protocol: UDP
+      port: 53
+      targetPort: 53
+      nodePort: 53
+    - name: dns-tcp
+      protocol: TCP
+      port: 53
+      targetPort: 53
+      nodePort: 53
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 30080
+---
