@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         {{- include "postgres.labels" . | nindent 8 }}
+        servc.yusufali.ca/database: {{ include "postgres.fullname" . }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:

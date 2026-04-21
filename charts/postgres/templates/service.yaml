@@ -16,4 +16,5 @@ spec:
       protocol: TCP
       name: postgres
   selector:
-    {{- include "postgres.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "postgres.name" . }}
+    servc.yusufali.ca/database: {{ include "postgres.fullname" . }}
