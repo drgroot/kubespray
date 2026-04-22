@@ -1,6 +1,11 @@
 name: ANSIBLE
 on:
   pull_request:
+    paths:
+      - '.github/ansible.yml'
+      - 'inventory/**'
+      - 'kubespray/**'
+      - '*.yml'
   workflow_dispatch:
     inputs:
       action:
