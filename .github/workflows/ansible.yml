@@ -1,11 +1,6 @@
 name: ANSIBLE
 on:
   pull_request:
-    paths:
-      - '.github/workflows/ansible.yml'
-      - 'inventory/**'
-      - 'kubespray/**'
-      - '*.yml'
   workflow_dispatch:
     inputs:
       action:
@@ -21,8 +16,43 @@ on:
           - Reset
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      ansible: ${{ steps.filter.outputs.ansible }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect relevant changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            ansible:
+              - '.github/workflows/ansible.yml'
+              - 'inventory/**'
+              - 'kubespray/**'
+              - '*.yml'
+
+  ansible-required:
+    name: ansible-required
+    needs: [changes, ansible]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pass when not needed or when ansible passed
+        run: |
+          if [ "${{ needs.changes.outputs.ansible }}" = "true" ]; then
+            [ "${{ needs.ansible.result }}" = "success" ]
+          else
+            echo "No relevant changes; required check passes."
+          fi
+
   ansible:
     runs-on: ubuntu-latest
+
+    needs: changes
+    if: needs.changes.outputs.ansible == 'true' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Tailscale
