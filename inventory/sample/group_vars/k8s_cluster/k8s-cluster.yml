@@ -375,3 +375,7 @@ kubeadm_patches: []
 
 # Set to true to remove the role binding to anonymous users created by kubeadm
 remove_anonymous_access: false
+
+# drain configuration
+kubectl_drain_ignore_daemonsets: true
+kubectl_drain_delete_emptydir_data: true
