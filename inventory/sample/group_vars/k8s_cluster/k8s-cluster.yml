@@ -16,7 +16,7 @@ kube_token_dir: "{{ kube_config_dir }}/tokens"
 
 kube_api_anonymous_auth: true
 
-kube_version: 1.32.5
+kube_version: 1.33.10
 
 # Where the binaries will be downloaded.
 # Note: ensure that you've enough disk space (about 1G)
