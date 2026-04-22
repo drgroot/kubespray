@@ -366,7 +366,7 @@ spec:
         global:
           storageClass: {{ .Values.storage.fast }}
           imagePullSecrets:
-            - name: cluster-docker-secrets
+            - cluster-docker-secrets
 
         enabled: true
         existingSecret: gitea-runner-secrets
