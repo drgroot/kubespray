@@ -2,7 +2,7 @@ name: ANSIBLE
 on:
   pull_request:
     paths:
-      - '.github/ansible.yml'
+      - '.github/workflows/ansible.yml'
       - 'inventory/**'
       - 'kubespray/**'
       - '*.yml'
