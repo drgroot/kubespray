@@ -1,5 +1,6 @@
 name: ANSIBLE
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
       action:
@@ -16,9 +17,16 @@ on:
 
 jobs:
   ansible:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
+      - name: Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+    
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -52,10 +60,15 @@ jobs:
       - name: Run Ansible Kubespray
         env:
           CMD: ${{ github.event.inputs.action }}
+          EVENT: ${{ github.event_name }}
         run: |
           CMD=${CMD:-"UpgradeAddons"}
+          echo $EVENT
 
-          ARGS=""
+          if [ "$EVENT" != "pull_request" ]; then
+            ARGS="--check --diff"
+          fi
+
           if [ "$CMD" == "Install" ]; then
             ARGS="kubespray/cluster.yml -l kube_control_plane"
           elif [ "$CMD" == "UpgradeAddons" ]; then
@@ -68,13 +81,14 @@ jobs:
             ARGS="kubespray/reset.yml -e reset_confirmation=yes"
           fi
 
-          ansible-playbook -i inventory/sample/inventory.ini $CHECK $ARGS -b -v
+          ansible-playbook -i inventory/sample/inventory.ini $ARGS -b -v
 
       - name: Run Post Install
+        if: github.event_name != 'pull_request'
         run: ansible-playbook -i inventory/sample/inventory.ini post_install.yml -b -v
 
       - name: Get admin.conf
-        if: (github.event.inputs.action == 'Install' || github.event.inputs.action == 'UpgradeAddons')
+        if: (github.event.inputs.action == 'Install' || github.event.inputs.action == 'UpgradeAddons') && github.event_name != 'pull_request'
         env:
           KUBE_CONFIG: ${{ github.workspace }}/admin.conf
         run: |
@@ -82,7 +96,7 @@ jobs:
           sed -i 's/127.0.0.1/192.168.1.10/g' $KUBE_CONFIG
 
       - name: Install Root Chart
-        if: (github.event.inputs.action == 'Install' || github.event.inputs.action == 'UpgradeAddons')
+        if: (github.event.inputs.action == 'Install' || github.event.inputs.action == 'UpgradeAddons') && github.event_name != 'pull_request'
         env:
           KUBECONFIG: ${{ github.workspace }}/admin.conf
         run: |
