@@ -21,7 +21,7 @@ jobs:
     outputs:
       ansible: ${{ steps.filter.outputs.ansible }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Detect relevant changes
         id: filter
@@ -63,7 +63,7 @@ jobs:
           tags: tag:ci
     
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
