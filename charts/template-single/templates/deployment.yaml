@@ -59,7 +59,7 @@ spec:
             {{- range .Values.pvc.backup.volumeMounts }}
             - name: {{ $.Values.pvc.name}}-emp
 {{ toYaml . | nindent 14 }}
-            {{- end }} 
+            {{- end }}
           {{- with .Values.envFrom }}
           envFrom:
             {{- toYaml .  | nindent 12 }}
@@ -136,7 +136,7 @@ spec:
           {{- range .Values.pvc.backup.volumeMounts }}
             - name: {{ $.Values.pvc.name}}-emp
 {{ toYaml . | nindent 14 }}
-          {{- end }} 
+          {{- end }}
           env:
             - name: SERVER
               value: "enable"

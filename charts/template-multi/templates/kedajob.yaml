@@ -125,11 +125,11 @@ spec:
   maxReplicaCount: {{ . }}
   {{- end }}
   {{- with ($config.keda).rollout }}
-  rollout: 
+  rollout:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   {{- with ($config.keda).scalingStrategy }}
-  scalingStrategy: 
+  scalingStrategy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   triggers:
