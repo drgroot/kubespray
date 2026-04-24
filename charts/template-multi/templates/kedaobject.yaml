@@ -35,7 +35,7 @@ spec:
   maxReplicaCount: {{ . }}
   {{- end }}
   {{- with ($config.keda).fallback }}
-  fallback: 
+  fallback:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   triggers:
