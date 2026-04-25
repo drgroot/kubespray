@@ -49,7 +49,7 @@ registry:
     tag: latest
 
   resources:
-    memory: 128Mi
+    memory: 1Gi
 
 minio:
   image:
