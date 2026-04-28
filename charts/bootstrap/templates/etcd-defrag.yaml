@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-defrag
+  namespace: kube-system
+spec:
+  schedule: "0 3 */10 * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          hostNetwork: true
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: "true"
+          restartPolicy: OnFailure
+          containers:
+            - name: etcd-defrag
+              image: quay.io/coreos/etcd:v3.5.26
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  ETCDCTL_API=3 etcdctl \
+                    --endpoints=https://127.0.0.1:2379 \
+                    --cacert=/etc/ssl/etcd/ssl/ca.pem \
+                    --cert=/etc/ssl/etcd/ssl/member-$(hostname).pem \
+                    --key=/etc/ssl/etcd/ssl/member-$(hostname)-key.pem \
+                    defrag
+              volumeMounts:
+                - name: etcd-certs
+                  mountPath: /etc/ssl/etcd/ssl
+                  readOnly: true
+          volumes:
+            - name: etcd-certs
+              hostPath:
+                path: /etc/ssl/etcd/ssl
