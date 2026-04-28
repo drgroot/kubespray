@@ -37,8 +37,7 @@ domains:
   internal: k8s.private
   external: yusufali.ca
 
-otherdomains:
-  - pocketgm.ca
+otherdomains: []
 
 certmanager:
   email: ali@yusuf.email
