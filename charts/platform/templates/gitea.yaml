@@ -174,11 +174,11 @@ spec:
         
         resources:
           requests:
-            cpu: 150m
-            memory: 400Mi
+            cpu: 500m
+            memory: 1Gi
           limits:
-            cpu: 300m
-            memory: 400Mi
+            cpu: 1500m
+            memory: 2Gi
 
         deployment:
           env: []
@@ -303,30 +303,6 @@ spec:
         
         postgresql:
           enabled: false
----
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: gitea-web-rps
-spec:
-  scaleTargetRef:
-    name: gitea
-    kind: Deployment
-  pollingInterval: 10
-  cooldownPeriod: 300
-  minReplicaCount: 1
-  maxReplicaCount: 5
-  triggers:
-    - type: prometheus
-      metadata:
-        serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring.svc:9090
-        metricName: gitea_web_rps_per_pod
-        threshold: "5"
-        query: |
-          sum(rate(nginx_ingress_controller_requests{exported_namespace="{{ .Release.Namespace }}",ingress="gitea"}[1m]))
-          /
-          count(kube_pod_info{namespace="{{ .Release.Namespace }}",pod=~"gitea-.*",pod!~"gitea-actions.*"})
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
