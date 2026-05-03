@@ -1,4 +1,12 @@
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry-http-secret
+type: Opaque
+stringData:
+  secret: asdasdasdadsa
+---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
@@ -56,8 +64,8 @@ spec:
           - name: REGISTRY_HTTP_SECRET
             valueFrom:
               secretKeyRef:
-                name: registry-htpasswd
-                key: htpasswd
+                name: registry-http-secret
+                key: secret
           - name: REGISTRY_AUTH
             value: htpasswd
           - name: REGISTRY_AUTH_HTPASSWD_REALM
