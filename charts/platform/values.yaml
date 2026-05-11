@@ -342,7 +342,7 @@ postgres:
 
 gitea:
   actions:
-    version: 1.0.0
+    version: 0.0.4
     maxRunners: 5
 
     resources:
