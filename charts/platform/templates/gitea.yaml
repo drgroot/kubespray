@@ -303,10 +303,13 @@ spec:
         
         postgresql:
           enabled: false
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: gitea-actions-dind-daemon
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
 data:
   daemon.json: |
     {
@@ -322,6 +325,13 @@ metadata:
   name: bootstrap-external-gitea-actions
   namespace: argocd
 spec:
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: gitea-actions-act-runner
+      jsonPointers:
+        - /spec/replicas
+        - /spec/template/metadata/annotations/kubectl.kubernetes.io~1restartedAt
   syncPolicy:
     automated:
       prune: true
