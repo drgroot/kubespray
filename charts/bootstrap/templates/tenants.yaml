@@ -85,6 +85,8 @@ kind: Application
 metadata:
   name: tenant-{{ $tenant.name }}
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/sync-wave: "10"
     argocd-image-updater.argoproj.io/pull-secret: pullsecret:argocd/cluster-docker-secrets

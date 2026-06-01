@@ -8,6 +8,8 @@ kind: Application
 metadata:
   name: system-prometheus
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:

@@ -4,6 +4,8 @@ kind: Application
 metadata:
   name: bootstrap-external-certmanager
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:
@@ -122,6 +124,8 @@ kind: Application
 metadata:
   name: bootstrap-external-externaldns
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:
@@ -148,7 +152,7 @@ spec:
                 key: CLOUDFLARE_PERSONAL_API_KEY
           - name: CF_API_EMAIL
             value: {{ .Values.certmanager.email }}
-        
+
         provider: cloudflare
         domainFilters:
           - {{ .Values.domains.external }}

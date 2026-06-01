@@ -35,6 +35,8 @@ kind: Application
 metadata:
   name: bootstrap-external-tailscale
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:
