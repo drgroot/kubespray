@@ -12,21 +12,23 @@ spec:
     - secretKey: password
       remoteRef:
         key: DB_POSTGRES
-        property:  PASSWORD
+        property: PASSWORD
     - secretKey: giteapassword
       remoteRef:
         key: DB_POSTGRES
-        property:  PASSWORD-defaultgitea
+        property: PASSWORD-defaultgitea
     - secretKey: bitwardenpassword
       remoteRef:
         key: DB_POSTGRES
-        property:  PASSWORD-mordorbitwarden
+        property: PASSWORD-mordorbitwarden
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: main-postgres
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:

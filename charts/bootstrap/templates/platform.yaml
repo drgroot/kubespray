@@ -12,6 +12,8 @@ kind: Application
 metadata:
   name: bootstrap-platform
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   syncPolicy:
     automated:
@@ -39,4 +41,3 @@ spec:
         domains:
           {{- toYaml . | nindent 12 }}
         {{- end }}
-    
