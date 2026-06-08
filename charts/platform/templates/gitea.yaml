@@ -487,7 +487,7 @@ spec:
               image: dockerhub.{{ .Values.domains.external }}/renovate/renovate
               env:
                 - name: RENOVATE_GIT_AUTHOR
-                  value: "ChintanBot <chintanbot@servc.io>"
+                  value: "Rennovate <rennovate@yusuf.local>"
                 - name: LOG_LEVEL
                   value: debug
                 - name: RENOVATE_SEMANTIC_COMMITS
