@@ -406,7 +406,7 @@ spec:
                 # options: -v /var/run/docker.sock:/var/run/docker.sock
               runner:
                 labels:
-                  - "ubuntu-latest:docker://registry.yusufali.ca/catthehacker/ubuntu"
+                  - "ubuntu-latest:docker://registry.yusufali.ca/runner"
 
         init:
           image:
