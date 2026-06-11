@@ -407,6 +407,7 @@ spec:
               runner:
                 labels:
                   - "ubuntu-latest:docker://registry.yusufali.ca/containers/runner"
+                  - "ubuntu-spark-3.5.6:docker://registry.yusufali.ca/containers/runner-spark"
 
         init:
           image:
