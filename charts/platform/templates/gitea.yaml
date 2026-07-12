@@ -1,5 +1,5 @@
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: coder-oauth-secrets
@@ -19,7 +19,7 @@ spec:
         property: gitea-oauth-clientsecret
       secretKey: CODER_OAUTH2_GITHUB_CLIENT_SECRET
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: gitea-runner-secrets
@@ -51,7 +51,7 @@ spec:
         property: RENOVATE_TOKEN
       secretKey: renovate-token
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: rennovate-secrets
@@ -76,7 +76,7 @@ spec:
         property: npm-read-password
       secretKey: npm_read_password
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: gitea-postgres-secrets

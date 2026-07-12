@@ -25,7 +25,7 @@ vault:
 versions:
   argoupdater: 0.16
   ingressnginx: 4.13.2
-  externalsecrets: 0.10.5
+  externalsecrets: 2.5.0
   nfsprovisioner: 4.0.18
   tailscale: 1.86.5
   keda: 2.17.2
