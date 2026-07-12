@@ -446,11 +446,6 @@ spec:
               periodSeconds: 30
         scaleDown:
           selectPolicy: Disabled
-          stabilizationWindowSeconds: 300
-          policies:
-            - type: Pods
-              value: 2
-              periodSeconds: 60
 
   triggers:
     - type: postgresql
