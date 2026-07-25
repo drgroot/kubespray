@@ -29,7 +29,7 @@ pypi:
     tag: latest
 
   resources:
-    cpu: 100m
+    cpu: 250m
     memory: 64Mi
 
 npm:
@@ -348,7 +348,7 @@ gitea:
     resources:
       requests:
         memory: "2Gi"
-        cpu: "500m"
+        cpu: "1"
       limits:
         memory: "4Gi"
-        cpu: "1"
+        cpu: "2"
