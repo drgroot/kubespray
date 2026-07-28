@@ -39,7 +39,7 @@ npm:
     tag: 6.1.6
 
   resources:
-    cpu: 750m
+    cpu: 1500m
     memory: 800Mi
 
 registry:
