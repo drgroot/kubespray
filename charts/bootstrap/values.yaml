@@ -4,6 +4,12 @@ vault:
   username: kubernetesadmin
   secretName: vault-password
   key: password
+  servc:
+    namespace: argocd
+    secretName: vault-password
+    remoteKey: VAULT
+    usernameProperty: servc-username
+    passwordProperty: servc-password
   image:
     repository: hashicorp/vault
     tag: "1.19.5"
