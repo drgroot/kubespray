@@ -29,3 +29,39 @@ spec:
       remoteRef:
         key: GIT
         property: GIT_USERNAME
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: oci-repo-credentials
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repo-creds
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: oci-repo-credentials
+    template:
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: repo-creds
+      data:
+        type: oci
+        url: 'oci://{{ printf "{{ .HOST }}" }}/serv-c'
+        username: '{{ printf "{{ .USERNAME }}" }}'
+        password: '{{ printf "{{ .PASSWORD }}" }}'
+  data:
+    - secretKey: HOST
+      remoteRef:
+        key: DOCKER_PRIVATE
+        property: host
+    - secretKey: USERNAME
+      remoteRef:
+        key: DOCKER_PRIVATE
+        property: username
+    - secretKey: PASSWORD
+      remoteRef:
+        key: DOCKER_PRIVATE
+        property: password
