@@ -1,5 +1,9 @@
 project: bootstrap
 
+envoy:
+  enabled: true
+  version: v1.8.3
+
 vault:
   username: kubernetesadmin
   secretName: vault-password
