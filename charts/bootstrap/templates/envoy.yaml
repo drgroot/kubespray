@@ -1,0 +1,36 @@
+{{- if .Values.envoy.enabled -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: envoy-gateway-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: envoy-gateway
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  destination:
+    namespace: envoy-gateway-system
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    automated:
+      prune: true
+      selfHeal: true
+  source:
+    repoURL: oci://docker.io/envoyproxy/gateway-helm
+    path: .
+    targetRevision: {{ .Values.envoy.version }}
+    helm:
+      releaseName: system-envoy
+      values: |-
+        # values file
+{{- end -}}
