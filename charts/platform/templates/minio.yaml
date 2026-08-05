@@ -68,6 +68,8 @@ spec:
                 secretKeyRef:
                   name: minio-credentials
                   key: rootPassword
+            - name: MINIO_BROWSER_REDIRECT_URL
+              value: https://s3-minio.{{ .Values.domains.external }}
           ports:
             - name: api
               containerPort: 9000
@@ -141,3 +143,30 @@ spec:
                 name: minio
                 port:
                   name: api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-console
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - "*.{{ .Values.domains.external }}"
+      secretName: wildcard-external
+  rules:
+    - host: s3-minio.{{ .Values.domains.external }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  name: console
