@@ -324,7 +324,7 @@ data:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: gitea_git_cache
+  name: gitea-git-cache
 spec:
   accessModes:
     - {{ .Values.gitea.actions.cache.accessMode }}
@@ -391,7 +391,7 @@ spec:
                 name: gitea-actions-dind-daemon
             - name: gitea-git-cache
               persistentVolumeClaim:
-                claimName: gitea_git_cache
+                claimName: gitea-git-cache
 
           dind:
             registry: dockerhub.{{ .Values.domains.external }}/library
