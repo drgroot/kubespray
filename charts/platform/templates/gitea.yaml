@@ -321,18 +321,6 @@ data:
       "mtu": 1450
     }
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: gitea-git-cache
-spec:
-  accessModes:
-    - {{ .Values.gitea.actions.cache.accessMode }}
-  resources:
-    requests:
-      storage: {{ .Values.gitea.actions.cache.size }}
-  storageClassName: {{ .Values.storage.fast }}
----
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -389,9 +377,6 @@ spec:
             - name: docker-daemon-config
               configMap:
                 name: gitea-actions-dind-daemon
-            - name: gitea-git-cache
-              persistentVolumeClaim:
-                claimName: gitea-git-cache
 
           dind:
             registry: dockerhub.{{ .Values.domains.external }}/library
@@ -409,8 +394,6 @@ spec:
               - name: docker-secret
                 mountPath: /root/.docker/config.json
                 subPath: .dockerconfigjson
-              - name: gitea-git-cache
-                mountPath: /root/.cache/act/
 
             config: |
               log:
