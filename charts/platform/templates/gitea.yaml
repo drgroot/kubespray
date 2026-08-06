@@ -380,6 +380,10 @@ spec:
 
           dind:
             registry: dockerhub.{{ .Values.domains.external }}/library
+            # Docker 29's containerd snapshotter can fail while committing
+            # large layers on the action runners. Keep the overlay2 backend
+            # until the newer snapshotter path is proven stable here.
+            tag: 28.5.1-dind
             extraVolumeMounts:
               - name: docker-secret
                 mountPath: /root/.docker/config.json
