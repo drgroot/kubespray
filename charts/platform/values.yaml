@@ -344,9 +344,6 @@ gitea:
   actions:
     version: 0.0.4
     maxRunners: 5
-    cache:
-      accessMode: ReadWriteMany
-      size: 20Gi
 
     resources:
       requests:
