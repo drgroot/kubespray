@@ -1,0 +1,57 @@
+{{- if .Values.crossplane.enabled -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: system-crossplane
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: system-crossplane
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true
+  destination:
+    namespace: system-crossplane
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: crossplane
+    repoURL: https://charts.crossplane.io/stable
+    targetRevision: {{ .Values.crossplane.version }}
+    helm:
+      releaseName: system-crossplane
+      values: |-
+        resourcesCrossplane:
+          limits:
+            cpu: ~ # 500m
+            memory: ~ # 1024Mi
+          requests:
+            cpu: ~
+            memory: ~
+        
+        resourcesRBACManager:
+          limits:
+            cpu: ~ #100m
+            memory: ~ #512Mi
+          requests:
+            cpu: ~ #100m
+            memory: ~ #256Mi
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-opentofu
+spec:
+  package: xpkg.upbound.io/upbound/provider-opentofu:v1.1.2
+{{- end }}

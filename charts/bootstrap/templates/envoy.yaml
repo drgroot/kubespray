@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: envoy-gateway-system
+  name: system-envoy
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
 ---
@@ -16,7 +16,7 @@ metadata:
 spec:
   project: {{ .Values.project }}
   destination:
-    namespace: envoy-gateway-system
+    namespace: system-envoy
     server: https://kubernetes.default.svc
   syncPolicy:
     syncOptions:
@@ -32,5 +32,5 @@ spec:
     helm:
       releaseName: system-envoy
       values: |-
-        # values file
+        namespaceOverride: {{ .Values.envoy.namespace }}
 {{- end -}}
