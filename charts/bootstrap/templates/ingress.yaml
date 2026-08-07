@@ -35,8 +35,6 @@ spec:
       releaseName: ingress-nginx
       values: |-
         controller:
-          minAvailable: 2
-
           allowSnippetAnnotations: true
           config:
             annotations-risk-level: "Critical"
@@ -48,7 +46,7 @@ spec:
           
           autoscaling:
             enabled: false
-            minReplicas: 3
+            minReplicas: 1
           
           metrics:
             namespace: kube-networking
@@ -60,11 +58,11 @@ spec:
               namespaceSelector:
                 any: true
 
-          replicaCount: 3
+          replicaCount: 1
 
           resources:
             requests:
-              memory: 500Mi
+              memory: 250Mi
 
           service:
             type: ClusterIP
