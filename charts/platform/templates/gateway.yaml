@@ -76,6 +76,15 @@ spec:
           - kind: TCPRoute
         namespaces:
           from: Same
+
+    - name: ingress-http
+      protocol: TCP
+      port: 80
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: Same
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
@@ -86,11 +95,16 @@ spec:
   parentRefs:
     - name: gateway
       sectionName: ingress-https
+    - name: gateway
+      sectionName: ingress-http
   rules:
     - backendRefs:
         - name: ingress-nginx-controller
           namespace: kube-networking
           port: 443
+        - name: ingress-nginx-controller
+          namespace: kube-networking
+          port: 80
 ---
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
