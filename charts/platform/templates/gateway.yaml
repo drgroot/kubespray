@@ -48,3 +48,41 @@ spec:
           - kind: TCPRoute
         namespaces:
           from: All
+
+    - name: ingress-https
+      protocol: TCP
+      port: 443
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: ingress-https
+  namespace: system-envoy
+spec:
+  parentRefs:
+    - name: gateway
+      sectionName: ingress-https
+  rules:
+    - backendRefs:
+        - name: ingress-nginx-controller
+          namespace: kube-networking
+          port: 443
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: ingress-https
+  namespace: kube-networking
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: TCPRoute
+      namespace: system-envoy
+  to:
+    - group: ""
+      kind: Service
