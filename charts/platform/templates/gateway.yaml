@@ -95,13 +95,23 @@ spec:
   parentRefs:
     - name: gateway
       sectionName: ingress-https
-    - name: gateway
-      sectionName: ingress-http
   rules:
     - backendRefs:
         - name: ingress-nginx-controller
           namespace: kube-networking
           port: 443
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: ingress-http
+  namespace: system-envoy
+spec:
+  parentRefs:
+    - name: gateway
+      sectionName: ingress-http
+  rules:
+    - backendRefs:
         - name: ingress-nginx-controller
           namespace: kube-networking
           port: 80
@@ -109,7 +119,7 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
-  name: ingress-https
+  name: ingress
   namespace: kube-networking
 spec:
   from:
