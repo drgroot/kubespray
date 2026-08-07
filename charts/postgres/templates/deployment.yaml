@@ -83,8 +83,12 @@ spec:
             name: {{ include "postgres.fullname" . }}-scripts
             defaultMode: 0777
         - name: postgres-data
+{{- if .Values.volume }}
+{{ toYaml .Values.volume | nindent 10 }}
+{{- else }}
           persistentVolumeClaim:
             claimName: {{ include "postgres.fullname" . }}-data
+{{- end }}
         - name: postgres-backup
           persistentVolumeClaim:
             claimName: {{ include "postgres.fullname" . }}-backup
