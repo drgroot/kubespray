@@ -67,10 +67,7 @@ spec:
               memory: 500Mi
 
           service:
-            type: NodePort
-            nodePorts:
-                http: 80
-                https: 443
+            type: ClusterIP
 
           extraArgs:
             enable-ssl-passthrough: true
