@@ -114,4 +114,4 @@ tenants:
         url: https://git.yusufali.ca/serv-c/servc-charts.git
         path: "servc-helm-aks"
         valuesRepo: https://git.yusufali.ca/serv-c/tenant-charts.git
-        valuesFile: "platform/onpremise.yaml"
+        valuesFile: "aks/onpremise.yaml"
