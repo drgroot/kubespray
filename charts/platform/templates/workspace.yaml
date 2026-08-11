@@ -19,6 +19,7 @@ spec:
     name: {{ $backendSecretName }}
     template:
       engineVersion: v2
+      mergePolicy: Merge
       data:
         AWS_ENDPOINT_URL_S3: http://minio.{{ .Release.Namespace }}.svc.cluster.local:9000
         TF_BACKEND_BUCKET: tfstate
