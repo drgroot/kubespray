@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "postgres.labels" . | nindent 4 }}
 spec:
-  schedule: {{ .Values.backup.schedule }}
+  schedule: {{ .Values.backup.schedule | quote }}
   concurrencyPolicy: Forbid
   failedJobsHistoryLimit: 1
   successfulJobsHistoryLimit: 1
@@ -22,32 +22,59 @@ spec:
           labels:
             {{- include "postgres.labels" . | nindent 12 }}
         spec:
-          containers:
-            - name: app
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          initContainers:
+            - name: dump
               image: {{ .Values.image }}
+              imagePullPolicy: IfNotPresent
               env:
                 - name: PGPASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: {{ .Values.server.password.secretname }}
-                      key: {{ .Values.server.password.key }}
+                      name: {{ include "postgres.fullname" . }}-credentials
+                      key: password
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "postgres.fullname" . }}-credentials
+                      key: username
+                - name: POSTGRES_DB
+                  value: {{ .Values.database | quote }}
               command:
-                - pg_dump
-              args:
-                - -Fc
-                - -h
-                - {{ include "postgres.fullname" . }}
-                - -U
-                - {{ .Values.server.username }}
-                - -d
-                - {{ .Values.server.databasename }}
-                - -f
-                - /backup/backup.sql
+                - /bin/sh
+                - -ec
+                - |
+                  psql --host={{ include "postgres.hostname" . }} --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --tuples-only --no-align --command \
+                    "SELECT datname FROM pg_database WHERE datistemplate = false AND datallowconn ORDER BY datname" |
+                  while IFS= read -r database; do
+                    [ -n "$database" ] || continue
+                    pg_dump --host={{ include "postgres.hostname" . }} --username="$POSTGRES_USER" --dbname="$database" --format=custom --file="/backup/${database}.pgdump"
+                  done
               volumeMounts:
                 - name: backup
                   mountPath: /backup
+          containers:
+            - name: rclone
+              image: {{ .Values.backup.image }}
+              imagePullPolicy: IfNotPresent
+              args:
+                - copy
+                - --config=/config/rclone/rclone.conf
+                - /backup
+                - s3:postgres/{{ include "postgres.fullname" . }}
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+                - name: rclone-config
+                  mountPath: /config/rclone
+                  readOnly: true
           volumes:
             - name: backup
-              persistentVolumeClaim:
-                claimName: {{ include "postgres.fullname" . }}-backup
+              emptyDir: {}
+            - name: rclone-config
+              secret:
+                secretName: {{ include "postgres.fullname" . }}-rclone
           restartPolicy: Never

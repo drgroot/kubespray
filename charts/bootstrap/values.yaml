@@ -7,6 +7,7 @@ envoy:
 crossplane:
   enabled: true
   version: v2.2.1
+  opentofuVersion: v1.1.2
 
 vault:
   username: kubernetesadmin
@@ -15,7 +16,7 @@ vault:
   servc:
     namespace: argocd
     secretName: vault-password
-    remoteKey: VAULT
+    remoteKey: vendor/vault
     usernameProperty: servc-username
     passwordProperty: servc-password
   image:

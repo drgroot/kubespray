@@ -17,20 +17,20 @@ spec:
           {{ `{{ htpasswd .npm_read_user .npm_read_password "bcrypt" }}` }}
   data:
     - remoteRef:
-        key: DOCKER_PRIVATE
-        property: npmuser
+        key: vendor/npm
+        property: username
       secretKey: PRIVATE_USERNAME
     - remoteRef:
-        key: DOCKER_PRIVATE
+        key: vendor/npm
         property: password
       secretKey: PRIVATE_PASSWORD
     - remoteRef:
-        key: DOCKER_PRIVATE
-        property: npm-read-user
+        key: vendor/npm
+        property: read-username
       secretKey: npm_read_user
     - remoteRef:
-        key: DOCKER_PRIVATE
-        property: npm-read-password
+        key: vendor/npm
+        property: read-password
       secretKey: npm_read_password
 ---
 apiVersion: v1

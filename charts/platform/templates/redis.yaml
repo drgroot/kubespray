@@ -4,7 +4,7 @@ metadata:
   name: redis-credentials
 spec:
   secretStoreRefs:
-    - name: kubernetes
+    - name: external-infra
       kind: ClusterSecretStore
   selector:
     secret:
@@ -17,17 +17,17 @@ spec:
     - match:
         secretKey: hostname
         remoteRef:
-          remoteKey: redis
+          remoteKey: iac/redis
           property: hostname
     - match:
         secretKey: url
         remoteRef:
-          remoteKey: redis
+          remoteKey: iac/redis
           property: url
     - match:
         secretKey: url
         remoteRef:
-          remoteKey: redis
+          remoteKey: iac/redis
           property: CACHE_URL
 ---
 apiVersion: apps/v1

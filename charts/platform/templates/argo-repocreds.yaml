@@ -23,12 +23,12 @@ spec:
   data:
     - secretKey: PASSWORD
       remoteRef:
-        key: GIT
-        property: GIT_PASSWORD
+        key: vendor/gitea
+        property: argo-password
     - secretKey: USERNAME
       remoteRef:
-        key: GIT
-        property: GIT_USERNAME
+        key: vendor/gitea
+        property: argo-username
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -55,13 +55,13 @@ spec:
   data:
     - secretKey: HOST
       remoteRef:
-        key: DOCKER_PRIVATE
-        property: host
+        key: vendor/docker
+        property: private-host
     - secretKey: USERNAME
       remoteRef:
-        key: DOCKER_PRIVATE
-        property: username
+        key: vendor/docker
+        property: private-username
     - secretKey: PASSWORD
       remoteRef:
-        key: DOCKER_PRIVATE
-        property: password
+        key: vendor/docker
+        property: private-password

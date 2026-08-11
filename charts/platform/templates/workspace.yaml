@@ -1,0 +1,75 @@
+{{- if .Values.crossplane.enabled }}
+{{- $backendSecretName := "crossplane-tofu-backend" -}}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $backendSecretName}}
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: external-infra
+  target:
+    name: {{ $backendSecretName }}
+    template:
+      engineVersion: v2
+      data:
+        AWS_ENDPOINT_URL_S3: http://minio.{{ .Release.Namespace }}.svc.cluster.local:9000
+        TF_BACKEND_BUCKET: tfstate
+        AWS_REGION: us-east-1
+        AWS_DEFAULT_REGION: us-east-1
+        VAULT_ADDR: http://vault.kube-tools.svc.cluster.local:8200
+  data:
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef:
+        key: vendor/minio
+        property: root-access-key
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: vendor/minio
+        property: root-secret-key
+    - secretKey: VAULT_TOKEN
+      remoteRef:
+        key: vendor/vault
+        property: token
+---
+{{- $envVars := list "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_ENDPOINT_URL_S3" "TF_BACKEND_BUCKET" "AWS_REGION" "AWS_DEFAULT_REGION" "VAULT_ADDR" "VAULT_TOKEN" -}}
+{{- range $name, $config := .Values.crossplane.iac }}
+---
+{{- if $config.enabled }}
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: {{ $.Release.Namespace }}-{{ $name }}
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: opentofu-provider-config
+
+  forProvider:
+    source: Remote
+    module: git::https://github.com/drgroot/kubespray.git//terraform/{{ $config.type | default $name }}-{{ $config.provider }}?ref={{ $config.version | default "main" }}
+
+    initArgs:
+      - -backend-config=bucket=tfstate
+      - -backend-config=key={{ $name }}.tfstate
+
+    env:
+      - name: VAULT_AUTH_METHOD
+        value: userpass
+      {{- range $key := $envVars }}
+      - name: {{ $key }}
+        secretKeyRef:
+          name: {{ $backendSecretName }}
+          key: {{ $key }}
+      {{- end }}
+    vars:
+      - key: name
+        value: {{ $config.name | default (printf "%s-%s" $.Release.Namespace $name) }}
+      {{- with $config.vars }}
+      {{- tpl (toYaml .) $ | nindent 6 }}
+      {{- end }}
+{{- end }}
+---
+{{- end }}
+---
+{{- end }}

@@ -13,12 +13,12 @@ spec:
       type: Opaque
   data:
     - remoteRef:
-        key: DOCKER_PUBLIC
-        property: username
+        key: vendor/docker
+        property: public-username
       secretKey: USERNAME
     - remoteRef:
-        key: DOCKER_PUBLIC
-        property: password
+        key: vendor/docker
+        property: public-password
       secretKey: PASSWORD
 ---
 apiVersion: v1

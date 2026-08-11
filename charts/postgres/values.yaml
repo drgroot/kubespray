@@ -1,5 +1,6 @@
 image: postgres:16.3
 imagePullSecrets: []
+database: postgres
 
 nameOverride: ""
 fullnameOverride: ""
@@ -28,24 +29,33 @@ storageclass: nfs-thorin-ssd-raid0
 #     targetPortal: 192.168.1.3:3260
 volume: {}
 
-server:
+secrets:
+  secretStore:
+    name: external-infra
+    type: ClusterSecretStore
+  username:
+    remoteRef:
+      key: vendor/postgres
+      property: username-key
   password:
-    secretname: postgres-password
-    key: password
-  databasename: postgres
-  username: postgres
+    remoteRef:
+      key: vendor/postgres
+      property: password-key
 
-  additionalUsers: []
-    # - name: test
-    #   passwordkey: password-test
-    #   schema: test
-
-pushsecret:
-  enabled: true
-  secretstore: default
-  secretStoreKind: SecretStore
-  remoteKey: postgres-credentials
+  pushsecret:
+    enabled: true
+    secretStore:
+      name: external-infra
+      type: ClusterSecretStore
+    remoteKey: iac/postgres
 
 backup:
+  image: rclone/rclone:latest
   schedule: "0 0 * * *"
-  storageclass: nfs-thorin-backups
+  secretStore:
+    name: external-infra
+    type: ClusterSecretStore
+  rclone:
+    remoteRef:
+      key: iac/s3-backups
+      property: rclone

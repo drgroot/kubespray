@@ -43,7 +43,7 @@ spec:
   source:
     path: "charts/postgres"
     repoURL: "https://github.com/drgroot/kubespray.git"
-    targetRevision: HEAD
+    targetRevision: 11a786a5ce9d6d0c80ce95a357097f9a9d42a381
     helm:
       releaseName: main
       values: |-

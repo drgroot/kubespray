@@ -14,11 +14,11 @@ spec:
   data:
     - secretKey: rootUser
       remoteRef:
-        key: S3
+        key: vendor/minio
         property: root-access-key
     - secretKey: rootPassword
       remoteRef:
-        key: S3
+        key: vendor/minio
         property: root-secret-key
 ---
 apiVersion: v1
@@ -114,6 +114,43 @@ spec:
     - name: console
       port: 9001
       targetPort: console
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-create-tfstate-bucket
+  labels:
+    app: minio
+spec:
+  backoffLimit: 12
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: create-bucket
+          image: minio/mc:latest
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              until mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"; do
+                sleep 2
+              done
+              mc mb --ignore-existing minio/tfstate
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: rootUser
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: rootPassword
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

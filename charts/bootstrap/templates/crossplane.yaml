@@ -55,5 +55,5 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "4"
 spec:
-  package: xpkg.upbound.io/upbound/provider-opentofu:v1.1.2
+  package: xpkg.upbound.io/upbound/provider-opentofu:{{ .Values.crossplane.opentofuVersion }}
 {{- end }}
