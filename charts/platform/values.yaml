@@ -397,11 +397,6 @@ bandersnatch:
     - xxhash
     - zstandard
 
-postgres:
-  resources:
-    cpu: 1.5
-    memory: 512Mi
-
 gitea:
   actions:
     version: 0.0.4
