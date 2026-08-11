@@ -43,16 +43,20 @@ spec:
   data:
     - secretKey: CLOUDFLARE_SERVC_DOMAIN_NAME
       remoteRef:
-        key: CLOUDFLARE
-        property: CLOUDFLARE_SERVC_DOMAIN_NAME
+        key: vendor/cloudflare
+        property: domain
     - secretKey: CLOUDFLARE_PERSONAL_API_KEY
       remoteRef:
-        key: CLOUDFLARE
-        property: CLOUDFLARE_PERSONAL_API_KEY
+        key: vendor/cloudflare
+        property: apikey
     - secretKey: CLOUDFLARE_PERSONAL_DOMAIN_NAME
       remoteRef:
-        key: CLOUDFLARE
-        property: CLOUDFLARE_PERSONAL_DOMAIN_NAME
+        key: vendor/cloudflare
+        property: domain
+    - secretKey: CLOUDFLARE_EMAIL
+      remoteRef:
+        key: vendor/cloudflare
+        property: email
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -93,13 +97,16 @@ spec:
         app: ddns
     spec:
       imagePullSecrets:
-        - name: cluster-docker-private
+        - name: cluster-docker-secrets
       containers:
         - name: app
           image: registry.yusufali.ca/hotio/cloudflareddns
           env:
             - name: CF_USER
-              value: {{ .Values.certmanager.email }}
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare
+                  key: CLOUDFLARE_EMAIL
             - name: UPDATE_IPV4
               value: "true"
             - name: UPDATE_IPV6
@@ -151,7 +158,10 @@ spec:
                 name: cloudflare
                 key: CLOUDFLARE_PERSONAL_API_KEY
           - name: CF_API_EMAIL
-            value: {{ .Values.certmanager.email }}
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare
+                key: CLOUDFLARE_EMAIL
 
         provider: cloudflare
         domainFilters:

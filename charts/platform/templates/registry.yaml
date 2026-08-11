@@ -1,11 +1,21 @@
 ---
-apiVersion: v1
-kind: Secret
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
   name: registry-http-secret
-type: Opaque
-stringData:
-  secret: asdasdasdadsa
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: registry-http-secret
+    template:
+      type: Opaque
+  data:
+    - remoteRef:
+        key: vendor/docker
+        property: http-secret
+      secretKey: secret
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -23,12 +33,12 @@ spec:
         htpasswd: '{{ `{{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD "bcrypt" }}` }}'
   data:
     - remoteRef:
-        key: DOCKER_PRIVATE
-        property: username
+        key: vendor/docker
+        property: private-username
       secretKey: PRIVATE_USERNAME
     - remoteRef:
-        key: DOCKER_PRIVATE
-        property: password
+        key: vendor/docker
+        property: private-password
       secretKey: PRIVATE_PASSWORD
 ---
 apiVersion: v1

@@ -8,6 +8,50 @@ storage:
 versions:
   gitea: 12.5.0
 
+crossplane:
+  enabled: true
+  iac:
+    s3-db-backups:
+      enabled: true
+      type: s3
+      provider: b2
+      name: backups
+      vars:
+        - key: input
+          value: external-infra/vendor/blackblaze
+        - key: output
+          value: external-infra/iac/s3-db-backups
+    postgres-gitea:
+      enabled: true
+      type: postgres
+      provider: db
+      name: gitea
+      vars:
+        - key: input
+          value: external-infra/vendor/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: gitea
+        - key: output
+          value: external-infra/iac/postgres-gitea
+    gitea-rennovate:
+      enabled: true
+      type: gitea
+      provider: user
+      name: rennovate
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: usernamekey
+          value: rennovate-username
+        - key: passwordkey
+          value: rennovate-password
+        - key: output
+          value: external-infra/iac/gitea-rennovate
+
 domains:
   internal: asd
   external: asd
@@ -352,3 +396,22 @@ gitea:
       limits:
         memory: "4Gi"
         cpu: "2"
+
+secretSync:
+  - name: docker
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/docker
+      properties:
+        - private-host
+        - private-username
+        - private-password
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/docker
+      properties:
+        private-host: host
+        private-username: username
+        private-password: password

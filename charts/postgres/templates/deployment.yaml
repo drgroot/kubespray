@@ -25,21 +25,24 @@ spec:
         - name: postgres
           image: {{ .Values.image }}
           imagePullPolicy: IfNotPresent
-          envFrom:
-            - secretRef:
-                name: {{ .Values.server.password.secretname }}
           env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "postgres.fullname" . }}-credentials
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "postgres.fullname" . }}-credentials
+                  key: password
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.server.password.secretname }}
-                  key: {{ .Values.server.password.key }}
-            - name: POSTGRES_PASSWORD
-              value: $(PGPASSWORD)
+                  name: {{ include "postgres.fullname" . }}-credentials
+                  key: password
             - name: POSTGRES_DB
-              value: {{ .Values.server.databasename }}
-            - name: POSTGRES_USER
-              value: {{ .Values.server.username }}
+              value: {{ .Values.database | quote }}
           ports:
             - name: postgres
               containerPort: 5432
@@ -48,10 +51,12 @@ spec:
             exec:
               command: 
                 - psql
+                - -h
+                - 127.0.0.1
                 - -U
-                - {{ .Values.server.username }}
+                - $(POSTGRES_USER)
                 - -d
-                - {{ .Values.server.databasename }}
+                - $(POSTGRES_DB)
                 - -c
                 - "SELECT 1"
             initialDelaySeconds: 45
@@ -60,10 +65,12 @@ spec:
             exec:
               command: 
                 - psql
+                - -h
+                - 127.0.0.1
                 - -U
-                - {{ .Values.server.username }}
+                - $(POSTGRES_USER)
                 - -d
-                - {{ .Values.server.databasename }}
+                - $(POSTGRES_DB)
                 - -c
                 - "SELECT 1"
             initialDelaySeconds: 15
@@ -71,17 +78,9 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: init-scripts
-              mountPath: /docker-entrypoint-initdb.d
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
-            - name: postgres-backup
-              mountPath: /backup
       volumes:
-        - name: init-scripts
-          configMap:
-            name: {{ include "postgres.fullname" . }}-scripts
-            defaultMode: 0777
         - name: postgres-data
 {{- if .Values.volume }}
 {{ toYaml .Values.volume | nindent 10 }}
@@ -89,6 +88,3 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "postgres.fullname" . }}-data
 {{- end }}
-        - name: postgres-backup
-          persistentVolumeClaim:
-            claimName: {{ include "postgres.fullname" . }}-backup

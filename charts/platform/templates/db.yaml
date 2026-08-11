@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: db
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    path: charts/postgres
+    repoURL: https://github.com/drgroot/kubespray.git
+    targetRevision: main
+    helm:
+      releaseName: db
+      values: |-
+        fullnameOverride: db
+
+        storageclass: {{ .Values.storage.fast }}
+
+        volume:
+          iscsi:
+            fsType: ext4
+            iqn: iqn.2026-01.com.middleearth:thorin
+            iscsiInterface: default
+            lun: 4
+            targetPortal: 192.168.1.3:3260
+
+        secrets:
+          secretStore:
+            name: external-infra
+            type: ClusterSecretStore
+          username:
+            remoteRef:
+              key: vendor/postgres
+              property: root-username
+          password:
+            remoteRef:
+              key: vendor/postgres
+              property: root-password
+          pushsecret:
+            enabled: true
+            secretStore:
+              name: external-infra
+              type: ClusterSecretStore
+            remoteKey: external-infra/iac/postgres
+
+        backup:
+          secretStore:
+            name: external-infra
+            type: ClusterSecretStore
+          rclone:
+            remoteRef:
+              key: external-infra/iac/s3-db-backups
+              property: rclone
