@@ -453,7 +453,7 @@ spec:
         targetQueryValue: "1"
         query: |
           SELECT CASE WHEN COUNT(*) > 0 THEN 5 ELSE 0 END::int
-          FROM gitea.action_run_job
+          FROM public.action_run_job
           WHERE status != 4 and stopped = 0;
       authenticationRef:
         name: gitea-db-auth
