@@ -60,5 +60,5 @@ spec:
             type: ClusterSecretStore
           rclone:
             remoteRef:
-              key: external-infra/iac/s3-db-backups
+              key: iac/s3-db-backups
               property: rclone
