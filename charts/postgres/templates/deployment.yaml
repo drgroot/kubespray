@@ -53,30 +53,18 @@ spec:
               protocol: TCP
           livenessProbe:
             exec:
-              command: 
-                - psql
+              command:
+                - pg_isready
                 - -h
                 - 127.0.0.1
-                - -U
-                - $(POSTGRES_USER)
-                - -d
-                - $(POSTGRES_DB)
-                - -c
-                - "SELECT 1"
             initialDelaySeconds: 45
             timeoutSeconds: 2
           readinessProbe:
             exec:
-              command: 
-                - psql
+              command:
+                - pg_isready
                 - -h
                 - 127.0.0.1
-                - -U
-                - $(POSTGRES_USER)
-                - -d
-                - $(POSTGRES_DB)
-                - -c
-                - "SELECT 1"
             initialDelaySeconds: 15
             timeoutSeconds: 2
           resources:
