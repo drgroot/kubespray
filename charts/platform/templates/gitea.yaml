@@ -78,33 +78,33 @@ metadata:
   name: gitea-postgres-secrets
 spec:
   secretStoreRef:
-    name: kubernetes
+    name: external-infra
     kind: ClusterSecretStore
   target:
     name: gitea-postgres-secrets
   data:
     - remoteRef:
-        key: main-postgres-credentials-gitea
+        key: iac/postgres-gitea
         property: url
       secretKey: url
     - remoteRef:
-        key: main-postgres-credentials-gitea
+        key: iac/postgres-gitea
         property: password
       secretKey: password
     - remoteRef:
-        key: main-postgres-credentials-gitea
+        key: iac/postgres-gitea
         property: username
       secretKey: username
     - remoteRef:
-        key: main-postgres-credentials-gitea
+        key: iac/postgres-gitea
         property: schema
       secretKey: schema
     - remoteRef:
-        key: main-postgres-credentials-gitea
+        key: iac/postgres-gitea
         property: hostname
       secretKey: hostname
     - remoteRef:
-        key: main-postgres-credentials-gitea
+        key: iac/postgres-gitea
         property: database
       secretKey: database
 ---
