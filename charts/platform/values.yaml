@@ -35,6 +35,20 @@ crossplane:
           value: gitea
         - key: output
           value: external-infra/iac/postgres-gitea
+    postgres-coder:
+      enabled: true
+      type: postgres
+      provider: db
+      name: coder
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: coder
+        - key: output
+          value: external-infra/iac/postgres-coder
     gitea-rennovate:
       enabled: true
       type: gitea
