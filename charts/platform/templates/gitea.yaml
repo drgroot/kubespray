@@ -43,7 +43,7 @@ spec:
         property: runner-token
       secretKey: token
     - remoteRef:
-        key: vendor/iac/gitea-rennovate
+        key: iac/gitea-rennovate
         property: token
       secretKey: renovate-token
 ---

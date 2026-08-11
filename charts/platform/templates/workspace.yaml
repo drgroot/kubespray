@@ -1,5 +1,12 @@
 {{- if .Values.crossplane.enabled }}
 {{- $backendSecretName := "crossplane-tofu-backend" -}}
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: opentofu-provider-config
+spec: {}
+---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
