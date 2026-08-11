@@ -52,7 +52,7 @@ spec:
             secretStore:
               name: external-infra
               type: ClusterSecretStore
-            remoteKey: external-infra/iac/postgres
+            remoteKey: iac/postgres
 
         backup:
           secretStore:
