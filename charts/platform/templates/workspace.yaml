@@ -2,7 +2,7 @@
 {{- $backendSecretName := "crossplane-tofu-backend" -}}
 ---
 apiVersion: opentofu.m.upbound.io/v1beta1
-kind: ProviderConfig
+kind: ClusterProviderConfig
 metadata:
   name: opentofu-provider-config
 spec: {}
@@ -49,7 +49,7 @@ metadata:
   name: {{ $.Release.Namespace }}-{{ $name }}
 spec:
   providerConfigRef:
-    kind: ProviderConfig
+    kind: ClusterProviderConfig
     name: opentofu-provider-config
 
   forProvider:
