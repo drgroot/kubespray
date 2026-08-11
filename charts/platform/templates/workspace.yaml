@@ -60,6 +60,7 @@ spec:
     initArgs:
       - -backend-config=bucket=tfstate
       - -backend-config=key={{ $name }}.tfstate
+      - -backend-config=use_path_style=true
 
     env:
       - name: VAULT_AUTH_METHOD
