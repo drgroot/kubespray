@@ -15,7 +15,7 @@ crossplane:
       enabled: true
       type: s3
       provider: b2
-      name: backups
+      name: db-backups
       vars:
         - key: input
           value: external-infra/vendor/blackblaze
@@ -28,7 +28,7 @@ crossplane:
       name: gitea
       vars:
         - key: input
-          value: external-infra/vendor/postgres
+          value: external-infra/iac/postgres
         - key: credentialpath
           value: external-infra/vendor/postgres
         - key: passwordkey
