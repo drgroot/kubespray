@@ -15,7 +15,7 @@ crossplane:
       enabled: true
       type: s3
       provider: b2
-      name: db-backups
+      name: db-backups-thorin
       vars:
         - key: input
           value: external-infra/vendor/blackblaze
