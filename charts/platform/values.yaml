@@ -425,6 +425,7 @@ secretSync:
         - private-host
         - private-username
         - private-password
+        - host-mirror
     output:
       kind: ClusterSecretStore
       name: servc
@@ -433,6 +434,62 @@ secretSync:
         private-host: host
         private-username: username
         private-password: password
+        host-mirror: host-mirror
+  - name: minio
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/minio
+      properties:
+        - root-access-key
+        - root-secret-key
+        - region
+        - endpoint-url
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/minio
+      properties:
+        root-access-key: access-key
+        root-secret-key: secret-key
+        region: region
+        endpoint-url: endpoint-url
+  - name: npm
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/npm
+      properties:
+        - password
+        - username
+        - read-username
+        - read-password
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/npm
+      properties:
+        password: npm_write_pass
+        username: npm_write_user
+        read-username: npm_read_user
+        read-password: npm_read_pass
+  - name: pip
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/pip
+      properties:
+        - host
+        - password
+        - username
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/pip
+      properties:
+        host: url
+        password: token
+        username: username
   - name: coder-postgres
     input:
       kind: ClusterSecretStore
@@ -446,3 +503,22 @@ secretSync:
       path: nonprod/coder-postgres-secret
       properties:
         url: onprem-url
+  - name: vault
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/vault
+      properties:
+        - servc-username
+        - servc-password
+        - token
+        - url
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/vault
+      properties:
+        servc-username: username
+        servc-password: password
+        url: vault-addr
+        token: vault-token
