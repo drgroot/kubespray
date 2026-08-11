@@ -433,3 +433,16 @@ secretSync:
         private-host: host
         private-username: username
         private-password: password
+  - name: coder-postgres
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: iac/postgres-coder
+      properties:
+        - url
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: nonprod/coder-postgres-secret
+      properties:
+        url: onprem-url
