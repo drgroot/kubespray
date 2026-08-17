@@ -32,7 +32,7 @@ spec:
             fsType: ext4
             iqn: iqn.2026-01.com.middleearth:thorin
             iscsiInterface: default
-            lun: 4
+            lun: 1
             targetPortal: 192.168.1.3:3260
 
         secrets:
