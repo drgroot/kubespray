@@ -31,7 +31,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.minio.storage.size }}
-  storageClassName: {{ .Values.storage.nobackup }}
+  storageClassName: {{ .Values.storage.default }}
 ---
 apiVersion: apps/v1
 kind: Deployment
