@@ -4,7 +4,7 @@ variable "input" {
 
 provider "cloudflare" {
   email   = data.vault_generic_secret.credentials.data["email"]
-  api_key = data.vault_generic_secret.credentials.data["global-api-key"]
+  api_key = data.vault_generic_secret.credentials.data["apikey"]
 }
 
 data "vault_generic_secret" "credentials" {
