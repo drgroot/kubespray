@@ -22,14 +22,14 @@ crossplane:
         - key: output
           value: external-infra/iac/s3-models-cloudflare
 
-    s3-db-backups:
+    s3-backups-k8s:
       enabled: true
       type: s3
-      provider: b2
-      name: db-backups-thorin
+      provider: minio
+      name: db-backups
       vars:
         - key: input
-          value: external-infra/vendor/blackblaze
+          value: external-infra/vendor/minio
         - key: output
           value: external-infra/iac/s3-db-backups
 
