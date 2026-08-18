@@ -1,6 +1,6 @@
 image:
   name: nextcloud
-  tag: latest
+  tag: 32
 
 env:
   - name: OVERWRITEPROTOCOL

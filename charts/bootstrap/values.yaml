@@ -72,20 +72,20 @@ storageClasses:
     mountPath: /ssd-raid0
 
 tenants:
-  # - name: media
-  #   namespace: media
-  #   createNamespace: true
-  #   permissions:
-  #     - pvc
-  #   sources:
-  #     - name: configs
-  #       url: https://git.yusufali.ca/drgroot/media.git
-  #       path: "chart"
-  #     - name: base
-  #       url: https://github.com/drgroot/kubespray.git
-  #       path: "charts/template-multi"
-  #       valuesRepo: https://git.yusufali.ca/drgroot/media.git
-  #       valuesFile: values.yaml
+  - name: media
+    namespace: media
+    createNamespace: true
+    permissions:
+      - pvc
+    sources:
+      - name: configs
+        url: https://github.com/drgroot/kubespray.git
+        path: "charts/media/chart"
+      - name: base
+        url: https://github.com/drgroot/kubespray.git
+        path: "charts/template-multi"
+        valuesRepo: https://github.com/drgroot/kubespray.git
+        valuesFile: charts/media/values.yaml
 
   - name: mordor
     namespace: mordor
@@ -94,8 +94,8 @@ tenants:
       - argo
       - pvc
     sources:
-      - url: https://git.yusufali.ca/drgroot/mordor.git
-        path: ""
+      - url: https://github.com/drgroot/kubespray.git
+        path: "charts/mordor"
 
   # - name: servc
   #   namespace: servc
