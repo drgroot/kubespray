@@ -70,7 +70,7 @@ spec:
           securityContext:
             {{- toYaml .  | nindent 12 }}
           {{- end }}
-          image: {{ ((($config.storage).config).backup).restoreImage | default "registry.yusufali.ca/containers/backup-pvc" }}
+          image: {{ ((($config.storage).config).backup).restoreImage | default "dockerhub.yusufali.ca/yusufali/backup-pvc" }}
           {{- with $config.imagePullPolicy }}
           imagePullPolicy: {{ . }}
           {{- end }}
@@ -154,7 +154,7 @@ spec:
           securityContext:
             {{- toYaml .  | nindent 12 }}
           {{- end }}
-          image: {{ ((($config.storage).config).backup).restoreImage | default "registry.yusufali.ca/containers/backup-pvc" }}
+          image: {{ ((($config.storage).config).backup).restoreImage | default "dockerhub.yusufali.ca/yusufali/backup-pvc" }}
           {{- with $config.imagePullPolicy }}
           imagePullPolicy: {{ . }}
           {{- end }}
