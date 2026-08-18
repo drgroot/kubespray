@@ -61,7 +61,7 @@ spec:
             name: bandersnatch-config
       containers:
         - name: bandersnatch
-          image: {{ .Values.bandersnatch.image.registry }}{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
+          image: {{ tpl .Values.bandersnatch.image.registry }}{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
           resources:
             {{- with.Values.bandersnatch.resources }}
             requests:
@@ -115,7 +115,7 @@ spec:
                 name: bandersnatch-config
           containers:
             - name: mirror-packages
-              image: {{ .Values.bandersnatch.image.registry }}{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
+              image: {{ tpl .Values.bandersnatch.image.registry }}{{ .Values.bandersnatch.image.repository }}:{{ .Values.bandersnatch.image.tag }}
               command:
                 - bandersnatch
               args:
