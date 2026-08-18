@@ -18,7 +18,8 @@ jobs:
 
       - id: get_scope
         run: |
-          echo "charts=$(ls charts/ | jq -R '.' | jq -cs .)" >> $GITHUB_OUTPUT
+          charts="$(find charts -type f -name Chart.yaml -exec dirname {} \; | sort | sed 's#^charts/##' | jq -R -s -c 'split("\n") | map(select(length > 0))')"
+          echo "charts=${charts}" >> "$GITHUB_OUTPUT"
 
     outputs:
       charts: ${{ steps.get_scope.outputs.charts }}
