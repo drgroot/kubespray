@@ -32,8 +32,8 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
         valueFiles:
-          - $values/syncthing.values.yaml
-    - repoURL: https://git.yusufali.ca/drgroot/mordor.git
+          - $values/charts/mordor/syncthing.values.yaml
+    - repoURL: https://github.com/drgroot/kubespray.git
       targetRevision: HEAD
       ref: values
 ---
