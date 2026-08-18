@@ -100,7 +100,7 @@ spec:
         - name: cluster-docker-secrets
       containers:
         - name: app
-          image: registry.yusufali.ca/hotio/cloudflareddns
+          image: ghcr.io/hotio/cloudflareddns:latest
           env:
             - name: CF_USER
               valueFrom:
