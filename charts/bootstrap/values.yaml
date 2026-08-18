@@ -72,20 +72,20 @@ storageClasses:
     mountPath: /ssd-raid0
 
 tenants:
-  - name: media
-    namespace: media
-    createNamespace: true
-    permissions:
-      - pvc
-    sources:
-      - name: configs
-        url: https://git.yusufali.ca/drgroot/media.git
-        path: "chart"
-      - name: base
-        url: https://github.com/drgroot/kubespray.git
-        path: "charts/template-multi"
-        valuesRepo: https://git.yusufali.ca/drgroot/media.git
-        valuesFile: values.yaml
+  # - name: media
+  #   namespace: media
+  #   createNamespace: true
+  #   permissions:
+  #     - pvc
+  #   sources:
+  #     - name: configs
+  #       url: https://git.yusufali.ca/drgroot/media.git
+  #       path: "chart"
+  #     - name: base
+  #       url: https://github.com/drgroot/kubespray.git
+  #       path: "charts/template-multi"
+  #       valuesRepo: https://git.yusufali.ca/drgroot/media.git
+  #       valuesFile: values.yaml
 
   - name: mordor
     namespace: mordor
@@ -97,22 +97,22 @@ tenants:
       - url: https://git.yusufali.ca/drgroot/mordor.git
         path: ""
 
-  - name: servc
-    namespace: servc
-    createNamespace: false
-    permissions:
-      - argo
-      - rbac
-      - pvc
-      - servc
-    ignoreDifferences:
-      - group: apps
-        kind: Deployment
-        jsonPointers:
-          - /spec/replicas
-    sources:
-      - name: infra
-        url: https://git.yusufali.ca/serv-c/servc-charts.git
-        path: "servc-helm-aks"
-        valuesRepo: https://git.yusufali.ca/serv-c/tenant-charts.git
-        valuesFile: "aks/onpremise.yaml"
+  # - name: servc
+  #   namespace: servc
+  #   createNamespace: false
+  #   permissions:
+  #     - argo
+  #     - rbac
+  #     - pvc
+  #     - servc
+  #   ignoreDifferences:
+  #     - group: apps
+  #       kind: Deployment
+  #       jsonPointers:
+  #         - /spec/replicas
+  #   sources:
+  #     - name: infra
+  #       url: https://git.yusufali.ca/serv-c/servc-charts.git
+  #       path: "servc-helm-aks"
+  #       valuesRepo: https://git.yusufali.ca/serv-c/tenant-charts.git
+  #       valuesFile: "aks/onpremise.yaml"
