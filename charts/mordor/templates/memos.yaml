@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.project }}-memos
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: "https://kubernetes.default.svc"
+  project: {{ .Values.project }}
+  sources:
+    - path: charts/template-single
+      repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      helm:
+        values: |
+          fullnameOverride: memos
+
+          {{- with .Values.storage }}
+          storageclasses:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.domains }}
+          domains:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        valueFiles:
+          - $values/memos.values.yaml
+    - repoURL: https://git.yusufali.ca/drgroot/mordor.git
+      targetRevision: HEAD
+      ref: values

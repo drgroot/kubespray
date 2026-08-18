@@ -1,0 +1,404 @@
+fullnameOverride: media
+storage:
+  media:
+    enabled: true
+    storageClass: thorin-nobackup
+    size: 5Gi
+    mountPath: /media
+  metadata:
+    enabled: true
+    storageClass: thorin-fast
+    size: 5Gi
+    mountPath: /metadata
+
+globals:
+  env:
+    - name: PUID
+      value: "1000"
+    - name: PGID
+      value: "1000"
+    - name: TZ
+      value: "America/Toronto"
+  imagePullSecrets:
+    - name: cluster-docker-secrets
+  imagePullPolicy: Always
+  storage:
+    metadata:
+      enabled: false
+    media:
+      enabled: false
+    config:
+      storageClass: thorin-default
+      backup:
+        storageClass: thorin-default
+        restoreImage: registry.yusufali.ca/containers/backup-pvc
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+  ingress:
+    annotations:
+      external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+      nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    className: nginx
+
+components:
+  media:
+    globals:
+      resources:
+        requests:
+          cpu: 150m
+          memory: 512Mi
+      storage:
+        media:
+          enabled: true
+          readOnly: true
+        metadata:
+          enabled: true
+          mountPath: /config/metadata
+        downloads:
+          enabled: false
+        config:
+          enabled: true
+          backup:
+            enabled: true
+      ingress:
+        enabled: true
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+          external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+          nginx.ingress.kubernetes.io/backend-protocol: HTTP
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        tls:
+          - hosts:
+              - "*.yusufali.ca"
+            secretName: wildcard-yusufali
+
+    list:
+      plex:
+        strategy:
+          type: Recreate
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: nvidia.com/gpu.present
+                      operator: In
+                      values:
+                        - "true"
+        probes:
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |-
+                  dbpath="/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.blobs.db"
+                  if [ ! -f "${dbpath}-shm" ]; then
+                    rm "$dbpath"
+                    exit 1
+                  fi
+
+                  curl http://localhost:32400/healthz
+            initialDelaySeconds: 120
+            periodSeconds: 5
+        env:
+          - name: PLEX_UID
+            value: "1000"
+          - name: PLEX_GID
+            value: "1000"
+          - name: NVIDIA_VISIBLE_DEVICES
+            value: "all"
+          - name: NVIDIA_DRIVER_CAPABILITIES
+            value: compute,video,utility
+        resources:
+          requests:
+            cpu: 500m
+            memory: 3Gi
+            nvidia.com/gpu: "1"
+          limits:
+            cpu: "4"
+            memory: 6Gi
+            nvidia.com/gpu: "1"
+        storage:
+          metadata:
+            mountPath: "/config/Library/Application Support/Plex Media Server/Metadata"
+            enabled: true
+            subPath: plex
+          media:
+            enabled: true
+            readOnly: true
+          config:
+            backup:
+              env:
+                - name: DATABASES
+                  value: "/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.blobs.db;/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
+                - name: FILES
+                  value: "/config/Library/Application Support/Plex Media Server/Preferences.xml"
+                - name: FOLDERS
+                  value: "/config/Library/Application Support/Plex Media Server/Plug-ins;/config/Library/Application Support/Plex Media Server/Plug-in Support/Preferences"
+        image:
+          name: plexinc/pms-docker
+        ingress:
+          host: plex.yusufali.ca
+        ports:
+          - port: 32400
+        volumes:
+          - name: ssl
+            secret:
+              secretName: wildcard-yusufali
+          - name: ssl-config
+            emptyDir: {}
+        volumeMounts:
+          - name: ssl-config
+            mountPath: /ssl
+            readOnly: true
+        initContainers:
+          - name: ssl
+            image: alpine/openssl
+            command:
+              - /bin/sh
+              - -c
+              - --
+            args:
+              - |
+                openssl pkcs12 -export -out /ssl-config/ssl.p12 \
+                  -certpbe AES-256-CBC -keypbe AES-256-CBC -macalg SHA256 \
+                  -inkey /ssl/tls.key -in /ssl/tls.crt  \
+                  -password pass:PASSWORD_HERE
+            volumeMounts:
+              - name: ssl-config
+                mountPath: /ssl-config
+              - name: ssl
+                mountPath: /ssl
+                readOnly: true
+
+  narrs:
+    globals:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 320Mi
+        limits:
+          cpu: 250m
+          memory: 512Mi
+      storage:
+        metadata:
+          enabled: false
+        media:
+          enabled: true
+        config:
+          enabled: true
+          backup:
+            enabled: true
+      ingress:
+        enabled: true
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+          external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+          nginx.ingress.kubernetes.io/backend-protocol: HTTP
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        tls:
+          - hosts:
+              - "*.yusufali.ca"
+            secretName: wildcard-yusufali
+
+    list:
+      prowlarr:
+        image:
+          name: linuxserver/prowlarr
+        ingress:
+          host: prowlarr.k8s.private
+          annotations:
+            nginx.ingress.kubernetes.io/ssl-redirect: "false"
+          tls: []
+        ports:
+          - port: 9696
+        resources:
+          requests:
+            cpu: 50m
+            memory: 192Mi
+          limits:
+            memory: 384Mi
+        probes:
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9696
+            initialDelaySeconds: 120
+            periodSeconds: 5
+        storage:
+          media:
+            enabled: false
+          downloads:
+            enabled: false
+          config:
+            backup:
+              env:
+                - name: FOLDERS
+                  value: "/config"
+
+      radarr:
+        image:
+          name: linuxserver/radarr
+        ingress:
+          host: radarr.k8s.private
+          annotations:
+            nginx.ingress.kubernetes.io/ssl-redirect: "false"
+          tls: []
+        ports:
+          - port: 7878
+        probes:
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7878
+            initialDelaySeconds: 120
+            periodSeconds: 5
+        storage:
+          media:
+            enabled: true
+          config:
+            backup:
+              env:
+                - name: DATABASES
+                  value: "/config/radarr.db"
+                - name: FILES
+                  value: "/config/config.xml"
+
+      sonarr:
+        image:
+          name: linuxserver/sonarr
+        ingress:
+          host: sonarr.k8s.private
+          annotations:
+            nginx.ingress.kubernetes.io/ssl-redirect: "false"
+          tls: []
+        ports:
+          - port: 8989
+        probes:
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8989
+            initialDelaySeconds: 120
+            periodSeconds: 5
+        storage:
+          media:
+            enabled: true
+          config:
+            backup:
+              env:
+                - name: DATABASES
+                  value: "/config/sonarr.db"
+                - name: FILES
+                  value: "/config/config.xml"
+
+  downloaders:
+    globals:
+      ingress:
+        enabled: false
+      storage:
+        metadata:
+          enabled: false
+        media:
+          enabled: false
+        config:
+          enabled: true
+
+    list:
+      narr-search-trigger:
+        type: cron
+        image:
+          name: registry.yusufali.ca/drgroot/narr-trigger
+        schedule: "0 */3 * * *"
+        env:
+          - name: CONF__LAKE__CATALOG_PROPERTIES__URI
+            value: sqlite:////config/lake.db
+          - name: CONF__LAKE__CATALOG_PROPERTIES__WAREHOUSE
+            value: file:///config/warehouse
+          - name: RADARR_HOST
+            value: http://media-narrs-radarr-svc.media:7878
+          - name: SONARR_HOST
+            value: http://media-narrs-sonarr-svc.media:8989
+          - name: SONARR_API_KEY
+            value: 26fe9b03f4d2476d869c130bccef0e33
+        storage:
+          media:
+            enabled: false
+
+      sabnzbd:
+        resources:
+          requests:
+            memory: 2Gi
+        ingress:
+          enabled: true
+          host: sabnzbd.k8s.private
+        podAnnotations:
+          secret.reloader.stakater.com/reload: sabnzbd-config
+        image:
+          name: linuxserver/sabnzbd
+        sideCars:
+          - name: orphan-repair
+            image: curlimages/curl:8.21.0
+            imagePullPolicy: IfNotPresent
+            command:
+              - /bin/sh
+              - -c
+            args:
+              - |
+                API_KEY=$(awk -F ' = ' '/^api_key = / {print $2; exit}' /config/sabnzbd.ini | tr -d '\r')
+                if [ -n "$API_KEY" ]; then
+                  until curl -fsS "http://127.0.0.1:8080/api?mode=version&output=json" >/dev/null 2>&1; do
+                    sleep 5
+                  done
+                  curl -fsS "http://127.0.0.1:8080/api?output=json&mode=status&name=add_all_orphan&apikey=$API_KEY" || true
+                fi
+                sleep infinity
+            volumeMounts:
+              - name: sabnzbd-config
+                mountPath: /config
+        storage:
+          config:
+            enabled: false
+          media:
+            enabled: true
+            mountPath: /downloads
+            subPath: sabnzbd
+        volumes:
+          - name: sabnzbd-config
+            persistentVolumeClaim:
+              claimName: media-downloaders-sabnzbd-config
+          - name: sabnzbd-config-seed
+            secret:
+              secretName: sabnzbd-config
+              defaultMode: 0644
+        volumeMounts:
+          - name: sabnzbd-config
+            mountPath: /config
+        initContainers:
+          - name: sabnzbd-config
+            image: alpine:3.24
+            command:
+              - /bin/sh
+              - -c
+              - --
+            args:
+              - |
+                mkdir -p /config
+                cp /seed/sabnzbd.ini /config/sabnzbd.ini
+            volumeMounts:
+              - name: sabnzbd-config
+                mountPath: /config
+              - name: sabnzbd-config-seed
+                mountPath: /seed
+                readOnly: true
+        probes:
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+        ports:
+          - port: 8080

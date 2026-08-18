@@ -1,0 +1,170 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.project }}-bitwarden
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: "https://kubernetes.default.svc"
+  project: {{ .Values.project }}
+  sources:
+    - path: charts/template-single
+      repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      helm:
+        values: |
+          fullnameOverride: bitwarden
+
+          {{- with .Values.storage }}
+          storageclasses:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.domains }}
+          domains:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        valueFiles:
+          - $values/bitwarden.values.yaml
+    - repoURL: https://git.yusufali.ca/drgroot/mordor.git
+      targetRevision: HEAD
+      ref: values
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: bitwarden-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: bitwarden-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      engineVersion: v2
+      data:
+        WEBSOCKET_ENABLED: "true"
+        INVITATIONS_ALLOWED: "false"
+        DOMAIN: https://bitwarden.{{ .Values.domains.external }}
+        SMTP_FROM: noreply@yusuf.email
+  data:
+    - secretKey: ADMIN_TOKEN
+      remoteRef:
+        key: vendor/bitwarden
+        property: admin-token
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 10m
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+  name: {{ .Values.project }}-bitwarden
+spec:
+  tls:
+    - hosts:
+        - "*.{{ .Values.domains.external }}"
+      secretName: wildcard-tls
+  ingressClassName: nginx
+  rules:
+  - host: bitwarden.{{ .Values.domains.external }}
+    http:
+      paths:
+      - backend:
+          service:
+            name: bitwarden
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+      - backend:
+          service:
+            name: bitwarden
+            port:
+              number: 3012
+        path: /notifications/hub
+        pathType: Prefix
+      - backend:
+          service:
+            name: bitwarden
+            port:
+              number: 80
+        path: /notifications/hub/negotiate
+        pathType: Prefix
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: bitwarden-postgres-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: bitwarden-postgres-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - remoteRef:
+        key: iac/postgres-bitwarden
+        property: password
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        nullBytePolicy: Ignore
+      secretKey: password
+    - remoteRef:
+        key: iac/postgres-bitwarden
+        property: username
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        nullBytePolicy: Ignore
+      secretKey: username
+    - remoteRef:
+        key: iac/postgres-bitwarden
+        property: schema
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        nullBytePolicy: Ignore
+      secretKey: schema
+    - remoteRef:
+        key: iac/postgres-bitwarden
+        property: hostname
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        nullBytePolicy: Ignore
+      secretKey: hostname
+    - remoteRef:
+        key: iac/postgres-bitwarden
+        property: url
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        nullBytePolicy: Ignore
+      secretKey: url
+    - remoteRef:
+        key: iac/postgres-bitwarden
+        property: database
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+        nullBytePolicy: Ignore
+      secretKey: database
+---

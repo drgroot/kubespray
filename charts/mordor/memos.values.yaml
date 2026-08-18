@@ -1,0 +1,90 @@
+fullnameOverride: memos
+
+image:
+  name: neosmemo/memos
+  tag: 0.27.0-rc.2
+
+imagePullSecrets:
+  - name: cluster-docker-secrets
+
+env:
+  - name: MEMOS_MODE
+    value: prod
+  - name: MEMOS_PORT
+    value: "5230"
+  - name: MEMOS_INSTANCE_URL
+    value: https://notes.yusufali.ca
+  - name: POSTGRES_USER
+    valueFrom:
+      secretKeyRef:
+        name: memos-postgres-credentials
+        key: username
+  - name: POSTGRES_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: memos-postgres-credentials
+        key: password
+  - name: POSTGRES_HOST
+    valueFrom:
+      secretKeyRef:
+        name: memos-postgres-credentials
+        key: hostname
+  - name: POSTGRES_DB
+    valueFrom:
+      secretKeyRef:
+        name: memos-postgres-credentials
+        key: database
+  - name: MEMOS_DRIVER
+    value: postgres
+  - name: MEMOS_DSN
+    value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)?sslmode=disable
+  - name: MEMOS_DATA
+    value: /var/opt/memos
+  - name: MEMOS_STORAGE_TYPE
+    value: local
+
+ports:
+  - name: web
+    containerPort: 5230
+
+service:
+  port: 5230
+  ports:
+    - port: 5230
+      targetPort: web
+      protocol: TCP
+      name: web
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+volumeMounts:
+  - name: storage
+    mountPath: /var/opt/memos
+
+pvc:
+  enabled: true
+  name: storage
+  storageClass: thorin-default
+  storage: 10Gi
+
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  tls:
+    - hosts:
+        - "*.yusufali.ca"
+      secretName: wildcard-tls
+  hosts:
+    - host: notes.yusufali.ca
+      paths:
+        - path: /
+          pathType: Prefix

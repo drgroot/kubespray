@@ -1,0 +1,82 @@
+image:
+  name: syncthing/syncthing
+  tag: latest
+
+imagePullSecrets:
+  - name: cluster-docker-secrets
+
+env:
+  
+probes:
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 8384
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 5
+
+ports:
+  - name: web
+    containerPort: 8384
+  - name: tcptransfer
+    containerPort: 22000
+    protocol: TCP
+  - name: quic
+    containerPort: 22000
+    protocol: UDP
+  - name: broadcast
+    containerPort: 21027
+    protocol: UDP
+
+service:
+  ports:
+    - port: 8384
+      targetPort: web
+      protocol: TCP
+      name: web
+    - port: 22000
+      targetPort: tcptransfer
+      protocol: TCP
+      name: tcptransfer
+    - port: 22000
+      targetPort: quic
+      protocol: UDP
+      name: quic
+    - port: 21027
+      targetPort: broadcast
+      protocol: UDP
+      name: broadcast
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
+
+volumeMounts:
+  - name: storage
+    mountPath: /var/syncthing
+
+pvc:
+  enabled: true
+  name: storage
+  storageClass: thorin-default
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 512m
+    nginx.ingress.kubernetes.io/client_max_body_size: 512m
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 64m
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+  hosts:
+    - host: syncthing.k8s.private
+      paths:
+        - path: /
+          pathType: Prefix

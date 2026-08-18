@@ -1,0 +1,110 @@
+image:
+  name: nextcloud
+  tag: 32
+
+env:
+  - name: OVERWRITEPROTOCOL
+    value: https
+  - name: OVERWRITECLIURL
+    value: https://drive.yusufali.ca
+  - name: REDIS_HOST
+    valueFrom:
+      secretKeyRef:
+        name: cluster-middleware-secrets
+        key: redishostname
+  - name: REDIS_HOST_PORT
+    value: "6379"
+  - name: NEXTCLOUD_TRUSTED_DOMAINS
+    value: drive.yusufali.ca
+  - name: PHP_MEMORY_LIMIT
+    value: 1024M
+  - name: SMTP_SECURE
+    value: tls
+  - name: SMTP_NAME
+    value: $(SMTP_USERNAME)
+  - name: MAIL_DOMAIN
+    value: $(SMTP_FROM_DOMAIN)
+  - name: MAIL_FROM_ADDRESS
+    value: $(SMTP_FROM_USER)
+  - name: POSTGRES_DB
+    valueFrom:
+      secretKeyRef:
+        name: nextcloud-postgres-credentials
+        key: database
+  - name: POSTGRES_USER
+    valueFrom:
+      secretKeyRef:
+        name: nextcloud-postgres-credentials
+        key: username
+  - name: POSTGRES_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: nextcloud-postgres-credentials
+        key: password
+  - name: POSTGRES_HOST
+    valueFrom:
+      secretKeyRef:
+        name: nextcloud-postgres-credentials
+        key: hostname
+
+envFrom:
+  - secretRef:
+      name: cluster-smtp-secrets
+
+ports:
+  - name: web
+    containerPort: 80
+
+command:
+  - /bin/sh
+  - -c
+args:
+  - usermod -u 1000 www-data && groupdel users && groupmod -g 1000 www-data && /bin/sh /entrypoint.sh apache2-foreground
+
+service:
+  port: 80
+  ports:
+    - port: 80
+      targetPort: web
+      protocol: TCP
+      name: web
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
+
+volumeMounts:
+  - name: storage
+    mountPath: /var/www/html/config
+    subPath: config
+  - name: storage
+    mountPath: /var/www/html/data
+    subPath: data
+
+pvc:
+  enabled: true
+  name: storage
+  storageClass: thorin-default
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 512m
+    nginx.ingress.kubernetes.io/client_max_body_size: 512m
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+  tls:
+    - hosts:
+        - "*.yusufali.ca"
+      secretName: wildcard-tls
+  hosts:
+    - host: drive.yusufali.ca
+      paths:
+        - path: /
+          pathType: Prefix

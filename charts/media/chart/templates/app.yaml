@@ -1,0 +1,121 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: sabnzbd-config
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: sabnzbd-config
+    template:
+      engineVersion: v2
+      data:
+        sabnzbd.ini: |
+          [misc]
+          host = 0.0.0.0
+          host_whitelist = sabnzbd.k8s.private,media-downloaders-sabnzbd-svc.media
+          pause_on_post_processing = 1
+          port = 8080
+          download_dir = /downloads/incomplete
+          download_free = 2T
+          complete_dir = /downloads/complete
+          complete_free = 2T
+          fulldisk_autoresume = 1
+          direct_unpack = 1
+          api_key = {{ `{{ .sabnzbd_api_key }}` }}
+          nzb_key = 125b354465ed4cf1954d9245b0be8834
+
+          [servers]
+          [[usenet]]
+          host = {{ `{{ .usenet_address }}` }}
+          username = {{ `{{ .usenet_username }}` }}
+          password = {{ `{{ .usenet_password }}` }}
+          connections = {{ `{{ .usenet_max_connections }}` }}
+          port = {{ `{{ .usenet_port }}` }}
+          ssl = 1
+
+          [categories]
+          [[*]]
+          name = *
+          order = 0
+          pp = 3
+          script = None
+          dir = ""
+          newzbin = ""
+          priority = 0
+          [[movies]]
+          name = movies
+          order = 1
+          pp = 3
+          script = None
+          dir = ""
+          newzbin = -1
+          priority = -100
+          [[tv]]
+          name = tv
+          order = 2
+          pp = 3
+          script = None
+          dir = ""
+          newzbin = -1
+          priority = -100
+          [[audio]]
+          name = audio
+          order = 3
+          pp = ""
+          script = Default
+          dir = ""
+          newzbin = ""
+          priority = -100
+          [[software]]
+          name = software
+          order = 4
+          pp = ""
+          script = Default
+          dir = ""
+          newzbin = ""
+          priority = -100
+  data:
+    - secretKey: usenet_address
+      remoteRef:
+        key: iac/sabnzbd
+        property: usenet-address
+    - secretKey: usenet_max_connections
+      remoteRef:
+        key: iac/sabnzbd
+        property: usenet-max-connections
+    - secretKey: usenet_password
+      remoteRef:
+        key: iac/sabnzbd
+        property: usenet-password
+    - secretKey: usenet_port
+      remoteRef:
+        key: iac/sabnzbd
+        property: usenet-port
+    - secretKey: usenet_username
+      remoteRef:
+        key: iac/sabnzbd
+        property: usenet-username
+    - secretKey: sabnzbd_api_key
+      remoteRef:
+        key: iac/sabnzbd
+        property: sabnzbd-api-key
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-downloaders-sabnzbd-config
+  labels:
+    component: downloaders
+    downloaders: sabnzbd
+    pvc: config
+    type: pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: thorin-fast
+---

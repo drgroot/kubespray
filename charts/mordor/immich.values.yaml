@@ -1,0 +1,153 @@
+storage:
+  photos:
+    enabled: true
+    storageClass: thorin-default
+    size: 50Gi
+  cache:
+    enabled: true
+    storageClass: thorin-fast
+    size: 5Gi
+    mountPath: /cache
+
+globals:
+  imagePullPolicy: Always
+  imagePullSecrets:
+    - name: cluster-docker-secrets
+  env:
+    - name: UPLOAD_LOCATION
+      value: /usr/src/app/upload
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: immich-db-credentials
+          key: password
+    - name: DB_HOSTNAME
+      valueFrom:
+        secretKeyRef:
+          name: immich-db-credentials
+          key: hostname
+    - name: DB_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: immich-db-credentials
+          key: username
+    - name: DB_DATABASE_NAME
+      valueFrom:
+        secretKeyRef:
+          name: immich-db-credentials
+          key: database
+    - name: REDIS_HOSTNAME
+      valueFrom:
+        secretKeyRef:
+          name: cluster-middleware-secrets 
+          key: redishostname
+    - name: IMMICH_MACHINE_LEARNING_URL
+      value: http://immich-server-machine-learning-svc:3003
+  storage:
+    cache:
+      enabled: false
+      mountPath: /cache
+    photos:
+      enabled: true
+      mountPath: /usr/src/app/upload
+
+components:
+  server:
+    globals:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      image:
+        name: ghcr.io/immich-app/immich-server
+        tag: v2.6.1
+
+    list:
+      machine-learning:
+        autoscaling:
+          maxReplicas: 10
+          enabled: true
+          metrics:
+            - type: Resource
+              resource:
+                name: cpu
+                target:
+                  type: AverageValue
+                  averageValue: 100m
+        image:
+          name: ghcr.io/immich-app/immich-machine-learning
+        storage:
+          cache:
+            enabled: true
+        resources:
+          requests:
+            cpu: 150m
+            memory: 512Mi
+          limits:
+            cpu: 150m
+            memory: 2Gi
+        ports:
+          - port: 3003
+        probes:
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 3003
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 3003
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+      server:
+        replicas: 1
+        autoscaling:
+          maxReplicas: 15
+          enabled: true
+          metrics:
+            - type: Resource
+              resource:
+                name: cpu
+                target:
+                  type: AverageValue
+                  averageValue: 300m
+        resources:
+          requests:
+            cpu: 50m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        ingress:
+          enabled: true
+          className: nginx
+          host: photos.yusufali.ca
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+            nginx.ingress.kubernetes.io/backend-protocol: HTTP
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+            nginx.ingress.kubernetes.io/proxy-body-size: 512m
+            nginx.ingress.kubernetes.io/client_max_body_size: 512m
+            nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
+          tls:
+            - hosts:
+                - "*.yusufali.ca"
+              secretName: wildcard-tls
+        ports:
+          - port: 2283
+        probes:
+          livenessProbe:
+            httpGet:
+              path: /api/server/ping
+              port: 2283
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/server/ping
+              port: 2283
+            initialDelaySeconds: 30
+            periodSeconds: 30

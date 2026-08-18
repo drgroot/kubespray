@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-media
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: {{ .Values.storage.default }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.project }}-frigate
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: "https://kubernetes.default.svc"
+  project: {{ .Values.project }}
+  sources:
+    - path: charts/template-single
+      repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      helm:
+        values: |
+          fullnameOverride: frigate
+
+          {{- with .Values.storage }}
+          storageclasses:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.domains }}
+          domains:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        valueFiles:
+          - $values/frigate.values.yaml
+    - repoURL: https://git.yusufali.ca/drgroot/mordor.git
+      targetRevision: HEAD
+      ref: values
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frigate-nodeport
+spec:
+  ports:
+    - name: rtsp
+      nodePort: 8554
+      port: 8554
+      protocol: TCP
+      targetPort: rtsp
+    - name: webrtc-tcp
+      nodePort: 8555
+      port: 8555
+      protocol: TCP
+      targetPort: webrtc-tcp
+    - name: webrtc-udp
+      nodePort: 8555
+      port: 8555
+      protocol: UDP
+      targetPort: webrtc-udp
+  selector:
+    app.kubernetes.io/instance: mordor-argo-frigate
+  type: NodePort
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frigate-internal
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: nvr.{{ .Values.domains.internal }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: frigate
+                port:
+                  number: 5000
+            path: /
+            pathType: Prefix
