@@ -40,17 +40,3 @@ crossplane:
           value: memos
         - key: output
           value: external-infra/iac/postgres-memos
-    postgres-nextcloud:
-      enabled: true
-      type: postgres
-      provider: db
-      name: nextcloud
-      vars:
-        - key: input
-          value: external-infra/iac/postgres
-        - key: credentialpath
-          value: external-infra/vendor/postgres
-        - key: passwordkey
-          value: nextcloud
-        - key: output
-          value: external-infra/iac/postgres-nextcloud

@@ -1,0 +1,85 @@
+image:
+  name: filebrowser/filebrowser
+  tag: s6
+
+ports:
+  - name: web
+    containerPort: 80
+
+service:
+  port: 80
+  ports:
+    - port: 80
+      targetPort: web
+      protocol: TCP
+      name: web
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+
+podSecurityContext:
+  fsGroup: 1000
+
+volumeMounts:
+  - name: storage
+    mountPath: /config
+    subPath: config
+  - name: storage
+    mountPath: /database
+    subPath: database
+  - name: storage
+    mountPath: /srv
+    subPath: data
+
+pvc:
+  enabled: true
+  name: storage
+  storageClass: thorin-default
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 512m
+    nginx.ingress.kubernetes.io/client_max_body_size: 512m
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+  tls:
+    - hosts:
+        - "*.yusufali.ca"
+      secretName: wildcard-tls
+  hosts:
+    - host: drive.yusufali.ca
+      paths:
+        - path: /
+          pathType: Prefix
+
+probes:
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 80
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 5
+  readinessProbe:
+    httpGet:
+      path: /
+      port: 80
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
