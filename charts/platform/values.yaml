@@ -434,6 +434,8 @@ secretSync:
         - private-username
         - private-password
         - host-mirror
+        - mirror-username
+        - mirror-password
     output:
       kind: ClusterSecretStore
       name: servc
@@ -443,6 +445,8 @@ secretSync:
         private-username: username
         private-password: password
         host-mirror: host-mirror
+        mirror-username: mirror-username
+        mirror-password: mirror-password
 
   - name: npm
     input:
