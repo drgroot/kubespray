@@ -1,0 +1,68 @@
+fullnameOverride: bitwarden
+
+image:
+  name: vaultwarden/server
+  tag: 1.37.1
+
+env:
+  - name: SMTP_DOMAIN
+    value: $(SMTP_FROM_DOMAIN)
+  - name: SMTP_FROM
+    value: $(SMTP_FROM_EMAIL)
+  - name: POSTGRES_DB_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: bitwarden-postgres-secrets
+        key: username
+  - name: POSTGRES_DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: bitwarden-postgres-secrets
+        key: password
+  - name: POSTGRES_DB_HOST
+    valueFrom:
+      secretKeyRef:
+        name: bitwarden-postgres-secrets
+        key: hostname
+  - name: POSTGRES_DB_PORT
+    value: "5432"
+  - name: POSTGRES_DB_DATABASE
+    valueFrom:
+      secretKeyRef:
+        name: bitwarden-postgres-secrets
+        key: database
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: bitwarden-postgres-secrets
+        key: url
+envFrom:
+  - secretRef:
+      name: cluster-smtp-secrets
+  - secretRef:
+      name: bitwarden-secrets
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 50m
+    memory: 64Mi
+
+ports:
+  - name: web
+    containerPort: 80
+  - name: websocket
+    containerPort: 3012
+
+service:
+  ports:
+    - port: 80
+      targetPort: web
+      protocol: TCP
+      name: web
+    - port: 3012
+      targetPort: websocket
+      protocol: TCP
+      name: websocket

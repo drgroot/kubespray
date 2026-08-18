@@ -1,0 +1,56 @@
+project: lol
+
+storage:
+  default: default
+  backup: default
+  ssd: default
+
+domains:
+  internal: example.com
+  external: exampe.com
+
+crossplane:
+  enabled: true
+  iac:
+    postgres-bitwarden:
+      enabled: true
+      type: postgres
+      provider: db
+      name: bitwarden
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: bitwarden
+        - key: output
+          value: external-infra/iac/postgres-bitwarden
+    postgres-memos:
+      enabled: true
+      type: postgres
+      provider: db
+      name: memos
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: memos
+        - key: output
+          value: external-infra/iac/postgres-memos
+    postgres-nextcloud:
+      enabled: true
+      type: postgres
+      provider: db
+      name: nextcloud
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: nextcloud
+        - key: output
+          value: external-infra/iac/postgres-nextcloud

@@ -1,0 +1,119 @@
+fullnameOverride: frigate
+
+image:
+  name: ghcr.io/blakeblackshear/frigate
+  tag: 0.16.4
+imagePullSecrets:
+  - name: cluster-docker-secrets
+
+env:
+  - name: FRIGATE_RTSP_PASSWORD
+    value: password
+
+ports:
+  - name: web
+    containerPort: 5000
+  - name: rtsp
+    containerPort: 8554
+  - name: webrtc-tcp
+    containerPort: 8555
+    protocol: TCP
+  - name: webrtc-udp
+    containerPort: 8555
+    protocol: UDP
+
+service:
+  ports:
+    - port: 5000
+      targetPort: web
+      protocol: TCP
+      name: web
+
+pvc:
+  enabled: true
+  name: config
+  storageClass: thorin-default
+  backup:
+    enabled: true
+    env:
+      - name: DATABASES
+        value: /config/frigate.db
+      - name: FILES
+        value: /config/config.yaml
+
+volumeMounts:
+  - name: storage
+    mountPath: /media/frigate
+  - name: dshm
+    mountPath: /dev/shm
+  - name: tmpfs
+    mountPath: /tmp
+  - name: coral-pcie
+    mountPath: /dev/bus/usb
+
+volumes:
+  - name: coral-pcie
+    hostPath:
+      path: /dev/bus/usb
+  - name: storage
+    persistentVolumeClaim:
+      claimName: frigate-media
+  - name: dshm
+    emptyDir:
+      medium: Memory
+      sizeLimit: 512Mi
+  - name: tmpfs
+    emptyDir:
+      medium: Memory
+      sizeLimit: 1Gi
+
+probes:
+  livenessProbe:
+    httpGet:
+      path: /api/
+      port: 5000
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 5
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: tiddlywiki-htpasswd
+    nginx.ingress.kubernetes.io/auth-realm: "Enter your credentials"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+  tls:
+    - hosts:
+        - "*.yusufali.ca"
+      secretName: wildcard-tls
+  hosts:
+    - host: nvr.yusufali.ca
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 2Gi
+  limits:
+    cpu: 500m
+    memory: 2Gi
+
+securityContext:
+  privileged: true
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+              - kube3

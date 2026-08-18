@@ -1,0 +1,68 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.project }}-syncthing
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: "https://kubernetes.default.svc"
+  project: {{ .Values.project }}
+  sources:
+    - path: charts/template-single
+      repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      helm:
+        values: |
+          fullnameOverride: syncthing
+
+          {{- with .Values.storage }}
+          storageclasses:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.domains }}
+          domains:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        valueFiles:
+          - $values/syncthing.values.yaml
+    - repoURL: https://git.yusufali.ca/drgroot/mordor.git
+      targetRevision: HEAD
+      ref: values
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: syncthing-nodeport
+spec:
+  ports:
+    - name: tcptransfer
+      nodePort: 22000
+      port: 22000
+      protocol: TCP
+      targetPort: tcptransfer
+    - name: quic
+      nodePort: 22000
+      port: 22000
+      protocol: UDP
+      targetPort: quic
+    - name: broadcast
+      nodePort: 21027
+      port: 21027
+      protocol: UDP
+      targetPort: broadcast
+    - name: web
+      nodePort: 8211
+      port: 8211
+      protocol: UDP
+      targetPort: web
+  selector:
+    app.kubernetes.io/instance: mordor-argo-syncthing
+  type: NodePort

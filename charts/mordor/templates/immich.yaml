@@ -1,0 +1,100 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.project }}-immich
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: "https://kubernetes.default.svc"
+  project: {{ .Values.project }}
+  sources:
+    - path: charts/template-multi
+      repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      helm:
+        values: |
+          fullnameOverride: immich
+
+          {{- with .Values.storage }}
+          storageclasses:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.domains }}
+          domains:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        valueFiles:
+          - $values/immich.values.yaml
+    - repoURL: https://git.yusufali.ca/drgroot/mordor.git
+      targetRevision: HEAD
+      ref: values
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: immich-db
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    path: "charts/postgres"
+    repoURL: "https://github.com/drgroot/kubespray.git"
+    targetRevision: main
+    helm:
+      releaseName: immich-db
+      values: |-
+        fullnameOverride: immich-db
+
+        image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+        imagePullSecrets:
+          - name: cluster-docker-secrets
+        storageclass: {{ .Values.storage.fast }}
+
+        resources:
+          requests:
+            cpu: 250m
+            memory: 1Gi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+
+        backup:
+          secretStore:
+            name: external-infra
+            type: ClusterSecretStore
+          rclone:
+            remoteRef:
+              key: iac/s3-db-backups
+              property: rclone
+
+        secrets:
+          secretStore:
+            name: external-infra
+            type: ClusterSecretStore
+          username:
+            remoteRef:
+              key: vendor/postgres
+              property: root-username
+          password:
+            remoteRef:
+              key: vendor/postgres
+              property: immich
+          pushsecret:
+            enabled: false
