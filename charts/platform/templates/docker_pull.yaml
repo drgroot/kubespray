@@ -1,3 +1,26 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: registry-htpasswd
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: registry-htpasswd
+    template:
+      type: Opaque
+      data:
+        htpasswd: '{{ `{{ htpasswd .USERNAME .PASSWORD "bcrypt" }}` }}'
+  data:
+    - remoteRef:
+        key: vendor/docker
+        property: mirror-username
+      secretKey: USERNAME
+    - remoteRef:
+        key: vendor/docker
+        property: mirror-password
+      secretKey: PASSWORD
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
