@@ -105,7 +105,7 @@ pvc:
       runAsGroup: 1000
     cron: "0 * * * *"
     port: 19999
-    image: registry.yusufali.ca/containers/backup-pvc
+    image: dockerhub.yusufali.ca/yusufali/backup-pvc
     volumeMounts:
       - mountPath: /config
       - mountPath: /data

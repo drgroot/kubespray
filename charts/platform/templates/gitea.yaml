@@ -406,8 +406,8 @@ spec:
                 # options: -v /var/run/docker.sock:/var/run/docker.sock
               runner:
                 labels:
-                  - "ubuntu-latest:docker://registry.yusufali.ca/containers/runner"
-                  - "ubuntu-spark:docker://registry.yusufali.ca/containers/runner-spark"
+                  - "ubuntu-latest:docker://dockerhub.yusufali.ca/yusufali/runner"
+                  - "ubuntu-spark:docker://dockerhub.yusufali.ca/yusufali/runner-spark"
 
         init:
           image:
@@ -535,7 +535,7 @@ spec:
             - name: cluster-docker-secrets
           containers:
             - name: app
-              image: registry.yusufali.ca/drgroot/actions-templater
+              image: dockerhub.yusufali.ca/yusufali/actions-templater
               imagePullPolicy: Always
               env:
                 - name: GITEA_TOKEN
