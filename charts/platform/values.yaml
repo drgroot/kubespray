@@ -11,16 +11,27 @@ versions:
 crossplane:
   enabled: true
   iac:
-    servc-models:
+    s3-backups-b2:
       enabled: true
       type: s3
-      provider: cloudflare
-      name: servc-models
+      provider: b2
+      name: thorin-backups
       vars:
         - key: input
-          value: external-infra/vendor/cloudflare
+          value: external-infra/vendor/blackblaze
         - key: output
-          value: external-infra/iac/s3-models-cloudflare
+          value: external-infra/iac/s3-backups-b2
+
+    s3-pvcbackups-k8s:
+      enabled: true
+      type: s3
+      provider: minio
+      name: pvc-backups
+      vars:
+        - key: input
+          value: external-infra/vendor/minio
+        - key: output
+          value: external-infra/iac/s3-pvcbackups-k8s
 
     s3-backups-k8s:
       enabled: true
