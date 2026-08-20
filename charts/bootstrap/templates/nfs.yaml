@@ -39,4 +39,76 @@ spec:
           mountOptions:
             - vers=4
 ---
+{{- if and $storageClass.backup $storageClass.backup.enabled }}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: nfs-{{ $storageClass.name }}-backup-rclone
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: {{ $storageClass.backup.secretStore.name }}
+    kind: {{ $storageClass.backup.secretStore.type }}
+  target:
+    name: nfs-{{ $storageClass.name }}-backup-rclone
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: rclone.conf
+      remoteRef:
+        key: {{ $storageClass.backup.rclone.remoteRef.key }}
+        property: {{ $storageClass.backup.rclone.remoteRef.property }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nfs-{{ $storageClass.name }}-backup
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  schedule: {{ $storageClass.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: rclone
+              image: {{ $storageClass.backup.image }}
+              imagePullPolicy: IfNotPresent
+              args:
+                - copy
+                - --config=/config/rclone/rclone.conf
+                - --transfers=16
+                - --checkers=32
+                - --s3-chunk-size=64M
+                - --s3-upload-concurrency=8
+                {{- range $folder := $storageClass.backup.ignoreFolders }}
+                - --exclude={{ trimAll "/" $folder }}/**
+                {{- end }}
+                - /nfs
+                - s3:nfs/{{ $storageClass.name }}
+              volumeMounts:
+                - name: nfs
+                  mountPath: /nfs
+                - name: rclone-config
+                  mountPath: /config/rclone
+                  readOnly: true
+          volumes:
+            - name: nfs
+              nfs:
+                server: {{ $storageClass.hostname }}
+                path: {{ $storageClass.mountPath }}
+            - name: rclone-config
+              secret:
+                secretName: nfs-{{ $storageClass.name }}-backup-rclone
+---
+{{- end }}
 {{- end }}
