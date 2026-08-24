@@ -31,3 +31,10 @@ provider "gitea" {
   username = data.vault_generic_secret.credentials.data[var.provider_usernamekey]
   password = data.vault_generic_secret.credentials.data[var.provider_passwordkey]
 }
+
+provider "gitea" {
+  alias    = "user"
+  base_url = var.gitea_url
+  username = data.vault_generic_secret.credentials.data[var.usernamekey]
+  password = data.vault_generic_secret.credentials.data[var.passwordkey]
+}

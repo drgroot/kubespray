@@ -15,6 +15,7 @@ resource "gitea_user" "user" {
 }
 
 resource "gitea_token" "user" {
+  provider = gitea.user
   name   = "${local.gitea_username}-opentofu"
   scopes = ["all"]
 
