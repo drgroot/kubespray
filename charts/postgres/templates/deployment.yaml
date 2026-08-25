@@ -54,17 +54,17 @@ spec:
           livenessProbe:
             exec:
               command:
-                - pg_isready
-                - -h
-                - 127.0.0.1
+                - sh
+                - -ec
+                - pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"
             initialDelaySeconds: 45
             timeoutSeconds: 2
           readinessProbe:
             exec:
               command:
-                - pg_isready
-                - -h
-                - 127.0.0.1
+                - sh
+                - -ec
+                - pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"
             initialDelaySeconds: 15
             timeoutSeconds: 2
           resources:
