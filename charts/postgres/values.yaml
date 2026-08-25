@@ -9,11 +9,11 @@ annotations: {}
 
 resources:
   requests:
-    cpu: "1"
-    memory: "2Gi"
+    cpu: "250m"
+    memory: "512Mi"
   limits:
-    cpu: "2"
-    memory: "4Gi"
+    cpu: "250m"
+    memory: "512Mi"
 
 storageclass: nfs-thorin-ssd-raid0
 
