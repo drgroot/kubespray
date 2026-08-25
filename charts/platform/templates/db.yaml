@@ -35,6 +35,16 @@ spec:
             cpu: "2"
             memory: "4Gi"
 
+        configuration:
+          shared_buffers: 512MB
+          effective_cache_size: 1536MB
+          maintenance_work_mem: 256MB
+          work_mem: 8MB
+          effective_io_concurrency: 32
+          random_page_cost: 1.5
+          max_wal_size: 2GB
+          checkpoint_completion_target: 0.9
+
         secrets:
           secretStore:
             name: external-infra
