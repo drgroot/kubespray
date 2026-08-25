@@ -15,6 +15,10 @@ resources:
     cpu: "250m"
     memory: "512Mi"
 
+# PostgreSQL server settings, passed as `postgres -c name=value` arguments.
+# Settings that require a restart take effect when the Deployment is rolled out.
+configuration: {}
+
 storageclass: nfs-thorin-ssd-raid0
 
 # Optional direct volume source for the Postgres data volume. When set, the
