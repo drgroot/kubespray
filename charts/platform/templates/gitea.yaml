@@ -338,6 +338,10 @@ spec:
       selfHeal: true
     syncOptions:
       - ServerSideApply=true
+      # RespectIgnoreDifferences=true prevents Argo CD from applying the
+      # Helm-rendered statefulset.replicas: 0 during sync; KEDA exclusively
+      # owns the replica count for gitea-actions-act-runner.
+      - RespectIgnoreDifferences=true
   destination:
     namespace: {{ .Release.Namespace }}
     server: https://kubernetes.default.svc
