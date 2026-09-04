@@ -1,0 +1,63 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: models-sync-rclone
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: external-infra
+  target:
+    name: models-sync-rclone
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: rclone.conf
+      remoteRef:
+        key: iac/s3-models-ovh
+        property: rclone
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: models-sync
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  schedule: "0 0 * * *"
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 0
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+            - name: cluster-docker-secrets
+          restartPolicy: OnFailure
+          containers:
+            - name: rclone
+              image: dockerhub.{{ .Values.domains.external }}/rclone/rclone:latest
+              imagePullPolicy: IfNotPresent
+              args:
+                - sync
+                - --config=/config/rclone/rclone.conf
+                - /nobackup/models/.comfyui
+                - thorin-ai-models:
+              volumeMounts:
+                - name: nobackup
+                  mountPath: /nobackup
+                  readOnly: true
+                - name: rclone-config
+                  mountPath: /config/rclone
+                  readOnly: true
+          volumes:
+            - name: nobackup
+              nfs:
+                server: 192.168.1.3
+                path: /nobackup
+            - name: rclone-config
+              secret:
+                secretName: models-sync-rclone
