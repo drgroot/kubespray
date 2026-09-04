@@ -45,7 +45,7 @@ spec:
                 - sync
                 - --config=/config/rclone/rclone.conf
                 - /nobackup/models/.comfyui
-                - thorin-ai-models:
+                - "thorin-ai-models:"
               volumeMounts:
                 - name: nobackup
                   mountPath: /nobackup
