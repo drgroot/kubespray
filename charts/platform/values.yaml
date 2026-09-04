@@ -44,6 +44,17 @@ crossplane:
         - key: output
           value: external-infra/iac/s3-db-backups
 
+    s3-models:
+      enabled: true
+      type: s3
+      provider: ovh
+      name: thorin-ai-models
+      vars:
+        - key: input
+          value: external-infra/vendor/ovh
+        - key: output
+          value: external-infra/iac/s3-models-ovh
+
     postgres-gitea:
       enabled: true
       type: postgres
