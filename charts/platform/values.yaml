@@ -119,6 +119,21 @@ crossplane:
           value: rennovate-username
         - key: passwordkey
           value: rennovate-password
+
+    gitea-rennovate-token:
+      enabled: true
+      type: gitea
+      provider: token
+      name: rennovate
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: usernamekey
+          value: rennovate-username
+        - key: passwordkey
+          value: rennovate-password
         - key: output
           value: external-infra/iac/gitea-rennovate
 
