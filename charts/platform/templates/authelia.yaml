@@ -175,6 +175,10 @@ spec:
                 policy: one_factor
                 subject:
                   - group:media-dev
+              - domain: syncthing.{{ .Values.domains.external }}
+                policy: one_factor
+                subject:
+                  - group:media-admin
 
           identity_validation:
             reset_password:
@@ -189,7 +193,6 @@ spec:
             cookies:
               - domain: {{ .Values.domains.external }}
                 subdomain: auth
-                authelia_url: https://auth.{{ .Values.domains.external }}
 
           storage:
             encryption_key:
