@@ -19,6 +19,30 @@ spec:
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
+  name: authelia-secrets
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: authelia-secrets
+  data:
+    - secretKey: db-secret
+      remoteRef:
+        key: {{ .Values.authelia.users.remoteKey }}
+        property: db-secret
+    - secretKey: jwt-key
+      remoteRef:
+        key: {{ .Values.authelia.users.remoteKey }}
+        property: jwt-key
+    - secretKey: secrets-key
+      remoteRef:
+        key: {{ .Values.authelia.users.remoteKey }}
+        property: secrets-key
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
   name: authelia-users-raw
 spec:
   secretStoreRef:
@@ -113,12 +137,24 @@ spec:
                 subject:
                   - group:media-admin
 
+          identity_validation:
+            reset_password:
+              secret:
+                secret_name: authelia-secrets
+                path: jwt-key
+
           session:
+            encryption_key:
+              secret_name: authelia-secrets
+              path: secrets-key
             cookies:
               - domain: {{ .Values.domains.external }}
                 subdomain: auth
 
           storage:
+            encryption_key:
+              secret_name: authelia-secrets
+              path: db-secret
             postgres:
               enabled: true
               address: tcp://db.{{ .Release.Namespace }}.svc.cluster.local:5432
@@ -212,6 +248,14 @@ spec:
               items:
                 - key: password
                   path: password
+            authelia-secrets:
+              items:
+                - key: db-secret
+                  path: db-secret
+                - key: jwt-key
+                  path: jwt-key
+                - key: secrets-key
+                  path: secrets-key
             cluster-smtp-secrets:
               items:
                 - key: SMTP_PASSWORD
