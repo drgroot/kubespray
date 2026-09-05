@@ -658,6 +658,20 @@ gitea:
         cpu: "2"
 
 secretSync:
+  - name: gitea-username
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/gitea
+      properties:
+        - chintan-username
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/gitea
+      properties:
+        chintan-username: username
+
   - name: gitea
     input:
       kind: ClusterSecretStore
