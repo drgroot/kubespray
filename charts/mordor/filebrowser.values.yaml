@@ -1,6 +1,6 @@
 image:
-  name: filebrowser/filebrowser
-  tag: s6
+  name: gtstef/filebrowser
+  tag: 1.5.6-stable
 
 ports:
   - name: web
@@ -17,30 +17,33 @@ service:
 resources:
   requests:
     cpu: 100m
-    memory: 128Mi
+    memory: 512Mi
   limits:
     cpu: 200m
-    memory: 256Mi
-
-env:
-  - name: PUID
-    value: "1000"
-  - name: PGID
-    value: "1000"
+    memory: 1Gi
 
 podSecurityContext:
   fsGroup: 1000
 
 volumeMounts:
   - name: storage
-    mountPath: /config
-    subPath: config
-  - name: storage
-    mountPath: /database
-    subPath: database
+    mountPath: /home/filebrowser/data
+    subPath: quantum-data
+  - name: filebrowser-config
+    mountPath: /home/filebrowser/data/config.yaml
+    subPath: config.yaml
+    readOnly: true
   - name: storage
     mountPath: /srv
     subPath: data
+
+volumes:
+  - name: filebrowser-config
+    secret:
+      secretName: filebrowser-config
+      items:
+        - key: config.yaml
+          path: config.yaml
 
 pvc:
   enabled: true

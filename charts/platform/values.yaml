@@ -222,6 +222,29 @@ authelia:
           userinfo_signed_response_alg: none
           token_endpoint_auth_method: client_secret_post
 
+      filebrowse:
+        client_id: filebrowse
+        client_name: FileBrowser
+        client_secret_property: client-secret-filebrowse
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          require_pkce: false
+          redirect_uris:
+            - https://drive.yusufali.ca/api/auth/oidc/callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_post
+
       bitwarden:
         client_id: bitwarden
         client_name: Vaultwarden

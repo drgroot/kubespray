@@ -1,0 +1,79 @@
+fullnameOverride: onlyoffice
+
+image:
+  name: onlyoffice/documentserver
+  tag: 9.4.0.1
+
+ports:
+  - name: web
+    containerPort: 80
+
+service:
+  port: 80
+  ports:
+    - port: 80
+      targetPort: web
+      protocol: TCP
+      name: web
+
+env:
+  - name: JWT_ENABLED
+    value: "true"
+  - name: JWT_HEADER
+    value: Authorization
+  - name: JWT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: filebrowser-config
+        key: onlyoffice-jwt-secret
+  - name: ALLOW_PRIVATE_IP_ADDRESS
+    value: "true"
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 2Gi
+  limits:
+    cpu: 4
+    memory: 4Gi
+
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: https://drive.yusufali.ca
+    nginx.ingress.kubernetes.io/cors-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+    nginx.ingress.kubernetes.io/proxy-body-size: 512m
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+  tls:
+    - hosts:
+        - "*.yusufali.ca"
+      secretName: wildcard-tls
+  hosts:
+    - host: onlyoffice.yusufali.ca
+      paths:
+        - path: /
+          pathType: Prefix
+
+probes:
+  livenessProbe:
+    httpGet:
+      path: /healthcheck
+      port: web
+    initialDelaySeconds: 90
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 6
+  readinessProbe:
+    httpGet:
+      path: /healthcheck
+      port: web
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 10
+    failureThreshold: 12
