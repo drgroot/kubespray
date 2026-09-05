@@ -114,9 +114,11 @@ spec:
                 path: password
 
           notifier:
-            filesystem:
+            smtp:
               enabled: true
-              filename: /config/notification.txt
+              password:
+                secret_name: cluster-smtp-secrets
+                path: SMTP_PASSWORD
 
         persistence:
           enabled: true
@@ -125,6 +127,33 @@ spec:
         pod:
           kind: Deployment
           replicas: 2
+          env:
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: cluster-smtp-secrets
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: cluster-smtp-secrets
+                  key: SMTP_PORT
+            - name: SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: cluster-smtp-secrets
+                  key: SMTP_USERNAME
+            - name: SMTP_FROM_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: cluster-smtp-secrets
+                  key: SMTP_FROM_EMAIL
+            - name: AUTHELIA_NOTIFIER_SMTP_ADDRESS
+              value: submission://$(SMTP_HOST):$(SMTP_PORT)
+            - name: AUTHELIA_NOTIFIER_SMTP_SENDER
+              value: Authelia <$(SMTP_FROM_EMAIL)>
+            - name: AUTHELIA_NOTIFIER_SMTP_USERNAME
+              value: $(SMTP_USERNAME)
           extraVolumes:
             - name: authelia-users-raw
               secret:
@@ -168,4 +197,8 @@ spec:
               items:
                 - key: password
                   path: password
+            cluster-smtp-secrets:
+              items:
+                - key: SMTP_PASSWORD
+                  path: SMTP_PASSWORD
 {{- end }}
