@@ -153,7 +153,7 @@ authelia:
       immich:
         client_id: immich
         client_name: immich
-        client_secret_property: immich-client-secret
+        client_secret_property: client-secret-immich
         oidc:
           public: false
           authorization_policy: two_factor
