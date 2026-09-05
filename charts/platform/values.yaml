@@ -130,10 +130,50 @@ authelia:
   enabled: true
   database:
     remoteKey: iac/postgres-authelia
+
   users:
     remoteKey: vendor/authelia
     list:
       - yusuf
+      - salihah
+
+  clients:
+    client_remote_key: vendor/authelia
+    hmac:
+      remoteKey: vendor/authelia
+      property: hmac-secret
+    jwks-private:
+      remoteKey: vendor/authelia
+      property: jwks-private
+    jwks-public:
+      remoteKey: vendor/authelia
+      property: jwks-public
+
+    list:
+      immich:
+        client_id: immich
+        client_name: immich
+        client_secret_property: immich-client-secret
+        oidc:
+          public: false
+          authorization_policy: two_factor
+          require_pkce: true
+          pkce_challenge_method: S256
+          redirect_uris:
+            - https://photos.yusufali.ca/auth/login
+            - https://photos.yusufali.ca/user-settings
+            - app.immich:///oauth-callback
+          scopes:
+            - openid
+            - profile
+            - email
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_basic
 
 redis:
   image:
