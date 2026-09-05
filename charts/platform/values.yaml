@@ -153,7 +153,7 @@ authelia:
       immich:
         client_id: immich
         client_name: immich
-        client_secret_property: immich-client-secret
+        client_secret_property: client-secret-immich
         oidc:
           public: false
           authorization_policy: two_factor
@@ -167,6 +167,7 @@ authelia:
             - openid
             - profile
             - email
+            - groups
           response_types:
             - code
           grant_types:
@@ -174,6 +175,29 @@ authelia:
           access_token_signed_response_alg: none
           userinfo_signed_response_alg: none
           token_endpoint_auth_method: client_secret_basic
+
+      memos:
+        client_id: memos
+        client_name: Memos
+        client_secret_property: client-secret-memos
+        oidc:
+          public: false
+          authorization_policy: two_factor
+          require_pkce: false
+          redirect_uris:
+            - https://notes.yusufali.ca/auth/callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_post
 
 redis:
   image:

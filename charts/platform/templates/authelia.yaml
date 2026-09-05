@@ -314,7 +314,7 @@ spec:
                   {{- range $name, $client := .Values.authelia.clients.list }}
                   client_secret_hash="$(authelia crypto hash generate pbkdf2 --variant sha512 --password "$(cat /oidc/{{ $name }}-client-secret)" | sed -n 's/^Digest: //p')"
                   test -n "$client_secret_hash"
-                  printf '%s\\n' "$client_secret_hash" > /config/oidc/{{ $name }}-client-secret-hash
+                  printf '%s' "$client_secret_hash" > /config/oidc/{{ $name }}-client-secret-hash
                   {{- end }}
                   {{- end }}
               volumeMounts:

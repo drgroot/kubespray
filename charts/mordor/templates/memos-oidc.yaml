@@ -1,0 +1,44 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: memos-oidc
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: memos-oidc
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      engineVersion: v2
+      data:
+        memos-idp-authelia.json: |
+          {
+            "uid": "authelia",
+            "name": "Authelia",
+            "type": "OAUTH2",
+            "identifierFilter": "",
+            "config": {
+              "oauth2Config": {
+                "clientId": "memos",
+                "clientSecret": {{ "{{" }} .clientSecret | toJson {{ "}}" }},
+                "authUrl": "https://auth.yusufali.ca/api/oidc/authorization",
+                "tokenUrl": "https://auth.yusufali.ca/api/oidc/token",
+                "userInfoUrl": "https://auth.yusufali.ca/api/oidc/userinfo",
+                "scopes": ["openid", "profile", "email", "groups"],
+                "fieldMapping": {
+                  "identifier": "sub",
+                  "displayName": "name",
+                  "email": "email",
+                  "avatarUrl": "picture"
+                }
+              }
+            }
+          }
+  data:
+    - secretKey: clientSecret
+      remoteRef:
+        key: vendor/authelia-apps
+        property: client-secret-memos
