@@ -2,6 +2,14 @@ variable "name" {
   type = string
 }
 
+# Kept for compatibility with existing Crossplane Workspace resources. User
+# creation does not write an output secret; token creation is handled by the
+# separate gitea-token module.
+variable "output" {
+  type    = string
+  default = null
+}
+
 locals {
   gitea_username = data.vault_generic_secret.credentials.data[var.usernamekey]
 }
