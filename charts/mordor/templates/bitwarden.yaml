@@ -52,6 +52,7 @@ spec:
     deletionPolicy: Retain
     template:
       engineVersion: v2
+      mergePolicy: Merge
       data:
         WEBSOCKET_ENABLED: "true"
         INVITATIONS_ALLOWED: "false"
