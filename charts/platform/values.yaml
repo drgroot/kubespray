@@ -138,15 +138,15 @@ authelia:
       - salihah
 
   clients:
-    client_remote_key: vendor/authelia
+    client_remote_key: vendor/authelia-apps
     hmac:
-      remoteKey: vendor/authelia
+      remoteKey: vendor/authelia-apps
       property: hmac-secret
     jwks-private:
-      remoteKey: vendor/authelia
+      remoteKey: vendor/authelia-apps
       property: jwks-private
     jwks-public:
-      remoteKey: vendor/authelia
+      remoteKey: vendor/authelia-apps
       property: jwks-public
 
     list:
