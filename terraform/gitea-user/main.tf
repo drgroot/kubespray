@@ -13,11 +13,3 @@ resource "gitea_user" "user" {
   email                = "${local.gitea_username}@local.invalid"
   must_change_password = false
 }
-
-resource "gitea_token" "user" {
-  provider = gitea.user
-  name   = "${local.gitea_username}-opentofu"
-  scopes = ["all"]
-
-  depends_on = [gitea_user.user]
-}

@@ -4,3 +4,26 @@ updates:
     directory: /
     schedule:
       interval: weekly
+
+  - package-ecosystem: terraform
+    directories:
+      - /terraform/gitea-token
+      - /terraform/gitea-user
+      - /terraform/postgres-db
+      - /terraform/s3-b2
+      - /terraform/s3-minio
+      - /terraform/s3-ovh
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: helm
+    directories:
+      - /charts/bootstrap
+      - /charts/media/chart
+      - /charts/mordor
+      - /charts/platform
+      - /charts/postgres
+      - /charts/template-multi
+      - /charts/template-single
+    schedule:
+      interval: weekly
