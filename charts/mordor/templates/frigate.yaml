@@ -73,21 +73,3 @@ spec:
   selector:
     app.kubernetes.io/instance: mordor-argo-frigate
   type: NodePort
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: frigate-internal
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: nvr.{{ .Values.domains.internal }}
-      http:
-        paths:
-          - backend:
-              service:
-                name: frigate
-                port:
-                  number: 5000
-            path: /
-            pathType: Prefix
