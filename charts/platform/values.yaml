@@ -137,6 +137,42 @@ crossplane:
         - key: output
           value: external-infra/iac/gitea-rennovate
 
+    gitea-chintan:
+      enabled: true
+      type: gitea
+      provider: user
+      name: chintan
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: provider_usernamekey
+          value: argo-username
+        - key: provider_passwordkey
+          value: argo-password
+        - key: usernamekey
+          value: chintan-username
+        - key: passwordkey
+          value: chintan-password
+
+    gitea-chintan-token:
+      enabled: true
+      type: gitea
+      provider: token
+      name: chintan
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: usernamekey
+          value: chintan-username
+        - key: passwordkey
+          value: chintan-password
+        - key: output
+          value: external-infra/iac/gitea
+
 domains:
   internal: asd
   external: asd
@@ -622,6 +658,20 @@ gitea:
         cpu: "2"
 
 secretSync:
+  - name: gitea
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: iac/gitea
+      properties:
+        - token
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/gitea
+      properties:
+        token: token
+
   - name: docker
     input:
       kind: ClusterSecretStore
