@@ -25,6 +25,9 @@ resources:
 podSecurityContext:
   fsGroup: 1000
 
+securityContext:
+  runAsUser: 0
+
 volumeMounts:
   - name: storage
     mountPath: /home/filebrowser/data
