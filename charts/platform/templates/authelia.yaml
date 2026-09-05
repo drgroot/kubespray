@@ -1,0 +1,169 @@
+{{- if .Values.authelia.enabled }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: authelia-database
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: authelia-database
+  data:
+    - secretKey: password
+      remoteRef:
+        key: {{ .Values.authelia.database.remoteKey }}
+        property: password
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: authelia-users-raw
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: authelia-users-raw
+  data:
+    {{- range $user := .Values.authelia.users.list }}
+    {{- if not (regexMatch "^[a-z0-9][a-z0-9_-]*$" $user) }}
+    {{- fail (printf "Authelia username %q must contain only lowercase letters, numbers, hyphens, or underscores" $user) }}
+    {{- end }}
+    - secretKey: {{ $user }}_displayname
+      remoteRef:
+        key: {{ $.Values.authelia.users.remoteKey }}
+        property: {{ $user }}_displayname
+    - secretKey: {{ $user }}_email
+      remoteRef:
+        key: {{ $.Values.authelia.users.remoteKey }}
+        property: {{ $user }}_email
+    - secretKey: {{ $user }}_groups
+      remoteRef:
+        key: {{ $.Values.authelia.users.remoteKey }}
+        property: {{ $user }}_groups
+    - secretKey: {{ $user }}_password
+      remoteRef:
+        key: {{ $.Values.authelia.users.remoteKey }}
+        property: {{ $user }}_password
+    {{- end }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap-external-authelia
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: authelia
+    repoURL: https://charts.authelia.com
+    targetRevision: {{ .Values.versions.authelia }}
+    helm:
+      releaseName: authelia
+      values: |-
+        image:
+          pullSecrets:
+            - cluster-docker-secrets
+
+        ingress:
+          enabled: true
+          className: nginx
+          certManager: true
+          annotations:
+            external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+          tls:
+            enabled: true
+            secret: authelia-tls
+
+        configMap:
+          authentication_backend:
+            file:
+              enabled: true
+              path: /config/users_database.yml
+
+          access_control:
+            default_policy: deny
+
+          session:
+            cookies:
+              - domain: {{ .Values.domains.external }}
+                subdomain: auth
+                default_redirection_url: https://auth.{{ .Values.domains.external }}
+
+          storage:
+            postgres:
+              enabled: true
+              address: tcp://db.{{ .Release.Namespace }}.svc.cluster.local:5432
+              database: db_authelia
+              username: authelia
+              password:
+                secret_name: authelia-database
+                path: password
+
+          notifier:
+            filesystem:
+              enabled: true
+              filename: /config/notification.txt
+
+        persistence:
+          enabled: true
+          storageClass: {{ .Values.storage.default }}
+
+        pod:
+          extraVolumes:
+            - name: authelia-users-raw
+              secret:
+                secretName: authelia-users-raw
+          initContainers:
+            - name: generate-users-database
+              image: ghcr.io/authelia/authelia:4.39.20
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  yaml_quote() {
+                    printf "%s" "$1" | sed "s/'/''/g; s/^/'/; s/$/'/"
+                  }
+
+                  {
+                    echo "users:"
+                    {{- range $user := .Values.authelia.users.list }}
+                    password_hash="$(authelia crypto hash generate argon2 --password "$(cat /users/{{ $user }}_password)" | sed -n 's/^Digest: //p')"
+                    test -n "$password_hash"
+                    echo "  {{ $user }}:"
+                    printf "    displayname: %s\\n" "$(yaml_quote "$(cat /users/{{ $user }}_displayname)")"
+                    printf "    email: %s\\n" "$(yaml_quote "$(cat /users/{{ $user }}_email)")"
+                    echo "    groups:"
+                    tr ',' '\n' < /users/{{ $user }}_groups | while IFS= read -r group; do
+                      test -n "$group" && printf "      - %s\\n" "$(yaml_quote "$group")"
+                    done
+                    printf "    password: %s\\n" "$password_hash"
+                    {{- end }}
+                  } > /config/users_database.yml
+              volumeMounts:
+                - name: authelia
+                  mountPath: /config
+                - name: authelia-users-raw
+                  mountPath: /users
+                  readOnly: true
+
+        secret:
+          additionalSecrets:
+            authelia-database:
+              items:
+                - key: password
+                  path: password
+{{- end }}
