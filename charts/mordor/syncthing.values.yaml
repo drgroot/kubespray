@@ -73,10 +73,20 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-body-size: 512m
     nginx.ingress.kubernetes.io/client_max_body_size: 512m
     nginx.ingress.kubernetes.io/client-body-buffer-size: 64m
+    nginx.ingress.kubernetes.io/auth-method: GET
+    nginx.ingress.kubernetes.io/auth-response-headers: Remote-User,Remote-Name,Remote-Groups,Remote-Email
+    nginx.ingress.kubernetes.io/auth-signin: https://auth.yusufali.ca?rm=$request_method
+    nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+  tls:
+    - hosts:
+        - syncthing.yusufali.ca
+      secretName: syncthing-tls
   hosts:
-    - host: syncthing.k8s.private
+    - host: syncthing.yusufali.ca
       paths:
         - path: /
           pathType: Prefix
