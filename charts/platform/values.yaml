@@ -669,7 +669,6 @@ secretSync:
       kind: ClusterSecretStore
       name: servc
       path: iac/gitea
-      updatePolicy: Merge
       properties:
         chintan-username: username
 
@@ -684,7 +683,6 @@ secretSync:
       kind: ClusterSecretStore
       name: servc
       path: iac/gitea
-      updatePolicy: Merge
       properties:
         token: token
 
