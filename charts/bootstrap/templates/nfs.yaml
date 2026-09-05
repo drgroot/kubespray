@@ -78,6 +78,8 @@ spec:
     spec:
       template:
         spec:
+          imagePullSecrets:
+            - name: cluster-docker-secrets
           restartPolicy: OnFailure
           containers:
             - name: rclone

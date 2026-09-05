@@ -46,6 +46,8 @@ spec:
       labels:
         app: redis
     spec:
+      imagePullSecrets:
+        - name: cluster-docker-secrets
       containers:
         - name: app
           image: {{ .Values.redis.image.registry }}{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}

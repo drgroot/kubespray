@@ -25,6 +25,10 @@ spec:
       values: |-
         fullnameOverride: db
 
+        image: dockerhub.yusufali.ca/library/postgres:16.3
+        imagePullSecrets:
+          - name: cluster-docker-secrets
+
         storageclass: {{ .Values.storage.fast }}
 
         resources:
@@ -65,6 +69,7 @@ spec:
             remoteKey: iac/postgres
 
         backup:
+          image: dockerhub.yusufali.ca/rclone/rclone:latest
           secretStore:
             name: external-infra
             type: ClusterSecretStore
