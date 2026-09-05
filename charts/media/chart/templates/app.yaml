@@ -101,6 +101,40 @@ spec:
       remoteRef:
         key: iac/sabnzbd
         property: sabnzbd-api-key
+{{- range $app, $port := dict "prowlarr" 9696 "radarr" 7878 "sonarr" 8989 }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: media-narrs-{{ $app }}-config
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: media-narrs-{{ $app }}-config
+    template:
+      engineVersion: v2
+      data:
+        config.xml: |
+          <Config>
+            <BindAddress>*</BindAddress>
+            <Port>{{ $port }}</Port>
+            <EnableSsl>False</EnableSsl>
+            <LaunchBrowser>False</LaunchBrowser>
+            <ApiKey>{{ `{{ .api_key }}` }}</ApiKey>
+            <AuthenticationMethod>External</AuthenticationMethod>
+            <AuthenticationRequired>DisabledForLocalAddresses</AuthenticationRequired>
+            <Branch>master</Branch>
+            <LogLevel>Info</LogLevel>
+            <UrlBase></UrlBase>
+          </Config>
+  data:
+    - secretKey: api_key
+      remoteRef:
+        key: vendor/media
+        property: {{ $app }}
+{{- end }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
