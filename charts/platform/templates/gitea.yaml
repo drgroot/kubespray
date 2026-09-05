@@ -241,6 +241,11 @@ spec:
                   name: cluster-smtp-secrets
                   key: SMTP_FROM_EMAIL
 
+            - name: GITEA__OAUTH2_CLIENT__ENABLE_AUTO_REGISTRATION
+              value: "true"
+            - name: GITEA__OAUTH2_CLIENT__ACCOUNT_LINKING
+              value: auto
+
           config:
             service:
               DISABLE_REGISTRATION: true
