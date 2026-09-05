@@ -245,6 +245,10 @@ spec:
               value: "true"
             - name: GITEA__OAUTH2_CLIENT__ACCOUNT_LINKING
               value: auto
+            - name: GITEA__OAUTH2_CLIENT__OPENID_CONNECT_SCOPES
+              value: profile email groups
+            - name: GITEA__OAUTH2_CLIENT__USERNAME
+              value: preferred_username
 
           config:
             service:
