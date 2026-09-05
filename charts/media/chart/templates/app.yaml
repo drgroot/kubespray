@@ -14,7 +14,7 @@ spec:
         sabnzbd.ini: |
           [misc]
           host = 0.0.0.0
-          host_whitelist = sabnzbd.k8s.private,media-downloaders-sabnzbd-svc.media
+          host_whitelist = sabnzbd.yusufali.ca,media-downloaders-sabnzbd-svc.media
           pause_on_post_processing = 1
           port = 8080
           download_dir = /downloads/incomplete
