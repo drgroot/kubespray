@@ -389,7 +389,20 @@ components:
             memory: 2Gi
         ingress:
           enabled: true
-          host: sabnzbd.k8s.private
+          host: sabnzbd.yusufali.ca
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+            nginx.ingress.kubernetes.io/auth-method: GET
+            nginx.ingress.kubernetes.io/auth-response-headers: Remote-User,Remote-Name,Remote-Groups,Remote-Email
+            nginx.ingress.kubernetes.io/auth-signin: https://auth.yusufali.ca?rm=$request_method
+            nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
+            nginx.ingress.kubernetes.io/backend-protocol: HTTP
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          tls:
+            - hosts:
+                - sabnzbd.yusufali.ca
+              secretName: sabnzbd-tls
         podAnnotations:
           secret.reloader.stakater.com/reload: sabnzbd-config
         image:

@@ -136,6 +136,14 @@ spec:
                 policy: one_factor
                 subject:
                   - group:media-admin
+              - domain: sabnzbd.{{ .Values.domains.external }}
+                policy: one_factor
+                subject:
+                  - group:media-admin
+              - domain: nvr.{{ .Values.domains.external }}
+                policy: one_factor
+                subject:
+                  - group:media-dev
 
           identity_validation:
             reset_password:
