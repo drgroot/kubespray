@@ -97,6 +97,21 @@ spec:
 
           access_control:
             default_policy: deny
+            rules:
+              - domain: radarr.{{ .Values.domains.external }}
+                policy: one_factor
+                subject:
+                  - group:media-admin
+                  - group:media-dev
+              - domain: sonarr.{{ .Values.domains.external }}
+                policy: one_factor
+                subject:
+                  - group:media-admin
+                  - group:media-dev
+              - domain: prowlarr.{{ .Values.domains.external }}
+                policy: one_factor
+                subject:
+                  - group:media-admin
 
           session:
             cookies:

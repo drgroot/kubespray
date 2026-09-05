@@ -207,11 +207,31 @@ components:
       prowlarr:
         image:
           name: linuxserver/prowlarr
+        volumes:
+          - name: arr-config
+            secret:
+              secretName: media-narrs-prowlarr-config
+              defaultMode: 0644
+        volumeMounts:
+          - name: arr-config
+            mountPath: /config/config.xml
+            subPath: config.xml
+            readOnly: true
         ingress:
-          host: prowlarr.k8s.private
+          host: prowlarr.yusufali.ca
           annotations:
-            nginx.ingress.kubernetes.io/ssl-redirect: "false"
-          tls: []
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+            nginx.ingress.kubernetes.io/auth-method: GET
+            nginx.ingress.kubernetes.io/auth-response-headers: Remote-User,Remote-Name,Remote-Groups,Remote-Email
+            nginx.ingress.kubernetes.io/auth-signin: https://auth.yusufali.ca?rm=$request_method
+            nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
+            nginx.ingress.kubernetes.io/backend-protocol: HTTP
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          tls:
+            - hosts:
+                - prowlarr.yusufali.ca
+              secretName: prowlarr-tls
         ports:
           - port: 9696
         resources:
@@ -241,11 +261,31 @@ components:
       radarr:
         image:
           name: linuxserver/radarr
+        volumes:
+          - name: arr-config
+            secret:
+              secretName: media-narrs-radarr-config
+              defaultMode: 0644
+        volumeMounts:
+          - name: arr-config
+            mountPath: /config/config.xml
+            subPath: config.xml
+            readOnly: true
         ingress:
-          host: radarr.k8s.private
+          host: radarr.yusufali.ca
           annotations:
-            nginx.ingress.kubernetes.io/ssl-redirect: "false"
-          tls: []
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+            nginx.ingress.kubernetes.io/auth-method: GET
+            nginx.ingress.kubernetes.io/auth-response-headers: Remote-User,Remote-Name,Remote-Groups,Remote-Email
+            nginx.ingress.kubernetes.io/auth-signin: https://auth.yusufali.ca?rm=$request_method
+            nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
+            nginx.ingress.kubernetes.io/backend-protocol: HTTP
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          tls:
+            - hosts:
+                - radarr.yusufali.ca
+              secretName: radarr-tls
         ports:
           - port: 7878
         probes:
@@ -263,17 +303,35 @@ components:
               env:
                 - name: DATABASES
                   value: "/config/radarr.db"
-                - name: FILES
-                  value: "/config/config.xml"
 
       sonarr:
         image:
           name: linuxserver/sonarr
+        volumes:
+          - name: arr-config
+            secret:
+              secretName: media-narrs-sonarr-config
+              defaultMode: 0644
+        volumeMounts:
+          - name: arr-config
+            mountPath: /config/config.xml
+            subPath: config.xml
+            readOnly: true
         ingress:
-          host: sonarr.k8s.private
+          host: sonarr.yusufali.ca
           annotations:
-            nginx.ingress.kubernetes.io/ssl-redirect: "false"
-          tls: []
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+            nginx.ingress.kubernetes.io/auth-method: GET
+            nginx.ingress.kubernetes.io/auth-response-headers: Remote-User,Remote-Name,Remote-Groups,Remote-Email
+            nginx.ingress.kubernetes.io/auth-signin: https://auth.yusufali.ca?rm=$request_method
+            nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
+            nginx.ingress.kubernetes.io/backend-protocol: HTTP
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          tls:
+            - hosts:
+                - sonarr.yusufali.ca
+              secretName: sonarr-tls
         ports:
           - port: 8989
         probes:
@@ -291,8 +349,6 @@ components:
               env:
                 - name: DATABASES
                   value: "/config/sonarr.db"
-                - name: FILES
-                  value: "/config/config.xml"
 
   downloaders:
     globals:
