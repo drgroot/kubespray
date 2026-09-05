@@ -36,11 +36,28 @@ env:
       secretKeyRef:
         name: bitwarden-postgres-secrets
         key: url
+  - name: SSO_ENABLED
+    value: "true"
+  - name: SSO_ONLY
+    value: "false"
+  - name: SSO_SIGNUPS_MATCH_EMAIL
+    value: "true"
+  - name: SSO_AUTHORITY
+    value: https://auth.yusufali.ca
+  - name: SSO_SCOPES
+    value: profile email offline_access groups
+  - name: SSO_PKCE
+    value: "true"
+  - name: SSO_CLIENT_ID
+    value: bitwarden
 envFrom:
   - secretRef:
       name: cluster-smtp-secrets
   - secretRef:
       name: bitwarden-secrets
+
+podAnnotations:
+  secret.reloader.stakater.com/reload: bitwarden-secrets
 
 resources:
   requests:
