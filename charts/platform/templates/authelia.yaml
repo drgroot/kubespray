@@ -178,6 +178,8 @@ spec:
         pod:
           kind: Deployment
           replicas: 2
+          annotations:
+            secret.reloader.stakater.com/reload: authelia-users-raw
           env:
             - name: SMTP_HOST
               valueFrom:
@@ -229,7 +231,7 @@ spec:
                     printf "    displayname: %s\\n" "$(yaml_quote "$(cat /users/{{ $user }}_displayname)")"
                     printf "    email: %s\\n" "$(yaml_quote "$(cat /users/{{ $user }}_email)")"
                     echo "    groups:"
-                    tr ',' '\n' < /users/{{ $user }}_groups | while IFS= read -r group; do
+                    tr ',' '\n' < /users/{{ $user }}_groups | while IFS= read -r group || [ -n "$group" ]; do
                       test -n "$group" && printf "      - %s\\n" "$(yaml_quote "$group")"
                     done
                     printf "    password: %s\\n" "$password_hash"
