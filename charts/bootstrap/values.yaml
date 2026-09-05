@@ -38,7 +38,7 @@ vault:
       timeoutSeconds: 5
 
 versions:
-  argoupdater: 0.16
+  argoupdater: 0.18
   ingressnginx: 4.13.2
   externalsecrets: 2.5.0
   nfsprovisioner: 4.0.18
@@ -70,7 +70,7 @@ storageClasses:
     mountPath: /general
     backup:
       enabled: true
-      image: rclone/rclone:latest
+      image: dockerhub.yusufali.ca/rclone/rclone:latest
       schedule: "0 0 * * *"
       secretStore:
         name: external-infra
@@ -94,6 +94,27 @@ tenants:
     createNamespace: true
     permissions:
       - pvc
+    updater:
+      - name: plex
+        image: plexinc/pms-docker:latest
+        updateStrategy: digest
+        helmImageName: components.media.list.plex.image.name
+        helmImageVersion: components.media.list.plex.image.tag
+      - name: prowlarr
+        image: linuxserver/prowlarr:latest
+        updateStrategy: digest
+        helmImageName: components.narrs.list.prowlarr.image.name
+        helmImageVersion: components.narrs.list.prowlarr.image.tag
+      - name: radarr
+        image: linuxserver/radarr:latest
+        updateStrategy: digest
+        helmImageName: components.narrs.list.radarr.image.name
+        helmImageVersion: components.narrs.list.radarr.image.tag
+      - name: sonarr
+        image: linuxserver/sonarr:latest
+        updateStrategy: digest
+        helmImageName: components.narrs.list.sonarr.image.name
+        helmImageVersion: components.narrs.list.sonarr.image.tag
     sources:
       - name: configs
         url: https://github.com/drgroot/kubespray.git

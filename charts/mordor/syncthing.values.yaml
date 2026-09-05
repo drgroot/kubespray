@@ -1,5 +1,5 @@
 image:
-  name: syncthing/syncthing
+  name: dockerhub.yusufali.ca/syncthing/syncthing
   tag: latest
 
 imagePullSecrets:

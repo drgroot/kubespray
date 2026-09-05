@@ -9,7 +9,7 @@ spec:
     kubernetes:
       useListenerPortAsContainerPort: true
       envoyService:
-          type: NodePort
+        type: NodePort
       envoyDaemonSet:
         container:
           securityContext:
@@ -53,15 +53,6 @@ spec:
     - name: postgres
       protocol: TCP
       port: 5432
-      allowedRoutes:
-        kinds:
-          - kind: TCPRoute
-        namespaces:
-          from: All
-
-    - name: cloudamqp
-      protocol: TCP
-      port: 5672
       allowedRoutes:
         kinds:
           - kind: TCPRoute

@@ -1,8 +1,11 @@
 fullnameOverride: onlyoffice
 
 image:
-  name: onlyoffice/documentserver
+  name: dockerhub.yusufali.ca/onlyoffice/documentserver
   tag: 9.4.0.1
+
+imagePullSecrets:
+  - name: cluster-docker-secrets
 
 ports:
   - name: web

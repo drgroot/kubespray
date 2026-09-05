@@ -288,7 +288,7 @@ authelia:
 
 redis:
   image:
-    registry: ""
+    registry: "dockerhub.{{ .Values.domains.external }}/library/"
     repository: redis
     tag: 8
 

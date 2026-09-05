@@ -1,8 +1,11 @@
 fullnameOverride: bitwarden
 
 image:
-  name: vaultwarden/server
+  name: dockerhub.yusufali.ca/vaultwarden/server
   tag: 1.37.1
+
+imagePullSecrets:
+  - name: cluster-docker-secrets
 
 env:
   - name: SMTP_DOMAIN

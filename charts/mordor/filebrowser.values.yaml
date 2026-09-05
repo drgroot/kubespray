@@ -1,6 +1,9 @@
 image:
-  name: gtstef/filebrowser
+  name: dockerhub.yusufali.ca/gtstef/filebrowser
   tag: 1.5.6-stable
+
+imagePullSecrets:
+  - name: cluster-docker-secrets
 
 ports:
   - name: web

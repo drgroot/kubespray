@@ -1,7 +1,7 @@
 fullnameOverride: memos
 
 image:
-  name: neosmemo/memos
+  name: dockerhub.yusufali.ca/neosmemo/memos
   tag: 0.30.0
 
 imagePullSecrets:
