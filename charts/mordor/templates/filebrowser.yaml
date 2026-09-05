@@ -36,3 +36,62 @@ spec:
     - repoURL: https://github.com/drgroot/kubespray.git
       targetRevision: HEAD
       ref: values
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: filebrowser-config
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: filebrowser-config
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      engineVersion: v2
+      data:
+        config.yaml: |
+          http:
+            port: 80
+            baseURL: "/"
+            externalUrl: "https://drive.yusufali.ca"
+            internalUrl: "http://filebrowser:80"
+            trustedHeaders:
+              - X-Forwarded-Proto
+              - X-Forwarded-Host
+              - X-Forwarded-For
+              - X-Real-IP
+          server:
+            sources:
+              - path: "/srv"
+          auth:
+            methods:
+              password:
+                enabled: false
+              oidc:
+                enabled: true
+                clientId: "filebrowse"
+                clientSecret: {{ "{{" }} .clientSecret | toJson {{ "}}" }}
+                issuerUrl: "https://auth.yusufali.ca"
+                scopes: "openid profile email groups"
+                userIdentifier: "preferred_username"
+                adminGroup: "media-admin"
+          integrations:
+            office:
+              url: "https://onlyoffice.yusufali.ca"
+              internalUrl: "http://onlyoffice:80"
+              secret: {{ "{{" }} .onlyofficeSecret | toJson {{ "}}" }}
+              viewOnly: false
+        onlyoffice-jwt-secret: {{ "{{" }} .onlyofficeSecret {{ "}}" }}
+  data:
+    - secretKey: clientSecret
+      remoteRef:
+        key: vendor/authelia-apps
+        property: client-secret-filebrowse
+    - secretKey: onlyofficeSecret
+      remoteRef:
+        key: vendor/authelia-apps
+        property: onlyoffice-jwt-secret-filebrowse
