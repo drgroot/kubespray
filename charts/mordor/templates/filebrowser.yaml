@@ -85,7 +85,7 @@ spec:
               internalUrl: "http://onlyoffice:80"
               secret: {{ "{{" }} .onlyofficeSecret | toJson {{ "}}" }}
               viewOnly: false
-        onlyoffice-jwt-secret: {{ "{{" }} .onlyofficeSecret {{ "}}" }}
+        onlyoffice-jwt-secret: '{{ "{{" }} .onlyofficeSecret {{ "}}" }}'
   data:
     - secretKey: clientSecret
       remoteRef:
