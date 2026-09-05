@@ -83,6 +83,7 @@ spec:
           className: nginx
           certManager: true
           annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
             external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
           tls:
             enabled: true
@@ -101,7 +102,6 @@ spec:
             cookies:
               - domain: {{ .Values.domains.external }}
                 subdomain: auth
-                default_redirection_url: https://auth.{{ .Values.domains.external }}
 
           storage:
             postgres:
@@ -123,6 +123,8 @@ spec:
           storageClass: {{ .Values.storage.default }}
 
         pod:
+          kind: Deployment
+          replicas: 2
           extraVolumes:
             - name: authelia-users-raw
               secret:
