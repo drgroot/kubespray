@@ -122,7 +122,7 @@ spec:
             "$schema": "https://github.com/toeverything/affine/releases/latest/download/config.schema.json",
             "server": {
               "name": "AFFiNE",
-              "externalUrl": "https://affine.yusufali.ca"
+              "externalUrl": "https://miro.yusufali.ca"
             },
             "oauth": {
               "providers.oidc": {

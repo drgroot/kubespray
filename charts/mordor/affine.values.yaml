@@ -125,11 +125,11 @@ ingress:
     external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   hosts:
-    - host: affine.yusufali.ca
+    - host: miro.yusufali.ca
       paths:
         - path: /
           pathType: Prefix
   tls:
     - hosts:
-        - affine.yusufali.ca
+        - miro.yusufali.ca
       secretName: affine-tls
