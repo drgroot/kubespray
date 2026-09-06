@@ -129,6 +129,7 @@ spec:
                 "clientId": "affine",
                 "clientSecret": {{ "{{" }} .clientSecret | toJson {{ "}}" }},
                 "issuer": "https://auth.yusufali.ca",
+                "allowPrivateNetwork": true,
                 "args": {
                   "scope": "openid profile email groups"
                 }
