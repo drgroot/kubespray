@@ -90,6 +90,61 @@ crossplane:
         - key: capabilities
           value: list
 
+    authelia-murtz-servc:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-murtz-servc
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: murtz
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: servc/*
+        - key: capabilities
+          value: create,read,update,delete,list,patch
+
+    authelia-murtz:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-murtz
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: murtz
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: external-infra/data/authelia/murtz
+        - key: capabilities
+          value: read,update,patch
+
+    authelia-murtz-browse:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-murtz-browse
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: murtz
+        - key: path
+          value: external-infra/metadata/authelia
+        - key: capabilities
+          value: list
+
     s3-backups-b2:
       enabled: true
       type: s3
@@ -287,6 +342,8 @@ authelia:
       remoteKey: authelia/yusuf
     - name: salihah
       remoteKey: authelia/salihah
+    - name: murtz
+      remoteKey: authelia/murtz
 
   clients:
     client_remote_key: vendor/authelia-apps
@@ -355,7 +412,7 @@ authelia:
         client_secret_property: client-secret-gitea
         oidc:
           public: false
-          authorization_policy: two_factor
+          authorization_policy: one_factor
           require_pkce: false
           redirect_uris:
             - https://git.yusufali.ca/user/oauth2/gitea/callback
