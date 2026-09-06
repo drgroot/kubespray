@@ -101,6 +101,25 @@ crossplane:
         - key: output
           value: external-infra/iac/postgres-authelia
 
+    gitea-argocd:
+      enabled: true
+      type: gitea
+      provider: user
+      name: argocd
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: provider_usernamekey
+          value: root-username
+        - key: provider_passwordkey
+          value: root-password
+        - key: usernamekey
+          value: argo-username
+        - key: passwordkey
+          value: argo-password
+
     gitea-rennovate:
       enabled: true
       type: gitea
@@ -112,9 +131,9 @@ crossplane:
         - key: credentialpath
           value: external-infra/vendor/gitea
         - key: provider_usernamekey
-          value: argo-username
+          value: root-username
         - key: provider_passwordkey
-          value: argo-password
+          value: root-password
         - key: usernamekey
           value: rennovate-username
         - key: passwordkey
@@ -148,9 +167,9 @@ crossplane:
         - key: credentialpath
           value: external-infra/vendor/gitea
         - key: provider_usernamekey
-          value: argo-username
+          value: root-username
         - key: provider_passwordkey
-          value: argo-password
+          value: root-password
         - key: usernamekey
           value: chintan-username
         - key: passwordkey
@@ -665,12 +684,14 @@ secretSync:
       path: vendor/gitea
       properties:
         - chintan-username
+        - chintan-password
     output:
       kind: ClusterSecretStore
       name: servc
       path: iac/gitea
       properties:
         chintan-username: username
+        chintan-password: password
 
   - name: gitea
     input:
