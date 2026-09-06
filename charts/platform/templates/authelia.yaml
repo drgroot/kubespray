@@ -29,15 +29,15 @@ spec:
   data:
     - secretKey: db-secret
       remoteRef:
-        key: {{ .Values.authelia.users.remoteKey }}
+        key: {{ .Values.authelia.secrets.remoteKey }}
         property: db-secret
     - secretKey: jwt-key
       remoteRef:
-        key: {{ .Values.authelia.users.remoteKey }}
+        key: {{ .Values.authelia.secrets.remoteKey }}
         property: jwt-key
     - secretKey: secrets-key
       remoteRef:
-        key: {{ .Values.authelia.users.remoteKey }}
+        key: {{ .Values.authelia.secrets.remoteKey }}
         property: secrets-key
 ---
 apiVersion: external-secrets.io/v1
@@ -51,26 +51,26 @@ spec:
   target:
     name: authelia-users-raw
   data:
-    {{- range $user := .Values.authelia.users.list }}
-    {{- if not (regexMatch "^[a-z0-9][a-z0-9_-]*$" $user) }}
-    {{- fail (printf "Authelia username %q must contain only lowercase letters, numbers, hyphens, or underscores" $user) }}
+    {{- range $user := .Values.authelia.users }}
+    {{- if not (regexMatch "^[a-z0-9][a-z0-9_-]*$" $user.name) }}
+    {{- fail (printf "Authelia username %q must contain only lowercase letters, numbers, hyphens, or underscores" $user.name) }}
     {{- end }}
-    - secretKey: {{ $user }}_displayname
+    - secretKey: {{ $user.name }}_displayname
       remoteRef:
-        key: {{ $.Values.authelia.users.remoteKey }}
-        property: {{ $user }}_displayname
-    - secretKey: {{ $user }}_email
+        key: {{ $user.remoteKey }}
+        property: displayname
+    - secretKey: {{ $user.name }}_email
       remoteRef:
-        key: {{ $.Values.authelia.users.remoteKey }}
-        property: {{ $user }}_email
-    - secretKey: {{ $user }}_groups
+        key: {{ $user.remoteKey }}
+        property: email
+    - secretKey: {{ $user.name }}_groups
       remoteRef:
-        key: {{ $.Values.authelia.users.remoteKey }}
-        property: {{ $user }}_groups
-    - secretKey: {{ $user }}_password
+        key: {{ $user.remoteKey }}
+        property: groups
+    - secretKey: {{ $user.name }}_password
       remoteRef:
-        key: {{ $.Values.authelia.users.remoteKey }}
-        property: {{ $user }}_password
+        key: {{ $user.remoteKey }}
+        property: password
     {{- end }}
 {{- if .Values.authelia.clients.list }}
 ---
@@ -299,14 +299,14 @@ spec:
 
                   {
                     echo "users:"
-                    {{- range $user := .Values.authelia.users.list }}
-                    password_hash="$(authelia crypto hash generate argon2 --password "$(cat /users/{{ $user }}_password)" | sed -n 's/^Digest: //p')"
+                    {{- range $user := .Values.authelia.users }}
+                    password_hash="$(authelia crypto hash generate argon2 --password "$(cat /users/{{ $user.name }}_password)" | sed -n 's/^Digest: //p')"
                     test -n "$password_hash"
-                    echo "  {{ $user }}:"
-                    printf "    displayname: %s\\n" "$(yaml_quote "$(cat /users/{{ $user }}_displayname)")"
-                    printf "    email: %s\\n" "$(yaml_quote "$(cat /users/{{ $user }}_email)")"
+                    echo "  {{ $user.name }}:"
+                    printf "    displayname: %s\\n" "$(yaml_quote "$(cat /users/{{ $user.name }}_displayname)")"
+                    printf "    email: %s\\n" "$(yaml_quote "$(cat /users/{{ $user.name }}_email)")"
                     echo "    groups:"
-                    tr ',' '\n' < /users/{{ $user }}_groups | while IFS= read -r group || [ -n "$group" ]; do
+                    tr ',' '\n' < /users/{{ $user.name }}_groups | while IFS= read -r group || [ -n "$group" ]; do
                       test -n "$group" && printf "      - %s\\n" "$(yaml_quote "$group")"
                     done
                     printf "    password: %s\\n" "$password_hash"

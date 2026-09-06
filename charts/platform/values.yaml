@@ -201,11 +201,14 @@ authelia:
   database:
     remoteKey: iac/postgres-authelia
 
-  users:
+  secrets:
     remoteKey: vendor/authelia
-    list:
-      - yusuf
-      - salihah
+
+  users:
+    - name: yusuf
+      remoteKey: authelia/yusuf
+    - name: salihah
+      remoteKey: authelia/salihah
 
   clients:
     client_remote_key: vendor/authelia-apps
