@@ -68,6 +68,8 @@ crossplane:
           value: ""
         - key: name
           value: salihah
+        - key: manage_identity
+          value: "false"
         - key: path
           value: external-infra/data/authelia/salihah
         - key: capabilities
