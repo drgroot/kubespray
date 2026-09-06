@@ -26,8 +26,6 @@ crossplane:
           value: servc-username
         - key: passwordkey
           value: servc-password
-        - key: tokenkey
-          value: servc-token
         - key: vault_addr
           value: https://vault.{{ .Values.domains.external }}
         - key: path
