@@ -365,7 +365,7 @@ spec:
   ignoreDifferences:
     - group: apps
       kind: StatefulSet
-      name: gitea-actions-act-runner
+      name: gitea-actions-runner
       jsonPointers:
         - /spec/replicas
         - /spec/template/metadata/annotations/kubectl.kubernetes.io~1restartedAt
@@ -430,7 +430,7 @@ spec:
                 subPath: daemon.json
                 readOnly: true
 
-          actRunner:
+          runner:
             extraVolumeMounts:
               - name: docker-secret
                 mountPath: /root/.docker/config.json
@@ -467,10 +467,10 @@ spec:
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: gitea-actions-act-runner
+  name: gitea-actions-runner
 spec:
   scaleTargetRef:
-    name: gitea-actions-act-runner
+    name: gitea-actions-runner
     kind: StatefulSet
   pollingInterval: 10
   cooldownPeriod: 300

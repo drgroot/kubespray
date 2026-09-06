@@ -665,7 +665,7 @@ bandersnatch:
 
 gitea:
   actions:
-    version: 0.0.4
+    version: 0.1.2
     maxRunners: 5
 
     resources:
