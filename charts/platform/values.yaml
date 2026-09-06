@@ -12,6 +12,40 @@ versions:
 crossplane:
   enabled: true
   iac:
+    authelia-salihah:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-salihah
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: salihah
+        - key: path
+          value: external-infra/data/authelia/salihah
+        - key: capabilities
+          value: read,update,patch
+
+    authelia-salihah-browse:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-salihah-browse
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: salihah
+        - key: path
+          value: external-infra/metadata/authelia
+        - key: capabilities
+          value: list
+
     s3-backups-b2:
       enabled: true
       type: s3
