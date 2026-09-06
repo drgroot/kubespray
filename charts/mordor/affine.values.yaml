@@ -1,0 +1,135 @@
+image:
+  name: ghcr.io/toeverything/affine
+  tag: 0.27.4
+
+imagePullSecrets:
+  - name: cluster-docker-secrets
+
+service:
+  ports:
+    - name: http
+      port: 3010
+      targetPort: 3010
+      protocol: TCP
+
+ports:
+  - name: http
+    containerPort: 3010
+    protocol: TCP
+
+env:
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: affine-db-credentials
+        key: url
+  - name: REDIS_SERVER_HOST
+    value: redis.kube-platform.svc.cluster.local
+  - name: REDIS_SERVER_PORT
+    value: "6379"
+  - name: DEPLOYMENT_TYPE
+    value: selfhosted
+  - name: AFFINE_INDEXER_ENABLED
+    value: "false"
+
+pvc:
+  enabled: true
+  name: affine-data
+  storageClass: thorin-default
+  storage: 20Gi
+
+volumeMounts:
+  - name: affine-data
+    mountPath: /root/.affine
+  - name: affine-config
+    mountPath: /root/.affine/config
+
+volumes:
+  - name: affine-config
+    emptyDir: {}
+  - name: affine-config-template
+    secret:
+      secretName: affine-config
+
+initContainers:
+  - name: configure
+    image: busybox:1.36
+    command:
+      - sh
+      - -ec
+      - cp /template/config.json /config/config.json
+    volumeMounts:
+      - name: affine-config
+        mountPath: /config
+      - name: affine-config-template
+        mountPath: /template
+        readOnly: true
+  - name: database-migration
+    image: ghcr.io/toeverything/affine:0.27.4
+    command:
+      - sh
+      - -ec
+      - |
+        if [ -f /root/.affine/private.key ]; then
+          cp /root/.affine/private.key /root/.affine/config/private.key
+        fi
+        node ./scripts/self-host-predeploy.js
+        cp /root/.affine/config/private.key /root/.affine/private.key
+    env:
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            name: affine-db-credentials
+            key: url
+      - name: REDIS_SERVER_HOST
+        value: redis.kube-platform.svc.cluster.local
+      - name: REDIS_SERVER_PORT
+        value: "6379"
+      - name: DEPLOYMENT_TYPE
+        value: selfhosted
+      - name: AFFINE_INDEXER_ENABLED
+        value: "false"
+    volumeMounts:
+      - name: affine-data
+        mountPath: /root/.affine
+      - name: affine-config
+        mountPath: /root/.affine/config
+
+probes:
+  livenessProbe:
+    httpGet:
+      path: /info
+      port: 3010
+    initialDelaySeconds: 60
+    periodSeconds: 30
+  readinessProbe:
+    httpGet:
+      path: /info
+      port: 3010
+    initialDelaySeconds: 30
+    periodSeconds: 15
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 1Gi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: affine.yusufali.ca
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - affine.yusufali.ca
+      secretName: affine-tls

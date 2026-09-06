@@ -1,0 +1,190 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.project }}-affine
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: "https://kubernetes.default.svc"
+  project: {{ .Values.project }}
+  sources:
+    - path: charts/template-single
+      repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      helm:
+        values: |
+          fullnameOverride: affine
+
+          {{- with .Values.storage }}
+          storageclasses:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.domains }}
+          domains:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        valueFiles:
+          - $values/charts/mordor/affine.values.yaml
+    - repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      ref: values
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: affine-db
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    path: charts/postgres
+    repoURL: https://github.com/drgroot/kubespray.git
+    targetRevision: main
+    helm:
+      releaseName: affine-db
+      values: |-
+        fullnameOverride: affine-db
+        database: affine
+
+        image: pgvector/pgvector:pg16
+        imagePullSecrets:
+          - name: cluster-docker-secrets
+        storageclass: {{ .Values.storage.fast }}
+
+        resources:
+          requests:
+            cpu: 250m
+            memory: 1Gi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+
+        backup:
+          image: dockerhub.yusufali.ca/rclone/rclone:latest
+          secretStore:
+            name: external-infra
+            type: ClusterSecretStore
+          rclone:
+            remoteRef:
+              key: iac/s3-db-backups
+              property: rclone
+
+        secrets:
+          secretStore:
+            name: external-infra
+            type: ClusterSecretStore
+          username:
+            remoteRef:
+              key: vendor/postgres
+              property: root-username
+          password:
+            remoteRef:
+              key: vendor/postgres
+              property: affine
+          pushsecret:
+            enabled: false
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: affine-config
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: affine-config
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      engineVersion: v2
+      data:
+        config.json: |
+          {
+            "$schema": "https://github.com/toeverything/affine/releases/latest/download/config.schema.json",
+            "server": {
+              "name": "AFFiNE",
+              "externalUrl": "https://affine.yusufali.ca"
+            },
+            "oauth": {
+              "providers.oidc": {
+                "clientId": "affine",
+                "clientSecret": {{ "{{" }} .clientSecret | toJson {{ "}}" }},
+                "issuer": "https://auth.yusufali.ca",
+                "args": {
+                  "scope": "openid profile email groups"
+                }
+              }
+            },
+            "storages": {
+              "avatar.storage": {
+                "provider": "aws-s3",
+                "bucket": {{ "{{" }} .bucket | toJson {{ "}}" }},
+                "config": {
+                  "endpoint": {{ "{{" }} index . "blob-url" | toJson {{ "}}" }},
+                  "region": {{ "{{" }} .region | toJson {{ "}}" }},
+                  "forcePathStyle": true,
+                  "credentials": {
+                    "accessKeyId": {{ "{{" }} .accesskey | toJson {{ "}}" }},
+                    "secretAccessKey": {{ "{{" }} .secretkey | toJson {{ "}}" }}
+                  }
+                }
+              },
+              "blob.storage": {
+                "provider": "aws-s3",
+                "bucket": {{ "{{" }} .bucket | toJson {{ "}}" }},
+                "config": {
+                  "endpoint": {{ "{{" }} index . "blob-url" | toJson {{ "}}" }},
+                  "region": {{ "{{" }} .region | toJson {{ "}}" }},
+                  "forcePathStyle": true,
+                  "credentials": {
+                    "accessKeyId": {{ "{{" }} .accesskey | toJson {{ "}}" }},
+                    "secretAccessKey": {{ "{{" }} .secretkey | toJson {{ "}}" }}
+                  }
+                }
+              }
+            }
+          }
+  data:
+    - secretKey: clientSecret
+      remoteRef:
+        key: vendor/authelia-apps
+        property: client-secret-affine
+    - secretKey: accesskey
+      remoteRef:
+        key: iac/s3-affine
+        property: accesskey
+    - secretKey: secretkey
+      remoteRef:
+        key: iac/s3-affine
+        property: secretkey
+    - secretKey: bucket
+      remoteRef:
+        key: iac/s3-affine
+        property: bucket
+    - secretKey: region
+      remoteRef:
+        key: iac/s3-affine
+        property: region
+    - secretKey: blob-url
+      remoteRef:
+        key: iac/s3-affine
+        property: blob-url

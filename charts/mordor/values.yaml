@@ -12,6 +12,17 @@ domains:
 crossplane:
   enabled: true
   iac:
+    s3-affine:
+      enabled: true
+      type: s3
+      provider: minio
+      name: affine
+      vars:
+        - key: input
+          value: external-infra/vendor/minio
+        - key: output
+          value: external-infra/iac/s3-affine
+
     postgres-bitwarden:
       enabled: true
       type: postgres
