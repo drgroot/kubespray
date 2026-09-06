@@ -153,6 +153,10 @@ spec:
           access_control:
             default_policy: deny
             rules:
+              - domain: grafana.{{ .Values.domains.external }}
+                policy: one_factor
+                subject:
+                  - group:media-admin
               - domain: radarr.{{ .Values.domains.external }}
                 policy: one_factor
                 subject:

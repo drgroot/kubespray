@@ -36,6 +36,31 @@ spec:
         grafana:
           enabled: true
 
+          envValueFrom:
+            GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+              secretKeyRef:
+                name: grafana-oidc
+                key: client-secret
+
+          grafana.ini:
+            auth:
+              disable_login_form: true
+              oauth_auto_login: true
+            auth.basic:
+              enabled: false
+            auth.generic_oauth:
+              enabled: true
+              name: Authelia
+              allow_sign_up: true
+              client_id: grafana
+              scopes: openid profile email groups
+              auth_url: https://auth.yusufali.ca/api/oidc/authorization
+              token_url: https://auth.yusufali.ca/api/oidc/token
+              api_url: https://auth.yusufali.ca/api/oidc/userinfo
+              use_pkce: true
+              groups_attribute_path: groups
+              allowed_groups: media-admin
+
           serviceMonitor:
             namespace: monitoring
 
@@ -56,3 +81,25 @@ spec:
               - secretName: grafana-general-tls
                 hosts:
                   - grafana.{{ .Values.domains.external }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: grafana-oidc
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: grafana-oidc
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: client-secret
+      remoteRef:
+        key: vendor/authelia-apps
+        property: client-secret-grafana
