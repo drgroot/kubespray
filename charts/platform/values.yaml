@@ -12,6 +12,29 @@ versions:
 crossplane:
   enabled: true
   iac:
+    vault-user-servc:
+      enabled: true
+      type: vault
+      provider: user
+      name: vault-user-servc
+      vars:
+        - key: input
+          value: vendor/vault
+        - key: output
+          value: iac/vault-user-servc
+        - key: usernamekey
+          value: servc-username
+        - key: passwordkey
+          value: servc-password
+        - key: tokenkey
+          value: servc-token
+        - key: vault_addr
+          value: https://vault.{{ .Values.domains.external }}
+        - key: path
+          value: servc/*
+        - key: capabilities
+          value: create,read,update,delete,list,patch,sudo
+
     vault-oidc:
       enabled: true
       type: vault
@@ -917,10 +940,10 @@ secretSync:
     input:
       kind: ClusterSecretStore
       name: external-infra
-      path: vendor/vault
+      path: iac/vault-user-servc
       properties:
-        - servc-username
-        - servc-password
+        - username
+        - password
         - token
         - url
     output:
@@ -928,7 +951,7 @@ secretSync:
       name: servc
       path: iac/vault
       properties:
-        servc-username: username
-        servc-password: password
+        username: username
+        password: password
         url: vault-addr
         token: vault-token
