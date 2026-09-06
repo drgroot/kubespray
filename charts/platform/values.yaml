@@ -19,9 +19,9 @@ crossplane:
       name: vault-user-servc
       vars:
         - key: input
-          value: vendor/vault
+          value: external-infra/vendor/vault
         - key: output
-          value: iac/vault-user-servc
+          value: external-infra/iac/vault-user-servc
         - key: usernamekey
           value: servc-username
         - key: passwordkey
@@ -68,6 +68,8 @@ crossplane:
           value: ""
         - key: name
           value: salihah
+        - key: manage_identity
+          value: "false"
         - key: path
           value: external-infra/data/authelia/salihah
         - key: capabilities
