@@ -15,10 +15,9 @@ vault:
   key: password
   servc:
     namespace: argocd
-    secretName: vault-password
-    remoteKey: vendor/vault
-    usernameProperty: servc-username
-    passwordProperty: servc-password
+    secretName: vault-servc-token
+    remoteKey: iac/vault-user-servc
+    tokenProperty: token
   image:
     repository: hashicorp/vault
     tag: "1.19.5"

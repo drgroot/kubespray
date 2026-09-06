@@ -24,7 +24,8 @@ variable "passwordkey" {
 # Accepted for compatibility with the Workspace interface. The module creates
 # a new token and writes it to the output secret as the `token` property.
 variable "tokenkey" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "vault_addr" {
