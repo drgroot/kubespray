@@ -70,7 +70,7 @@ data "vault_identity_entity" "user" {
 }
 
 resource "vault_policy" "user_path" {
-  name = "oidc-${var.name}-${replace(var.path, "/", "-")}"
+  name = "oidc-${var.name}-${replace( replace(var.path, "*", "") , "/", "-")}"
 
   policy = <<-EOT
     path ${jsonencode(var.path)} {
