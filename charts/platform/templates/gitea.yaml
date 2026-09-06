@@ -165,7 +165,7 @@ spec:
 
         image:
           registry: dockerhub.{{ .Values.domains.external }}/gitea
-          tag: 1.27.0
+          tag: 1.27.3
 
         imagePullSecrets:
           - name: cluster-docker-secrets
@@ -299,7 +299,7 @@ spec:
             packages:
               enabled: false
 
-            webhook:
+            security:
               ALLOWED_HOST_LIST: '*'
             
             migrations:
