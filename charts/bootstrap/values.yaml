@@ -13,14 +13,6 @@ vault:
   username: kubernetesadmin
   secretName: vault-password
   key: password
-  oidc:
-    # Enable only after the platform chart has deployed Authelia and its Vault client.
-    enabled: true
-    discoveryURL: https://auth.yusufali.ca
-    clientID: vault
-    clientSecretMount: external-infra
-    clientSecretPath: vendor/authelia-apps
-    clientSecretProperty: client-secret-vault
   servc:
     namespace: argocd
     secretName: vault-password

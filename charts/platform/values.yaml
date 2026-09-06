@@ -12,6 +12,27 @@ versions:
 crossplane:
   enabled: true
   iac:
+    vault-oidc:
+      enabled: true
+      type: vault
+      provider: oidc-config
+      name: vault-oidc
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: oidc_discovery_url
+          value: https://auth.{{ .Values.domains.external }}
+        - key: oidc_client_id
+          value: vault
+        - key: oidc_client_secret_path
+          value: external-infra/vendor/authelia-apps
+        - key: oidc_client_secret_key
+          value: client-secret-vault
+        - key: vault_url
+          value: https://vault.{{ .Values.domains.external }}
+
     authelia-salihah:
       enabled: true
       type: vault
