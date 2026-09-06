@@ -75,6 +75,31 @@ spec:
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
+  name: gitea-admin-credentials
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: gitea-admin-credentials
+    template:
+      engineVersion: v2
+      data:
+        username: "{{ `{{ .rootUsername }}` }}"
+        password: "{{ `{{ .rootPassword }}` }}"
+  data:
+    - remoteRef:
+        key: vendor/gitea
+        property: root-username
+      secretKey: rootUsername
+    - remoteRef:
+        key: vendor/gitea
+        property: root-password
+      secretKey: rootPassword
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
   name: gitea-postgres-secrets
 spec:
   secretStoreRef:
@@ -186,6 +211,9 @@ spec:
           storageClass: {{ .Values.storage.default }}
 
         gitea:
+          admin:
+            existingSecret: gitea-admin-credentials
+
           additionalConfigFromEnvs:
             - name: GITEA__DATABASE__DB_TYPE
               value: postgres
