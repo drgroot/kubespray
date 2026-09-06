@@ -21,7 +21,7 @@ vault:
     passwordProperty: servc-password
   image:
     repository: hashicorp/vault
-    tag: "2.1.0"
+    tag: "1.19.5"
     pullPolicy: IfNotPresent
   probes:
     startup:
