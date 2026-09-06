@@ -945,7 +945,7 @@ secretSync:
         - username
         - password
         - token
-        - url
+        - vault-addr
     output:
       kind: ClusterSecretStore
       name: servc
@@ -953,5 +953,5 @@ secretSync:
       properties:
         username: username
         password: password
-        url: vault-addr
+        vault-addr: vault-addr
         token: vault-token
