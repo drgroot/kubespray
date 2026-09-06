@@ -68,6 +68,12 @@ resource "vault_policy" "user" {
     path ${jsonencode(var.path)} {
       capabilities = ${jsonencode(local.policy_capabilities)}
     }
+
+    # The Terraform Vault provider uses this endpoint to mint its limited
+    # child token before managing Vault resources.
+    path "auth/token/create" {
+      capabilities = ["update"]
+    }
   EOT
 }
 
