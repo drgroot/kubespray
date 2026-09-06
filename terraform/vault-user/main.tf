@@ -92,4 +92,5 @@ resource "vault_generic_endpoint" "userpass_user" {
 
 resource "vault_token" "user" {
   policies = [vault_policy.user.name]
+  no_parent = true
 }
