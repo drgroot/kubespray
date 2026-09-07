@@ -415,7 +415,7 @@ authelia:
           require_pkce: true
           pkce_challenge_method: S256
           redirect_uris:
-            - https://chatgpt.com/connector_platform/oauth/callback
+            - https://chatgpt.com/connector/oauth/PA_sKrw20tug
             - https://claude.ai/api/mcp/auth_callback
           audience:
             - https://miro-mcp.yusufali.ca/mcp
