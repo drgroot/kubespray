@@ -30,4 +30,6 @@ jobs:
 name: COMMIT LINT
 'on':
   pull_request: {}
+permissions:
+  contents: read
 run-name: COMMIT LINT
