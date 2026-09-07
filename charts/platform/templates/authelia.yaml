@@ -221,6 +221,10 @@ spec:
           identity_providers:
             oidc:
               enabled: true
+              # NOTE: remove this when postiz sends state in url
+              minimum_parameter_entropy: -1
+              #
+
               hmac_secret:
                 secret_name: authelia-oidc
                 path: hmac-secret
