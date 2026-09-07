@@ -1,0 +1,113 @@
+image:
+  name: ghcr.io/dawncr0w/affine-mcp-server
+  tag: "3.5.1"
+
+imagePullSecrets:
+  - name: cluster-docker-secrets
+
+deploymentAnnotations:
+  secret.reloader.stakater.com/reload: affine-mcp-credentials
+
+service:
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+      protocol: TCP
+
+ports:
+  - name: http
+    containerPort: 3000
+    protocol: TCP
+
+env:
+  - name: MCP_TRANSPORT
+    value: http
+  - name: PORT
+    value: "3000"
+  - name: AFFINE_MCP_HTTP_HOST
+    value: 0.0.0.0
+  - name: AFFINE_BASE_URL
+    value: http://affine.mordor.svc.cluster.local:3010
+  - name: AFFINE_ALLOW_INSECURE_HTTP
+    value: "true"
+  - name: AFFINE_CLIENT_VERSION
+    value: "0.27.4"
+  - name: AFFINE_WORKSPACE_ID
+    value: 320c07fd-57ef-435d-80aa-f4ac8faaaa2d
+  - name: AFFINE_LOGIN_AT_START
+    value: sync
+  - name: AFFINE_EMAIL
+    valueFrom:
+      secretKeyRef:
+        name: affine-mcp-credentials
+        key: email
+  - name: AFFINE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: affine-mcp-credentials
+        key: password
+  - name: AFFINE_MCP_AUTH_MODE
+    value: oauth
+  - name: AFFINE_MCP_PUBLIC_BASE_URL
+    value: https://miro-mcp.yusufali.ca
+  - name: AFFINE_OAUTH_ISSUER_URL
+    value: https://auth.yusufali.ca
+  - name: AFFINE_OAUTH_SCOPES
+    value: openid profile email
+  - name: AFFINE_TOOL_PROFILE
+    value: authoring
+  - name: AFFINE_OAUTH_ALLOW_SERVICE_WRITES
+    value: "true"
+
+probes:
+  startupProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    failureThreshold: 30
+    periodSeconds: 10
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    periodSeconds: 30
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: http
+    periodSeconds: 15
+    timeoutSeconds: 10
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  hosts:
+    - host: miro-mcp.yusufali.ca
+      paths:
+        - path: /mcp
+          pathType: Exact
+        - path: /sse
+          pathType: Exact
+        - path: /messages
+          pathType: Exact
+        - path: /.well-known
+          pathType: Prefix
+  tls:
+    - hosts:
+        - miro-mcp.yusufali.ca
+      secretName: wildcard-tls

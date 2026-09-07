@@ -5,6 +5,9 @@ image:
 imagePullSecrets:
   - name: cluster-docker-secrets
 
+deploymentAnnotations:
+  secret.reloader.stakater.com/reload: affine-config,cluster-smtp-secrets
+
 service:
   ports:
     - name: http
@@ -30,6 +33,38 @@ env:
   - name: DEPLOYMENT_TYPE
     value: selfhosted
   - name: AFFINE_INDEXER_ENABLED
+    value: "false"
+  - name: MAILER_HOST
+    valueFrom:
+      secretKeyRef:
+        name: cluster-smtp-secrets
+        key: SMTP_HOST
+  - name: MAILER_PORT
+    valueFrom:
+      secretKeyRef:
+        name: cluster-smtp-secrets
+        key: SMTP_PORT
+  - name: MAILER_USER
+    valueFrom:
+      secretKeyRef:
+        name: cluster-smtp-secrets
+        key: SMTP_USERNAME
+  - name: MAILER_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: cluster-smtp-secrets
+        key: SMTP_PASSWORD
+  - name: MAILER_SENDER
+    valueFrom:
+      secretKeyRef:
+        name: cluster-smtp-secrets
+        key: SMTP_FROM_EMAIL
+  - name: MAILER_SERVERNAME
+    valueFrom:
+      secretKeyRef:
+        name: cluster-smtp-secrets
+        key: SMTP_FROM_DOMAIN
+  - name: MAILER_IGNORE_TLS
     value: "false"
 
 pvc:
