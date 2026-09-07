@@ -121,7 +121,6 @@ ingress:
   enabled: true
   className: nginx
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   hosts:
@@ -131,5 +130,5 @@ ingress:
           pathType: Prefix
   tls:
     - hosts:
-        - miro.yusufali.ca
-      secretName: affine-tls
+        - "*.yusufali.ca"
+      secretName: wildcard-tls

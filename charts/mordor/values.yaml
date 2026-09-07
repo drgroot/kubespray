@@ -12,6 +12,19 @@ domains:
 crossplane:
   enabled: true
   iac:
+    s3-postiz:
+      enabled: true
+      type: s3
+      provider: cloudflare
+      name: postiz
+      vars:
+        - key: input
+          value: external-infra/vendor/cloudflare
+        - key: output
+          value: external-infra/iac/s3-postiz
+        - key: hostname
+          value: postiz-uploads.yusufali.ca
+
     s3-affine:
       enabled: true
       type: s3
@@ -51,3 +64,31 @@ crossplane:
           value: memos
         - key: output
           value: external-infra/iac/postgres-memos
+    postgres-postiz:
+      enabled: true
+      type: postgres
+      provider: db
+      name: postiz
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: postiz
+        - key: output
+          value: external-infra/iac/postgres-postiz
+    postgres-postiz-temporal:
+      enabled: true
+      type: postgres
+      provider: db
+      name: postiz-temporal
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: postiz-temporal
+        - key: output
+          value: external-infra/iac/postgres-postiz-temporal

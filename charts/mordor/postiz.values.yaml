@@ -1,0 +1,133 @@
+image:
+  name: ghcr.io/gitroomhq/postiz-app
+  tag: v2.23.0
+
+imagePullSecrets:
+  - name: cluster-docker-secrets
+
+ports:
+  - name: http
+    containerPort: 5000
+    protocol: TCP
+
+service:
+  ports:
+    - name: http
+      port: 5000
+      targetPort: http
+      protocol: TCP
+
+envFrom:
+  - secretRef:
+      name: postiz-secrets
+  - secretRef:
+      name: cluster-smtp-secrets
+
+env:
+  - name: MAIN_URL
+    value: https://postiz.yusufali.ca
+  - name: FRONTEND_URL
+    value: https://postiz.yusufali.ca
+  - name: NEXT_PUBLIC_BACKEND_URL
+    value: https://postiz.yusufali.ca/api
+  - name: BACKEND_INTERNAL_URL
+    value: http://localhost:3000
+  - name: REDIS_URL
+    value: redis://redis.kube-platform.svc.cluster.local:6379
+  - name: TEMPORAL_ADDRESS
+    value: temporal:7233
+  - name: IS_GENERAL
+    value: "true"
+  - name: DISABLE_REGISTRATION
+    value: "true"
+  - name: RUN_CRON
+    value: "true"
+  - name: STORAGE_PROVIDER
+    value: cloudflare
+  - name: POSTIZ_GENERIC_OAUTH
+    value: "true"
+  - name: NEXT_PUBLIC_POSTIZ_OAUTH_DISPLAY_NAME
+    value: Authelia
+  - name: POSTIZ_OAUTH_URL
+    value: https://auth.yusufali.ca
+  - name: POSTIZ_OAUTH_AUTH_URL
+    value: https://auth.yusufali.ca/api/oidc/authorization
+  - name: POSTIZ_OAUTH_TOKEN_URL
+    value: https://auth.yusufali.ca/api/oidc/token
+  - name: POSTIZ_OAUTH_USERINFO_URL
+    value: https://auth.yusufali.ca/api/oidc/userinfo
+  - name: POSTIZ_OAUTH_CLIENT_ID
+    value: postiz
+  - name: EMAIL_PROVIDER
+    value: nodemailer
+  - name: EMAIL_HOST
+    value: $(SMTP_HOST)
+  - name: EMAIL_PORT
+    value: $(SMTP_PORT)
+  - name: EMAIL_SECURE
+    value: "false"
+  - name: EMAIL_USER
+    value: $(SMTP_USERNAME)
+  - name: EMAIL_PASS
+    value: $(SMTP_PASSWORD)
+  - name: EMAIL_FROM_NAME
+    value: Postiz
+  - name: EMAIL_FROM_ADDRESS
+    value: $(SMTP_FROM_EMAIL)
+
+initContainers:
+  - name: wait-for-temporal
+    image: dockerhub.yusufali.ca/library/busybox:1.36.1
+    command:
+      - sh
+      - -ec
+      - until nc -z temporal 7233; do sleep 2; done
+
+probes:
+  startupProbe:
+    httpGet:
+      path: /
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 18
+  livenessProbe:
+    httpGet:
+      path: /
+      port: http
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 5
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 5
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 1Gi
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 2g
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+  hosts:
+    - host: postiz.yusufali.ca
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - "*.yusufali.ca"
+      secretName: wildcard-tls

@@ -125,7 +125,6 @@ components:
           className: nginx
           host: photos.yusufali.ca
           annotations:
-            cert-manager.io/cluster-issuer: letsencrypt-prod
             external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
             nginx.ingress.kubernetes.io/backend-protocol: HTTP
             nginx.ingress.kubernetes.io/ssl-redirect: "true"

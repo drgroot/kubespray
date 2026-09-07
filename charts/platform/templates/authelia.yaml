@@ -136,13 +136,12 @@ spec:
         ingress:
           enabled: true
           className: nginx
-          certManager: true
+          certManager: false
           annotations:
-            cert-manager.io/cluster-issuer: letsencrypt-prod
             external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
           tls:
             enabled: true
-            secret: authelia-tls
+            secret: wildcard-external
 
         configMap:
           authentication_backend:

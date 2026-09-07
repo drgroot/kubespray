@@ -184,7 +184,6 @@ spec:
                   pathType: Prefix
           annotations:
             kubernetes.io/ingress.class: nginx
-            cert-manager.io/cluster-issuer: letsencrypt-prod
             nginx.ingress.kubernetes.io/ssl-redirect: "true"
             nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
             external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
@@ -193,7 +192,7 @@ spec:
           tls:
             - hosts:
                 - "*.{{ .Values.domains.external }}"
-              secretName: wildcard-yusufali
+              secretName: wildcard-external
 
         resources:
           requests:
