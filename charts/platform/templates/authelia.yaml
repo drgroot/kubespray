@@ -233,6 +233,10 @@ spec:
                   use: sig
                   key:
                     path: /secrets/authelia-oidc/jwks-private
+              {{- with .Values.authelia.clients.claims_policies }}
+              claims_policies:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
               clients:
                 {{- range $name, $client := .Values.authelia.clients.list }}
                 - client_id: {{ $client.client_id | quote }}
