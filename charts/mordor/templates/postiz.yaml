@@ -428,6 +428,26 @@ spec:
       remoteRef:
         key: vendor/authelia-apps
         property: client-secret-postiz
+    - secretKey: PINTEREST_CLIENT_ID
+      remoteRef: {key: vendor/postiz-oauth, property: pinterest-client-id}
+    - secretKey: PINTEREST_CLIENT_SECRET
+      remoteRef: {key: vendor/postiz-oauth, property: pinterest-client-secret}
+    - secretKey: FACEBOOK_APP_ID
+      remoteRef: {key: vendor/postiz-oauth, property: facebook-client-id}
+    - secretKey: FACEBOOK_APP_SECRET
+      remoteRef: {key: vendor/postiz-oauth, property: facebook-client-secret}
+    - secretKey: INSTAGRAM_APP_ID
+      remoteRef: {key: vendor/postiz-oauth, property: instagram-client-id}
+    - secretKey: INSTAGRAM_APP_SECRET
+      remoteRef: {key: vendor/postiz-oauth, property: instagram-client-secret}
+    - secretKey: YOUTUBE_CLIENT_ID
+      remoteRef: {key: vendor/postiz-oauth, property: youtube-client-id}
+    - secretKey: YOUTUBE_CLIENT_SECRET
+      remoteRef: {key: vendor/postiz-oauth, property: youtube-client-secret}
+    - secretKey: TIKTOK_CLIENT_ID
+      remoteRef: {key: vendor/postiz-oauth, property: tiktok-client-id}
+    - secretKey: TIKTOK_CLIENT_SECRET
+      remoteRef: {key: vendor/postiz-oauth, property: tiktok-client-secret}
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret

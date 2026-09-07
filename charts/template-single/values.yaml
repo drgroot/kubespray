@@ -18,6 +18,7 @@ image:
   suffix: ""
 
 labels: {}
+deploymentAnnotations: {}
 
 imagePullSecrets: []
 # serviceAccountName: my sa
