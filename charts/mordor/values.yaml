@@ -50,20 +50,6 @@ crossplane:
           value: bitwarden
         - key: output
           value: external-infra/iac/postgres-bitwarden
-    postgres-memos:
-      enabled: true
-      type: postgres
-      provider: db
-      name: memos
-      vars:
-        - key: input
-          value: external-infra/iac/postgres
-        - key: credentialpath
-          value: external-infra/vendor/postgres
-        - key: passwordkey
-          value: memos
-        - key: output
-          value: external-infra/iac/postgres-memos
     postgres-postiz:
       enabled: true
       type: postgres
