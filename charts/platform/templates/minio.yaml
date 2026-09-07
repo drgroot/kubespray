@@ -157,7 +157,6 @@ kind: Ingress
 metadata:
   name: minio
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -186,7 +185,6 @@ kind: Ingress
 metadata:
   name: minio-console
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
     nginx.ingress.kubernetes.io/ssl-redirect: "true"

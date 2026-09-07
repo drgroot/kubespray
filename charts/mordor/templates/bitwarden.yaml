@@ -72,7 +72,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/client-body-buffer-size: 10m
     nginx.ingress.kubernetes.io/ssl-redirect: "true"

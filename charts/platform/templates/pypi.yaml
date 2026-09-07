@@ -113,7 +113,6 @@ kind: Ingress
 metadata:
   name: pypi
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
     # external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
     nginx.ingress.kubernetes.io/backend-protocol: HTTP

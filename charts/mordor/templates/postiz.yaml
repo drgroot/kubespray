@@ -1,0 +1,282 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.project }}-postiz
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: "https://kubernetes.default.svc"
+  project: {{ .Values.project }}
+  sources:
+    - path: charts/template-single
+      repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      helm:
+        values: |
+          fullnameOverride: postiz
+
+          {{- with .Values.storage }}
+          storageclasses:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.domains }}
+          domains:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        valueFiles:
+          - $values/charts/mordor/postiz.values.yaml
+    - repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      ref: values
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: postiz-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: postiz-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: DATABASE_URL
+      remoteRef: {key: iac/postgres-postiz, property: url}
+    - secretKey: JWT_SECRET
+      remoteRef: {key: vendor/postiz, property: jwt-secret}
+    - secretKey: CLOUDFLARE_ACCOUNT_ID
+      remoteRef: {key: iac/s3-postiz, property: accountid}
+    - secretKey: CLOUDFLARE_ACCESS_KEY
+      remoteRef: {key: iac/s3-postiz, property: accesskey}
+    - secretKey: CLOUDFLARE_SECRET_ACCESS_KEY
+      remoteRef: {key: iac/s3-postiz, property: secretkey}
+    - secretKey: CLOUDFLARE_BUCKETNAME
+      remoteRef: {key: iac/s3-postiz, property: bucket}
+    - secretKey: CLOUDFLARE_BUCKET_URL
+      remoteRef: {key: iac/s3-postiz, property: blob-url}
+    - secretKey: CLOUDFLARE_REGION
+      remoteRef: {key: iac/s3-postiz, property: region}
+    - secretKey: POSTIZ_OAUTH_CLIENT_SECRET
+      remoteRef:
+        key: vendor/authelia-apps
+        property: client-secret-postiz
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: postiz-temporal-postgres
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: postiz-temporal-postgres
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: POSTGRES_USER
+      remoteRef: {key: iac/postgres-postiz-temporal, property: username}
+    - secretKey: POSTGRES_PWD
+      remoteRef: {key: iac/postgres-postiz-temporal, property: password}
+    - secretKey: POSTGRES_SEEDS
+      remoteRef: {key: iac/postgres-postiz-temporal, property: hostname}
+    - secretKey: DBNAME
+      remoteRef: {key: iac/postgres-postiz-temporal, property: database}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postiz-temporal-dynamicconfig
+data:
+  development-sql.yaml: |
+    limit.maxIDLength:
+      - value: 255
+        constraints: {}
+    system.forceSearchAttributesCacheRefreshOnRead:
+      - value: true
+        constraints: {}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postiz-temporal-elasticsearch
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.storage.default }}
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal-elasticsearch
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: temporal-elasticsearch
+  template:
+    metadata:
+      labels:
+        app: temporal-elasticsearch
+    spec:
+      imagePullSecrets:
+        - name: cluster-docker-secrets
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: elasticsearch
+          image: dockerhub.yusufali.ca/library/elasticsearch:7.17.27
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: ES_JAVA_OPTS
+              value: -Xms256m -Xmx256m
+            - name: xpack.security.enabled
+              value: "false"
+            - name: node.store.allow_mmap
+              value: "false"
+            - name: cluster.routing.allocation.disk.threshold_enabled
+              value: "true"
+            - name: cluster.routing.allocation.disk.watermark.low
+              value: 512mb
+            - name: cluster.routing.allocation.disk.watermark.high
+              value: 256mb
+            - name: cluster.routing.allocation.disk.watermark.flood_stage
+              value: 128mb
+          ports:
+            - name: http
+              containerPort: 9200
+          readinessProbe:
+            httpGet:
+              path: /_cluster/health?wait_for_status=yellow&timeout=5s
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/elasticsearch/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: postiz-temporal-elasticsearch
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-elasticsearch
+spec:
+  selector:
+    app: temporal-elasticsearch
+  ports:
+    - name: http
+      port: 9200
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: temporal
+  template:
+    metadata:
+      labels:
+        app: temporal
+      annotations:
+        secret.reloader.stakater.com/reload: postiz-temporal-postgres
+    spec:
+      imagePullSecrets:
+        - name: cluster-docker-secrets
+      containers:
+        - name: temporal
+          image: dockerhub.yusufali.ca/temporalio/auto-setup:1.28.1
+          envFrom:
+            - secretRef:
+                name: postiz-temporal-postgres
+          env:
+            - name: DB
+              value: postgres12
+            - name: DB_PORT
+              value: "5432"
+            - name: SKIP_DB_CREATE
+              value: "true"
+            - name: DYNAMIC_CONFIG_FILE_PATH
+              value: config/dynamicconfig/development-sql.yaml
+            - name: ENABLE_ES
+              value: "true"
+            - name: ES_SEEDS
+              value: temporal-elasticsearch
+            - name: ES_VERSION
+              value: v7
+            - name: TEMPORAL_NAMESPACE
+              value: default
+            - name: SKIP_ADD_CUSTOM_SEARCH_ATTRIBUTES
+              value: "true"
+          ports:
+            - name: grpc
+              containerPort: 7233
+          readinessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          volumeMounts:
+            - name: dynamicconfig
+              mountPath: /etc/temporal/config/dynamicconfig
+              readOnly: true
+      volumes:
+        - name: dynamicconfig
+          configMap:
+            name: postiz-temporal-dynamicconfig
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal
+spec:
+  selector:
+    app: temporal
+  ports:
+    - name: grpc
+      port: 7233
+      targetPort: grpc
