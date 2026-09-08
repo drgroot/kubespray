@@ -453,6 +453,8 @@ authelia:
             - https://chatgpt.com/connector_platform_oauth_redirect
           audience:
             - https://nonprod-api.servc.io/mcp/onprem
+            - https://nonprod-mcp.modlin.ai/mcp/onprem
+            - https://mcp.modlin.ai/mcp/gptplugin
           requested_audience_mode: implicit
           scopes:
             - openid
