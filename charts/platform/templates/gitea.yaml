@@ -473,7 +473,7 @@ spec:
     kind: StatefulSet
   pollingInterval: 10
   cooldownPeriod: 300
-  minReplicaCount: 1
+  minReplicaCount: 0
   maxReplicaCount: {{ .Values.gitea.actions.maxRunners }}
   advanced:
     horizontalPodAutoscalerConfig:
@@ -484,8 +484,6 @@ spec:
             - type: Pods
               value: 10
               periodSeconds: 30
-        scaleDown:
-          selectPolicy: Disabled
 
   triggers:
     - type: postgresql
