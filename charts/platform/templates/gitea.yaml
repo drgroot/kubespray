@@ -212,7 +212,8 @@ spec:
               /^\[/ { section=$0 }
               !(section == "[webhook]" && $0 ~ /^[[:space:]]*ALLOWED_HOST_LIST[[:space:]]*=/)
             ' /data/gitea/conf/app.ini > "${tmp}"
-            mv "${tmp}" /data/gitea/conf/app.ini
+            cp "${tmp}" /data/gitea/conf/app.ini
+            rm "${tmp}"
           fi
 
         persistence:
