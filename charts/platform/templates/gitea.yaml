@@ -205,6 +205,16 @@ spec:
         deployment:
           env: []
 
+        initPreScript: |
+          if [ -f /data/gitea/conf/app.ini ]; then
+            tmp="$(mktemp)"
+            awk '
+              /^\[/ { section=$0 }
+              !(section == "[webhook]" && $0 ~ /^[[:space:]]*ALLOWED_HOST_LIST[[:space:]]*=/)
+            ' /data/gitea/conf/app.ini > "${tmp}"
+            mv "${tmp}" /data/gitea/conf/app.ini
+          fi
+
         persistence:
           enabled: true
           storageClass: {{ .Values.storage.default }}
