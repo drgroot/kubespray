@@ -22,8 +22,7 @@ crossplane:
           value: external-infra/vendor/cloudflare
         - key: output
           value: external-infra/iac/s3-postiz
-        - key: hostname
-          value: postiz-uploads.yusufali.ca
+    
 
     s3-affine:
       enabled: true
