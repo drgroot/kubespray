@@ -2,10 +2,6 @@ variable "name" {
   type = string
 }
 
-variable "hostname" {
-  type = string
-}
-
 data "cloudflare_zones" "domain" {
   name = data.vault_generic_secret.credentials.data["domain"]
 }
@@ -23,13 +19,10 @@ resource "cloudflare_r2_bucket" "uploads" {
   storage_class = "Standard"
 }
 
-resource "cloudflare_r2_custom_domain" "uploads" {
+resource "cloudflare_r2_managed_domain" "uploads" {
   account_id  = local.account_id
   bucket_name = cloudflare_r2_bucket.uploads.name
-  domain      = var.hostname
   enabled     = true
-  zone_id     = local.zone.id
-  min_tls     = "1.2"
 }
 
 data "cloudflare_api_token_permission_groups_list" "r2_write" {
