@@ -37,32 +37,44 @@ spec:
       targetRevision: HEAD
       ref: values
 ---
-apiVersion: v1
-kind: Service
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
 metadata:
-  name: syncthing-nodeport
+  name: syncthing-tcptransfer
 spec:
-  ports:
-    - name: tcptransfer
-      nodePort: 22000
-      port: 22000
-      protocol: TCP
-      targetPort: tcptransfer
-    - name: quic
-      nodePort: 22000
-      port: 22000
-      protocol: UDP
-      targetPort: quic
-    - name: broadcast
-      nodePort: 21027
-      port: 21027
-      protocol: UDP
-      targetPort: broadcast
-    - name: web
-      nodePort: 8211
-      port: 8211
-      protocol: UDP
-      targetPort: web
-  selector:
-    app.kubernetes.io/instance: mordor-argo-syncthing
-  type: NodePort
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: syncthing-tcptransfer
+  rules:
+    - backendRefs:
+        - name: syncthing
+          port: 22000
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: UDPRoute
+metadata:
+  name: syncthing-quic
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: syncthing-quic
+  rules:
+    - backendRefs:
+        - name: syncthing
+          port: 22000
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: UDPRoute
+metadata:
+  name: syncthing-discovery
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: syncthing-discovery
+  rules:
+    - backendRefs:
+        - name: syncthing
+          port: 21027

@@ -50,6 +50,33 @@ spec:
   gatewayClassName: envoy-nodeport
 
   listeners:
+    - name: syncthing-tcptransfer
+      protocol: TCP
+      port: 22000
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: All
+
+    - name: syncthing-quic
+      protocol: UDP
+      port: 22000
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+        namespaces:
+          from: All
+
+    - name: syncthing-discovery
+      protocol: UDP
+      port: 21027
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+        namespaces:
+          from: All
+
     - name: postgres
       protocol: TCP
       port: 5432
