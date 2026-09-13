@@ -1,3 +1,11 @@
+name: COMMIT LINT
+run-name: COMMIT LINT
+'on':
+  pull_request: {}
+
+permissions:
+  contents: read
+
 jobs:
   commitlint:
     name: commitlint
@@ -27,7 +35,3 @@ jobs:
     - if: github.event_name == 'pull_request'
       name: Lint Pull Request
       run: commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
-name: COMMIT LINT
-'on':
-  pull_request: {}
-run-name: COMMIT LINT
