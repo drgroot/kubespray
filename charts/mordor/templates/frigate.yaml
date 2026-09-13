@@ -49,30 +49,47 @@ spec:
       targetRevision: HEAD
       ref: values
 ---
-apiVersion: v1
-kind: Service
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
 metadata:
-  name: frigate-nodeport
+  name: frigate-rtsp
 spec:
-  ports:
-    - name: rtsp
-      nodePort: 8554
-      port: 8554
-      protocol: TCP
-      targetPort: rtsp
-    - name: webrtc-tcp
-      nodePort: 8555
-      port: 8555
-      protocol: TCP
-      targetPort: webrtc-tcp
-    - name: webrtc-udp
-      nodePort: 8555
-      port: 8555
-      protocol: UDP
-      targetPort: webrtc-udp
-  selector:
-    app.kubernetes.io/instance: mordor-argo-frigate
-  type: NodePort
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: frigate-rtsp
+  rules:
+    - backendRefs:
+        - name: frigate
+          port: 8554
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: frigate-webrtc-tcp
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: frigate-webrtc-tcp
+  rules:
+    - backendRefs:
+        - name: frigate
+          port: 8555
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: UDPRoute
+metadata:
+  name: frigate-webrtc-udp
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: frigate-webrtc-udp
+  rules:
+    - backendRefs:
+        - name: frigate
+          port: 8555
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

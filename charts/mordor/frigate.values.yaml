@@ -28,6 +28,18 @@ service:
       targetPort: web
       protocol: TCP
       name: web
+    - port: 8554
+      targetPort: rtsp
+      protocol: TCP
+      name: rtsp
+    - port: 8555
+      targetPort: webrtc-tcp
+      protocol: TCP
+      name: webrtc-tcp
+    - port: 8555
+      targetPort: webrtc-udp
+      protocol: UDP
+      name: webrtc-udp
 
 pvc:
   enabled: true
