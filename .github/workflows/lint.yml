@@ -3,6 +3,9 @@ name: Helm Lint
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   get_scope:
     runs-on: ubuntu-latest
