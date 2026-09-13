@@ -50,6 +50,33 @@ spec:
   gatewayClassName: envoy-nodeport
 
   listeners:
+    - name: frigate-rtsp
+      protocol: TCP
+      port: 8554
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: All
+
+    - name: frigate-webrtc-tcp
+      protocol: TCP
+      port: 8555
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: All
+
+    - name: frigate-webrtc-udp
+      protocol: UDP
+      port: 8555
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+        namespaces:
+          from: All
+
     - name: syncthing-tcptransfer
       protocol: TCP
       port: 22000
