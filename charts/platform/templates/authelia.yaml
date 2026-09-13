@@ -182,6 +182,11 @@ spec:
                 policy: one_factor
                 subject:
                   - group:media-admin
+              - domain: comfyui.{{ .Values.domains.external }}
+                policy: one_factor
+                subject:
+                  - group:servc-admin
+                  - group:servc-dev
 
           identity_validation:
             reset_password:
