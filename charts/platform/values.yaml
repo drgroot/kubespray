@@ -359,6 +359,7 @@ authelia:
         oidc:
           public: false
           authorization_policy: one_factor
+          consent_mode: implicit
           require_pkce: false
           redirect_uris:
             - https://postiz.yusufali.ca/settings
@@ -382,6 +383,7 @@ authelia:
         oidc:
           public: false
           authorization_policy: one_factor
+          consent_mode: implicit
           require_pkce: true
           pkce_challenge_method: S256
           redirect_uris:
@@ -407,6 +409,7 @@ authelia:
         oidc:
           public: false
           authorization_policy: one_factor
+          consent_mode: implicit
           require_pkce: true
           pkce_challenge_method: S256
           redirect_uris:
@@ -437,6 +440,7 @@ authelia:
           claims_policy: servc-mcp
           public: false
           authorization_policy: one_factor
+          consent_mode: implicit
           require_pkce: true
           pkce_challenge_method: S256
           redirect_uris:
@@ -467,6 +471,7 @@ authelia:
         oidc:
           public: false
           authorization_policy: one_factor
+          consent_mode: implicit
           require_pkce: true
           pkce_challenge_method: S256
           redirect_uris:
@@ -491,6 +496,7 @@ authelia:
         oidc:
           public: false
           authorization_policy: one_factor
+          consent_mode: implicit
           require_pkce: false
           redirect_uris:
             - https://git.yusufali.ca/user/oauth2/gitea/callback
@@ -514,6 +520,7 @@ authelia:
         oidc:
           public: false
           authorization_policy: one_factor
+          consent_mode: implicit
           require_pkce: true
           pkce_challenge_method: S256
           redirect_uris:
@@ -540,6 +547,7 @@ authelia:
         oidc:
           public: false
           authorization_policy: one_factor
+          consent_mode: implicit
           require_pkce: false
           redirect_uris:
             - https://drive.yusufali.ca/api/auth/oidc/callback
@@ -563,6 +571,7 @@ authelia:
         oidc:
           public: false
           authorization_policy: one_factor
+          consent_mode: implicit
           require_pkce: true
           pkce_challenge_method: S256
           redirect_uris:
@@ -589,6 +598,7 @@ authelia:
         oidc:
           public: false
           authorization_policy: two_factor
+          consent_mode: implicit
           require_pkce: false
           redirect_uris:
             - https://vault.yusufali.ca/ui/vault/auth/oidc/oidc/callback
