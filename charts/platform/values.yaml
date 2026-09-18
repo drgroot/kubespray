@@ -475,30 +475,6 @@ authelia:
           userinfo_signed_response_alg: none
           token_endpoint_auth_method: client_secret_post
 
-      lakefs:
-        client_id: lakefs
-        client_name: lakefs
-        client_secret_property: client-secret-lakefs
-        oidc:
-          public: false
-          authorization_policy: one_factor
-          consent_mode: implicit
-          require_pkce: true
-          pkce_challenge_method: S256
-          redirect_uris:
-            - https://lakefs.servc.io/oidc/callback
-          scopes:
-            - openid
-            - profile
-            - email
-          response_types:
-            - code
-          grant_types:
-            - authorization_code
-          access_token_signed_response_alg: RS256
-          userinfo_signed_response_alg: none
-          token_endpoint_auth_method: client_secret_post
-
       grafana:
         client_id: grafana
         client_name: Grafana
@@ -1092,20 +1068,6 @@ secretSync:
       path: nonprod/coder-postgres-secret
       properties:
         url: onprem-url
-
-  - name: onprem-oidc
-    input:
-      kind: ClusterSecretStore
-      name: external-infra
-      path: vendor/authelia-apps
-      properties:
-        - client-secret-lakefs
-    output:
-      kind: ClusterSecretStore
-      name: servc
-      path: iac/onprem-oidc
-      properties:
-        client-secret-lakefs: client-secret-lakefs
 
   - name: vault
     input:
