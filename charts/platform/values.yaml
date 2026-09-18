@@ -1093,6 +1093,20 @@ secretSync:
       properties:
         url: onprem-url
 
+  - name: onprem-oidc
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/authelia-apps
+      properties:
+        - client-secret-lakefs
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/onprem-oidc
+      properties:
+        client-secret-lakefs: client-secret-lakefs
+
   - name: vault
     input:
       kind: ClusterSecretStore
