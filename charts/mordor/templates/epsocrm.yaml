@@ -1,0 +1,81 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.project }}-epsocrm
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: "https://kubernetes.default.svc"
+  project: {{ .Values.project }}
+  sources:
+    - path: charts/template-single
+      repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      helm:
+        values: |
+          fullnameOverride: epsocrm
+
+          {{- with .Values.storage }}
+          storageclasses:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.domains }}
+          domains:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        valueFiles:
+          - $values/charts/mordor/epsocrm.values.yaml
+    - repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      ref: values
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: epsocrm-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: epsocrm-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      engineVersion: v2
+      data:
+        ESPOCRM_CONFIG_OIDC_CLIENT_SECRET: '{{ "{{" }} .oidcClientSecret {{ "}}" }}'
+  data:
+    - secretKey: ESPOCRM_DATABASE_HOST
+      remoteRef:
+        key: iac/postgres-epsocrm
+        property: hostname
+    - secretKey: ESPOCRM_DATABASE_NAME
+      remoteRef:
+        key: iac/postgres-epsocrm
+        property: database
+    - secretKey: ESPOCRM_DATABASE_USER
+      remoteRef:
+        key: iac/postgres-epsocrm
+        property: username
+    - secretKey: ESPOCRM_DATABASE_PASSWORD
+      remoteRef:
+        key: iac/postgres-epsocrm
+        property: password
+    - secretKey: ESPOCRM_ADMIN_PASSWORD
+      remoteRef:
+        key: vendor/epsocrm
+        property: admin-password
+    - secretKey: oidcClientSecret
+      remoteRef:
+        key: vendor/authelia-apps
+        property: client-secret-epsocrm
