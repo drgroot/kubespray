@@ -613,7 +613,7 @@ authelia:
           require_pkce: true
           pkce_challenge_method: S256
           redirect_uris:
-            - https://epsocrm.yusufali.ca/oauth-callback.php
+            - https://crm.yusufali.ca/oauth-callback.php
           scopes:
             - openid
             - profile
