@@ -32,7 +32,7 @@ env:
   - name: ESPOCRM_ADMIN_USERNAME
     value: admin
   - name: ESPOCRM_SITE_URL
-    value: https://epsocrm.yusufali.ca
+    value: https://crm.yusufali.ca
   - name: ESPOCRM_CONFIG_AUTHENTICATION_METHOD
     value: Oidc
   - name: ESPOCRM_CONFIG_OIDC_CLIENT_ID
