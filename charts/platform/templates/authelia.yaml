@@ -30,15 +30,15 @@ spec:
     - secretKey: db-secret
       remoteRef:
         key: {{ .Values.authelia.secrets.remoteKey }}
-        property: db-secret
+        property: authelia-db-secret
     - secretKey: jwt-key
       remoteRef:
         key: {{ .Values.authelia.secrets.remoteKey }}
-        property: jwt-key
+        property: authelia-jwt-key
     - secretKey: secrets-key
       remoteRef:
         key: {{ .Values.authelia.secrets.remoteKey }}
-        property: secrets-key
+        property: authelia-secrets-key
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret

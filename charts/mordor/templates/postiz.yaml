@@ -411,7 +411,7 @@ spec:
     - secretKey: DATABASE_URL
       remoteRef: {key: iac/postgres-postiz, property: url}
     - secretKey: JWT_SECRET
-      remoteRef: {key: vendor/postiz, property: jwt-secret}
+      remoteRef: {key: vendor/selfhosted-app-tokens, property: postiz-jwt-key}
     - secretKey: CLOUDFLARE_ACCOUNT_ID
       remoteRef: {key: iac/s3-postiz, property: accountid}
     - secretKey: CLOUDFLARE_ACCESS_KEY

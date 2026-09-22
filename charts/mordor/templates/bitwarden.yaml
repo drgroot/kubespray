@@ -61,8 +61,8 @@ spec:
   data:
     - secretKey: ADMIN_TOKEN
       remoteRef:
-        key: vendor/bitwarden
-        property: admin-token
+        key: vendor/selfhosted-app-tokens
+        property: bitwarden-admin-token
     - secretKey: SSO_CLIENT_SECRET
       remoteRef:
         key: vendor/authelia-apps

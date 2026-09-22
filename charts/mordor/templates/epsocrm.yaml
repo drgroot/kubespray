@@ -78,8 +78,8 @@ spec:
         property: password
     - secretKey: ESPOCRM_ADMIN_PASSWORD
       remoteRef:
-        key: vendor/epsocrm
-        property: admin-password
+        key: vendor/selfhosted-app-tokens
+        property: epocrm-admin-password
     - secretKey: oidcClientSecret
       remoteRef:
         key: vendor/authelia-apps
