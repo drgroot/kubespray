@@ -53,6 +53,11 @@ spec:
     template:
       engineVersion: v2
       data:
+        ESPOCRM_DATABASE_HOST: '{{ "{{" }} .ESPOCRM_DATABASE_HOST {{ "}}" }}'
+        ESPOCRM_DATABASE_NAME: '{{ "{{" }} .ESPOCRM_DATABASE_NAME {{ "}}" }}'
+        ESPOCRM_DATABASE_USER: '{{ "{{" }} .ESPOCRM_DATABASE_USER {{ "}}" }}'
+        ESPOCRM_DATABASE_PASSWORD: '{{ "{{" }} .ESPOCRM_DATABASE_PASSWORD {{ "}}" }}'
+        ESPOCRM_ADMIN_PASSWORD: '{{ "{{" }} .ESPOCRM_ADMIN_PASSWORD {{ "}}" }}'
         ESPOCRM_CONFIG_OIDC_CLIENT_SECRET: '{{ "{{" }} .oidcClientSecret {{ "}}" }}'
   data:
     - secretKey: ESPOCRM_DATABASE_HOST
