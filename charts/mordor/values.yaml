@@ -77,3 +77,17 @@ crossplane:
           value: postiz-temporal
         - key: output
           value: external-infra/iac/postgres-postiz-temporal
+    postgres-epsocrm:
+      enabled: true
+      type: postgres
+      provider: db
+      name: epsocrm
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: epsomcrm
+        - key: output
+          value: external-infra/iac/postgres-epsocrm

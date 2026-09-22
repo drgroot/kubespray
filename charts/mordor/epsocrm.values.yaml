@@ -1,0 +1,156 @@
+image:
+  name: espocrm/espocrm
+  tag: 10.0.8
+
+imagePullSecrets:
+  - name: cluster-docker-secrets
+
+strategy:
+  type: Recreate
+
+ports:
+  - name: http
+    containerPort: 80
+    protocol: TCP
+
+service:
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+
+envFrom:
+  - secretRef:
+      name: epsocrm-secrets
+
+env:
+  - name: ESPOCRM_DATABASE_PLATFORM
+    value: Postgresql
+  - name: ESPOCRM_DATABASE_PORT
+    value: "5432"
+  - name: ESPOCRM_ADMIN_USERNAME
+    value: admin
+  - name: ESPOCRM_SITE_URL
+    value: https://epsocrm.yusufali.ca
+  - name: ESPOCRM_CONFIG_AUTHENTICATION_METHOD
+    value: Oidc
+  - name: ESPOCRM_CONFIG_OIDC_CLIENT_ID
+    value: epsocrm
+  - name: ESPOCRM_CONFIG_OIDC_AUTHORIZATION_ENDPOINT
+    value: https://auth.yusufali.ca/api/oidc/authorization
+  - name: ESPOCRM_CONFIG_OIDC_TOKEN_ENDPOINT
+    value: https://auth.yusufali.ca/api/oidc/token
+  - name: ESPOCRM_CONFIG_OIDC_USER_INFO_ENDPOINT
+    value: https://auth.yusufali.ca/api/oidc/userinfo
+  - name: ESPOCRM_CONFIG_OIDC_JWKS_ENDPOINT
+    value: https://auth.yusufali.ca/jwks.json
+  - name: ESPOCRM_CONFIG_OIDC_USERNAME_CLAIM
+    value: preferred_username
+  - name: ESPOCRM_CONFIG_OIDC_CREATE_USER
+    value: "true"
+  - name: ESPOCRM_CONFIG_OIDC_SYNC
+    value: "true"
+  - name: ESPOCRM_CONFIG_OIDC_LOGOUT_URL
+    value: https://auth.yusufali.ca/api/oidc/logout?post_logout_redirect_uri={siteUrl}
+
+pvc:
+  enabled: true
+  name: epsocrm-data
+  storageClass: thorin-default
+  storage: 20Gi
+
+initContainers:
+  - name: create-persistent-directories
+    image: busybox:1.36
+    command:
+      - sh
+      - -ec
+      - mkdir -p /storage/data /storage/custom /storage/client-custom
+    volumeMounts:
+      - name: epsocrm-data
+        mountPath: /storage
+
+volumeMounts:
+  - name: epsocrm-data
+    mountPath: /var/www/html/data
+    subPath: data
+  - name: epsocrm-data
+    mountPath: /var/www/html/custom
+    subPath: custom
+  - name: epsocrm-data
+    mountPath: /var/www/html/client/custom
+    subPath: client-custom
+
+sideCars:
+  - name: daemon
+    image: espocrm/espocrm:10.0.8
+    imagePullPolicy: Always
+    command:
+      - docker-daemon.sh
+    envFrom:
+      - secretRef:
+          name: epsocrm-secrets
+    env:
+      - name: ESPOCRM_CONFIG_AUTHENTICATION_METHOD
+        value: Oidc
+    volumeMounts:
+      - name: epsocrm-data
+        mountPath: /var/www/html/data
+        subPath: data
+      - name: epsocrm-data
+        mountPath: /var/www/html/custom
+        subPath: custom
+      - name: epsocrm-data
+        mountPath: /var/www/html/client/custom
+        subPath: client-custom
+
+deploymentAnnotations:
+  secret.reloader.stakater.com/reload: epsocrm-secrets
+
+probes:
+  startupProbe:
+    httpGet:
+      path: /
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+  livenessProbe:
+    httpGet:
+      path: /
+      port: http
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 5
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 5
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/proxy-body-size: 100m
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: epsocrm.yusufali.ca
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - "*.yusufali.ca"
+      secretName: wildcard-tls
