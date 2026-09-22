@@ -146,7 +146,7 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-body-size: 100m
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   hosts:
-    - host: epsocrm.yusufali.ca
+    - host: crm.yusufali.ca
       paths:
         - path: /
           pathType: Prefix
