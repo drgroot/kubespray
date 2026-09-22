@@ -335,7 +335,7 @@ authelia:
     remoteKey: iac/postgres-authelia
 
   secrets:
-    remoteKey: vendor/authelia
+    remoteKey: vendor/selfhosted-app-tokens
 
   users:
     - name: yusuf
