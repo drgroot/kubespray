@@ -212,11 +212,24 @@ components:
             secret:
               secretName: media-narrs-prowlarr-config
               defaultMode: 0644
-        volumeMounts:
-          - name: arr-config
-            mountPath: /config/config.xml
-            subPath: config.xml
-            readOnly: true
+        # Copy the Secret into the writable config volume. Arr applications persist
+        # settings in config.xml during startup and cannot use a read-only subPath.
+        initContainers:
+          - name: seed-config
+            image: alpine:3.24
+            command:
+              - sh
+              - -ec
+              - |
+                cp /seed/config.xml /config/config.xml
+                chown 1000:1000 /config/config.xml
+                chmod 0644 /config/config.xml
+            volumeMounts:
+              - name: config
+                mountPath: /config
+              - name: arr-config
+                mountPath: /seed
+                readOnly: true
         ingress:
           host: prowlarr.yusufali.ca
           annotations:
@@ -266,11 +279,24 @@ components:
             secret:
               secretName: media-narrs-radarr-config
               defaultMode: 0644
-        volumeMounts:
-          - name: arr-config
-            mountPath: /config/config.xml
-            subPath: config.xml
-            readOnly: true
+        # Copy the Secret into the writable config volume. Arr applications persist
+        # settings in config.xml during startup and cannot use a read-only subPath.
+        initContainers:
+          - name: seed-config
+            image: alpine:3.24
+            command:
+              - sh
+              - -ec
+              - |
+                cp /seed/config.xml /config/config.xml
+                chown 1000:1000 /config/config.xml
+                chmod 0644 /config/config.xml
+            volumeMounts:
+              - name: config
+                mountPath: /config
+              - name: arr-config
+                mountPath: /seed
+                readOnly: true
         ingress:
           host: radarr.yusufali.ca
           annotations:
@@ -312,11 +338,24 @@ components:
             secret:
               secretName: media-narrs-sonarr-config
               defaultMode: 0644
-        volumeMounts:
-          - name: arr-config
-            mountPath: /config/config.xml
-            subPath: config.xml
-            readOnly: true
+        # Copy the Secret into the writable config volume. Arr applications persist
+        # settings in config.xml during startup and cannot use a read-only subPath.
+        initContainers:
+          - name: seed-config
+            image: alpine:3.24
+            command:
+              - sh
+              - -ec
+              - |
+                cp /seed/config.xml /config/config.xml
+                chown 1000:1000 /config/config.xml
+                chmod 0644 /config/config.xml
+            volumeMounts:
+              - name: config
+                mountPath: /config
+              - name: arr-config
+                mountPath: /seed
+                readOnly: true
         ingress:
           host: sonarr.yusufali.ca
           annotations:
