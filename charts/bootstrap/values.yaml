@@ -2,12 +2,12 @@ project: bootstrap
 
 envoy:
   enabled: true
-  version: v1.8.3
+  version: v1.9.2
 
 crossplane:
   enabled: true
-  version: v2.2.1
-  opentofuVersion: v1.1.2
+  version: v2.4.2
+  opentofuVersion: v1.1.9
 
 vault:
   username: kubernetesadmin
@@ -39,12 +39,11 @@ vault:
 versions:
   argoupdater: 0.18
   ingressnginx: 4.13.2
-  externalsecrets: 2.5.0
+  externalsecrets: 2.11.0
   nfsprovisioner: 4.0.18
-  tailscale: 1.86.5
-  keda: 2.17.2
-  certmanager: 1.18.2
-  externaldns: 1.18.0
+  keda: 2.21.0
+  certmanager: 1.21.2
+  externaldns: 1.21.1
   prometheus: 77.3.0
   reloader: 2.2.16
 
