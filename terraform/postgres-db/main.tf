@@ -37,6 +37,7 @@ resource "postgresql_schema" "public" {
   name          = "public"
   owner         = postgresql_role.application.name
   if_not_exists = true
+  drop_cascade  = true
 
   policy {
     role   = postgresql_role.application.name
