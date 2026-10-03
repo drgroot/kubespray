@@ -500,6 +500,30 @@ authelia:
           userinfo_signed_response_alg: none
           token_endpoint_auth_method: client_secret_basic
 
+      argocd:
+        client_id: argocd
+        client_name: Argo CD
+        client_secret_property: client-secret-argocd
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: false
+          redirect_uris:
+            - https://argocd.yusufali.ca/auth/callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_basic
+
       gitea:
         client_id: gitea
         client_name: Gitea

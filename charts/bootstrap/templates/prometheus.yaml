@@ -43,6 +43,8 @@ spec:
                 key: client-secret
 
           grafana.ini:
+            server:
+              root_url: https://grafana.{{ .Values.domains.external }}/
             auth:
               disable_login_form: true
               oauth_auto_login: true

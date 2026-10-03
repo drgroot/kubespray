@@ -1,0 +1,107 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: argocd-oidc
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: argocd-oidc
+    creationPolicy: Owner
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/part-of: argocd
+  data:
+    - secretKey: client-secret
+      remoteRef:
+        key: vendor/authelia-apps
+        property: client-secret-argocd
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+data:
+  url: https://argocd.{{ .Values.domains.external }}
+  admin.enabled: "false"
+  oidc.config: |
+    name: Authelia
+    issuer: https://auth.{{ .Values.domains.external }}
+    clientID: argocd
+    clientSecret: $argocd-oidc:client-secret
+    requestedScopes:
+      - openid
+      - profile
+      - email
+      - groups
+    enableUserInfoGroups: true
+    userInfoPath: /api/oidc/userinfo
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+data:
+  policy.default: role:authenticated
+  policy.csv: |
+    g, media-admin, role:admin
+  scopes: '[groups]'
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: argocd-tls
+  namespace: argocd
+spec:
+  secretName: argocd-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - argocd.{{ .Values.domains.external }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server
+  namespace: argocd
+  annotations:
+    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/auth-signin: "https://auth.{{ .Values.domains.external }}?rm=$request_method"
+    nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - argocd.{{ .Values.domains.external }}
+      secretName: argocd-tls
+  rules:
+    - host: argocd.{{ .Values.domains.external }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  name: https
