@@ -487,6 +487,7 @@ authelia:
           pkce_challenge_method: S256
           redirect_uris:
             - https://grafana.yusufali.ca/login/generic_oauth
+            - https://grafana-us.servc.io/login/generic_oauth
           scopes:
             - openid
             - profile
@@ -511,6 +512,7 @@ authelia:
           require_pkce: false
           redirect_uris:
             - https://argocd.yusufali.ca/auth/callback
+            - https://argocd-us.servc.io/auth/callback
           scopes:
             - openid
             - profile
@@ -987,6 +989,22 @@ gitea:
         cpu: "2"
 
 secretSync:
+  - name: authelia-oidc-clients
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/authelia-apps
+      properties:
+        - client-secret-argocd
+        - client-secret-grafana
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/authelia
+      properties:
+        client-secret-argocd: client-secret-argocd
+        client-secret-grafana: client-secret-grafana
+
   - name: gitea-username
     input:
       kind: ClusterSecretStore
