@@ -152,6 +152,10 @@ spec:
           access_control:
             default_policy: deny
             rules:
+              - domain: argocd.{{ .Values.domains.external }}
+                policy: one_factor
+                subject:
+                  - group:media-admin
               - domain: grafana.{{ .Values.domains.external }}
                 policy: one_factor
                 subject:
