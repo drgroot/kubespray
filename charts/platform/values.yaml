@@ -466,6 +466,9 @@ authelia:
   clients:
     client_remote_key: vendor/authelia-apps
     claims_policies:
+      vault:
+        id_token:
+          - preferred_username
       servc-mcp:
         access_token:
           - email
@@ -751,6 +754,7 @@ authelia:
         client_name: Vault
         client_secret_property: client-secret-vault
         oidc:
+          claims_policy: vault
           public: false
           authorization_policy: two_factor
           consent_mode: implicit
