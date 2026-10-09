@@ -92,5 +92,13 @@ resource "vault_generic_endpoint" "userpass_user" {
 
 resource "vault_token" "user" {
   policies = [vault_policy.user.name]
+
   no_parent = true
+  renewable = true
+  period    = "24h"
+
+  renew_min_lease = 43200 # Renew if < 12 hours remain
+  renew_increment = 86400 # Request 24 hours
+
+  display_name = "vault-user-${var.name}"
 }
