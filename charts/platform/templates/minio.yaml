@@ -51,7 +51,7 @@ spec:
     spec:
       containers:
         - name: minio
-          image: {{ tpl .Values.minio.image.registry . }}{{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}
+          image: {{ tpl .Values.minio.image.registry . }}{{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}{{ with .Values.minio.image.digest }}@{{ . }}{{ end }}
           args:
             - server
             - /data
@@ -131,7 +131,8 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: create-bucket
-          image: minio/mc:latest
+          # Use the release's bundled mc client for bucket initialization.
+          image: {{ tpl .Values.minio.image.registry . }}{{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}{{ with .Values.minio.image.digest }}@{{ . }}{{ end }}
           command:
             - /bin/sh
             - -ec
