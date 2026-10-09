@@ -90,6 +90,23 @@ crossplane:
         - key: capabilities
           value: list
 
+    authelia-yusuf-browse:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-yusuf-browse
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: yusuf
+        - key: path
+          value: external-infra/metadata/authelia
+        - key: capabilities
+          value: list
+    
     authelia-yusuf:
       enabled: true
       type: vault
