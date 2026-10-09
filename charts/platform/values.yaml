@@ -90,6 +90,25 @@ crossplane:
         - key: capabilities
           value: list
 
+    authelia-yusuf-servc:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-yusuf-servc
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: yusuf
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: servc/*
+        - key: capabilities
+          value: create,read,update,list,patch
+
     authelia-murtz-servc:
       enabled: true
       type: vault
@@ -107,7 +126,7 @@ crossplane:
         - key: path
           value: servc/*
         - key: capabilities
-          value: create,read,update,delete,list,patch
+          value: create,read,update,list,patch
 
     authelia-murtz:
       enabled: true
