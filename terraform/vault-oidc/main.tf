@@ -1,5 +1,5 @@
 variable "name" {
-  description = "Authelia subject and Vault identity entity name."
+  description = "Vault identity entity name, usually the Authelia username."
   type        = string
 
   validation {
@@ -50,7 +50,7 @@ variable "oidc_mount" {
 }
 
 variable "manage_identity" {
-  description = "Whether this workspace owns the user's Vault identity entity and OIDC alias."
+  description = "Whether this workspace owns the user's named identity, external group, and OIDC group alias."
   type        = bool
   default     = true
 }
@@ -70,7 +70,7 @@ data "vault_identity_entity" "user" {
 }
 
 resource "vault_policy" "user_path" {
-  name = "oidc-${var.name}-${replace( replace(var.path, "*", "") , "/", "-")}"
+  name = "oidc-${var.name}-${replace(replace(var.path, "*", ""), "/", "-")}"
 
   policy = <<-EOT
     path ${jsonencode(var.path)} {
@@ -96,10 +96,36 @@ resource "vault_identity_entity_policies" "user_path" {
   exclusive = false
 }
 
-resource "vault_identity_entity_alias" "authelia" {
+# Username aliases cannot match the OIDC sub UUID. External groups instead
+# map the authenticated preferred_username claim to per-user policies.
+data "vault_identity_group" "user" {
+  count = var.manage_identity ? 0 : 1
+
+  group_name = "oidc-${var.oidc_mount}-${var.name}"
+}
+
+resource "vault_identity_group" "user" {
+  count = var.manage_identity ? 1 : 0
+
+  name              = "oidc-${var.oidc_mount}-${var.name}"
+  type              = "external"
+  external_policies = true
+}
+
+locals {
+  group_id = var.manage_identity ? vault_identity_group.user[0].id : data.vault_identity_group.user[0].group_id
+}
+
+resource "vault_identity_group_policies" "user_path" {
+  group_id  = local.group_id
+  policies  = [vault_policy.user_path.name]
+  exclusive = false
+}
+
+resource "vault_identity_group_alias" "authelia" {
   count = var.manage_identity ? 1 : 0
 
   name           = var.name
   mount_accessor = data.vault_auth_backend.oidc.accessor
-  canonical_id   = local.entity_id
+  canonical_id   = local.group_id
 }
