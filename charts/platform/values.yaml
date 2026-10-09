@@ -289,6 +289,69 @@ crossplane:
         - key: output
           value: external-infra/iac/gitea-rennovate
 
+    gitea-servc-vault-addr:
+      enabled: true
+      type: gitea
+      provider: orgsecret
+      name: VAULT_ADDR
+      vars:
+        - key: path
+          value: external-infra/iac/vault-user-servc
+        - key: property
+          value: vault-addr
+        - key: org
+          value: serv-c
+        - key: gitea_url
+          value: https://git.yusufali.ca
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: usernamekey
+          value: root-username
+        - key: passwordkey
+          value: root-password
+
+    gitea-servc-vault-username:
+      enabled: true
+      type: gitea
+      provider: orgsecret
+      name: VAULT_USERNAME
+      vars:
+        - key: path
+          value: external-infra/iac/vault-user-servc
+        - key: property
+          value: username
+        - key: org
+          value: serv-c
+        - key: gitea_url
+          value: https://git.yusufali.ca
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: usernamekey
+          value: root-username
+        - key: passwordkey
+          value: root-password
+
+    gitea-servc-vault-password:
+      enabled: true
+      type: gitea
+      provider: orgsecret
+      name: VAULT_PASSWORD
+      vars:
+        - key: path
+          value: external-infra/iac/vault-user-servc
+        - key: property
+          value: password
+        - key: org
+          value: serv-c
+        - key: gitea_url
+          value: https://git.yusufali.ca
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: usernamekey
+          value: root-username
+        - key: passwordkey
+          value: root-password
+
     gitea-chintan:
       enabled: true
       type: gitea
