@@ -90,6 +90,25 @@ crossplane:
         - key: capabilities
           value: list
 
+    authelia-yusuf:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-yusuf
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: yusuf
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: external-infra/data/authelia/yusuf
+        - key: capabilities
+          value: read,update,patch
+
     authelia-yusuf-servc:
       enabled: true
       type: vault
