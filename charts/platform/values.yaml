@@ -840,111 +840,149 @@ bandersnatch:
     memory: 64Mi
 
   packages:
+    - a2wsgi
     - absl-py
-    - adbc-driver-postgresql
-    - adbc-driver-sqlite
-    - adlfs
+    - aenum
+    - agent-detector
+    - aiodns
+    - aiohappyeyeballs
     - aiohttp
-    - aiomysql
-    - aioodbc
-    - aiosqlite
+    - aiohttp-retry
+    - aiosignal
     - alembic
     - altair
+    - annotated-doc
     - annotated-types
     - anyio
+    - argcomplete
     - arro3-core
     - arviz
-    - asgiref
+    - ast-serialize
+    - asttokens
     - astunparse
-    - async-timeout
-    - asyncmy
-    - asyncpg
-    - beautifulsoup4
+    - attrs
+    - audioop-lts
+    - authlib
+    - babel
+    - backoff
+    - backports-zstd
+    - bcrypt
+    - berserk
+    - bidict
     - blinker
-    - bodo
+    - borb
     - boto3
     - botocore
-    - bottleneck
+    - brotli
     - build
     - cachetools
+    - capi-param-builder-python
     - certifi
+    - cffi
     - chardet
     - charset_normalizer
+    - chess
+    - chess-com
+    - civitai-comfy-nodes
     - click
+    - cloudpickle
     - colorama
+    - comfy-script
+    - comfyui-ib-customnodes
+    - comfyui-tooling-nodes
+    - comm
+    - contourpy
     - coverage
     - cryptography
-    - cx_oracle
-    - daft
-    - dataframe-api-compat
-    - datafusion
+    - curlify
+    - cycler
+    - decorator
     - delta-spark
     - deltalake
     - deprecated
+    - detect-installer
+    - diff-cover
+    - discord-py
     - distro
+    - dm-tree
     - dnspython
+    - docutils
     - duckdb
+    - durationpy
+    - dynaconf
     - email-validator
     - et-xmlfile
-    - fastparquet
-    - fido2
+    - executing
+    - facebook-business
+    - fastapi
+    - fastapi-cli
+    - fastapi-cloud-cli
+    - fastar
     - flask
     - flatbuffers
+    - fonttools
+    - frozenlist
     - fsspec
     - gast
-    - gcsfs
-    - gevent
-    - google-api-python-client
+    - google-ads
+    - google-analytics-admin
+    - google-analytics-data
+    - google-api-core
     - google-auth
-    - google-cloud-bigquery
+    - google-auth-oauthlib
     - google-meridian
     - google_pasta
     - googleapis-common-protos
-    - greenlet
     - grpcio
     - grpcio-status
-    - gssapi
+    - grpcio-tools
+    - gunicorn
+    - h11
+    - h5netcdf
     - h5py
-    - hiredis
-    - html5lib
+    - httpcore
+    - httpcore2
+    - httptools
     - httpx
-    - httpx-aiohttp
-    - huggingface-hub
-    - hypothesis
+    - httpx2
     - id
     - idna
     - immutabledict
     - importlib-metadata
+    - iniconfig
+    - inquirerpy
+    - invoke
+    - ipython
+    - ipython-pygments-lexers
+    - ipywidgets
     - itsdangerous
+    - jaraco-classes
+    - jaraco-context
+    - jaraco-functools
     - jax
     - jaxlib
+    - jedi
+    - jeepney
     - jinja2
     - jiter
     - jmespath
     - joblib
+    - joserfc
     - jsonpatch
+    - jsonpointer
+    - jsonschema
+    - jsonschema-specifications
+    - jupyterlab-widgets
     - keras
-    - kerberos
     - keyring
+    - kiwisolver
     - kubernetes
+    - kubernetes-stubs-elephant-fork
     - langchain
-    - langchain-anthropic
-    - langchain-aws
-    - langchain-azure-ai
-    - langchain-community
     - langchain-core
-    - langchain-deepseek
-    - langchain-fireworks
-    - langchain-google-genai
-    - langchain-google-vertexai
-    - langchain-groq
-    - langchain-huggingface
-    - langchain-mistralai
-    - langchain-ollama
+    - langchain-mcp-adapters
     - langchain-openai
-    - langchain-perplexity
-    - langchain-together
-    - langchain-xai
+    - langchain-protocol
     - langgraph
     - langgraph-checkpoint
     - langgraph-prebuilt
@@ -952,153 +990,189 @@ bandersnatch:
     - langsmith
     - libclang
     - librt
-    - lxml
+    - mailjet-rest
     - mako
-    - mariadb
+    - markdown-it-py
     - markupsafe
     - matplotlib
+    - matplotlib-inline
+    - mcp
+    - mcp-types
+    - mdurl
     - ml_dtypes
-    - mlflow
     - mmh3
-    - mmm-proto-schema
+    - more-itertools
+    - multidict
     - mypy
     - mypy_extensions
     - mysql-connector-python
-    - mysqlclient
+    - namex
+    - narwhals
     - natsort
-    - numba
-    - numexpr
+    - ndjson
+    - nest-asyncio2
+    - networkx
+    - nh3
     - numpy
-    - nvidia-cublas-cu12
-    - nvidia-cuda-cupti-cu12
-    - nvidia-cuda-nvcc-cu12
-    - nvidia-cuda-nvrtc-cu12
-    - nvidia-cuda-runtime-cu12
-    - nvidia-cudnn-cu12
-    - nvidia-cufft-cu12
-    - nvidia-curand-cu12
-    - nvidia-cusolver-cu12
-    - nvidia-cusparse-cu12
-    - nvidia-nccl-cu12
-    - nvidia-nvjitlink-cu12
-    - odfpy
+    - oauthlib
     - openai
     - openpyxl
     - opentelemetry-api
+    - opentelemetry-exporter-http-transport
+    - opentelemetry-exporter-otlp-common
+    - opentelemetry-exporter-otlp-proto-common
     - opentelemetry-exporter-otlp-proto-http
+    - opentelemetry-proto
     - opentelemetry-sdk
+    - opentelemetry-semantic-conventions
     - opt_einsum
-    - oracledb
+    - optree
     - orjson
+    - ormsgpack
+    - overrides
     - packaging
     - pandas
-    - pandas-gbq
     - pandas-stubs
+    - paramiko
+    - parso
     - pathspec
-    - pg8000
+    - patsy
+    - pexpect
+    - pfzy
     - pika
-    - pip
+    - pillow
+    - platformdirs
+    - pluggy
     - polars
+    - polars-runtime-32
+    - prettytable
+    - prompt-toolkit
+    - propcache
+    - proto-plus
     - protobuf
     - psutil
-    - psycopg
-    - psycopg2
     - psycopg2-binary
-    - psycopg2cffi
+    - ptyprocess
+    - pure-eval
+    - py-cpuinfo
     - py4j
+    - pyarr
     - pyarrow
     - pyarrow-stubs
-    - pybreaker
+    - pyasn1
+    - pyasn1-modules
+    - pycares
+    - pycountry
+    - pycparser
+    - pycryptodome
     - pydantic
     - pydantic-core
+    - pydantic-extra-types
+    - pydantic-settings
+    - pygments
     - pyiceberg
     - pyiceberg-core
-    - pyink
     - pyjwt
-    - pylint
-    - pymssql
-    - pymysql
-    - pyodbc
-    - pyopenssl
+    - pynacl
     - pyparsing
     - pyproject_hooks
-    - pyqt5
-    - pyreadstat
     - pyroaring
-    - pysocks
     - pyspark
     - pytest
-    - pytest-xdist
-    - python-calamine
     - python-dateutil
     - python-dotenv
-    - python-snappy
+    - python-multipart
     - pytz
-    - pyxlsb
     - pyyaml
-    - qtpy
-    - ray
+    - questionary
     - readme-renderer
     - redis
+    - referencing
+    - regex
     - requests
+    - requests-oauthlib
     - requests-toolbelt
     - rfc3986
     - rich
-    - s3fs
+    - rich-toolkit
+    - rignore
+    - rpds-py
+    - runpod
+    - runpod-flash
     - s3transfer
     - scipy
-    - semver
+    - secretstorage
+    - sentry-sdk
     - servc
     - setuptools
+    - shellingham
+    - shopifyapp
     - simplejson
     - six
     - sniffio
-    - sortedcontainers
-    - sounddevice
     - sqlalchemy
-    - sqlcipher3_binary
-    - sqlgot
+    - sqlfluff
+    - sqlglot
+    - sqlglotc
+    - sqlglotrs
+    - sse-starlette
+    - stack-data
+    - starlette
     - statsmodels
+    - stockfish
     - strictyaml
-    - tables
-    - tabulate
+    - stripe
+    - tblib
     - tenacity
-    - tensorboard
     - tensorflow
-    - tensorflow-io-gcs-filesystem
-    - tensorflow-probability
     - termcolor
     - tf-keras
-    - thrift
-    - thrift-sasl
+    - tfp-nightly
     - tiktoken
     - tomli
-    - tornado
+    - tomlkit
     - tqdm
+    - tqdm-loggable
+    - traitlets
+    - truststore
     - twine
-    - twisted
+    - typer
+    - types-authlib
+    - types-cffi
+    - types-grpcio
+    - types-protobuf
     - types-pyopenssl
-    - types-pytz
+    - types-python-dateutil
     - types-pyyaml
     - types-redis
     - types-requests
+    - types-setuptools
     - types-simplejson
     - typing-extensions
     - typing-inspection
-    - typing_extensions
     - tzdata
     - urllib3
     - uuid-utils
-    - uv
-    - virtualenv
+    - uvicorn
+    - uvloop
+    - vastai
+    - watchdog
+    - watchfiles
+    - wcwidth
+    - websocket-client
     - websockets
     - werkzeug
+    - wheel
+    - widgetsnbextension
     - wrapt
     - xarray
-    - xlrd
-    - xlsxwriter
+    - xarray-einstats
+    - xdg
     - xxhash
+    - yarl
+    - zipp
     - zstandard
+
 
 gitea:
   actions:
