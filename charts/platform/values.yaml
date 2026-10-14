@@ -863,6 +863,7 @@ bandersnatch:
     - attrs
     - audioop-lts
     - authlib
+    - Authlib
     - babel
     - backoff
     - backports-zstd
