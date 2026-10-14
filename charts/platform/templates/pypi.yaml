@@ -65,6 +65,7 @@ spec:
             - pypi-server
           args:
             - run
+            - --disable-fallback
             - --port
             - "8080"
             - --authenticate
