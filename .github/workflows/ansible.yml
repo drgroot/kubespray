@@ -108,6 +108,7 @@ jobs:
           fi
 
           if [ "$CMD" == "Install" ]; then
+            ansible-playbook -i inventory/sample/inventory.ini kubespray/playbooks/facts.yml -b -v
             ARGS="kubespray/cluster.yml -l kube_control_plane"
           elif [ "$CMD" == "UpgradeAddons" ]; then
             ARGS="kubespray/upgrade-cluster.yml --tags=apps"
