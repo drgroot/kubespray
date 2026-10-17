@@ -99,6 +99,7 @@ jobs:
         env:
           CMD: ${{ github.event.inputs.action }}
           EVENT: ${{ github.event_name }}
+          ANSIBLE_CONFIG: ${{ github.workspace }}/kubespray/ansible.cfg
         run: |
           CMD=${CMD:-"UpgradeAddons"}
           echo $EVENT
