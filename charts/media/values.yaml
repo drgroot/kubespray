@@ -416,8 +416,16 @@ components:
             value: http://media-narrs-radarr-svc.media:7878
           - name: SONARR_HOST
             value: http://media-narrs-sonarr-svc.media:8989
+          - name: RADARR_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: media-downloaders-narr-search-trigger-api-keys
+                key: RADARR_API_KEY
           - name: SONARR_API_KEY
-            value: 26fe9b03f4d2476d869c130bccef0e33
+            valueFrom:
+              secretKeyRef:
+                name: media-downloaders-narr-search-trigger-api-keys
+                key: SONARR_API_KEY
         storage:
           media:
             enabled: false
