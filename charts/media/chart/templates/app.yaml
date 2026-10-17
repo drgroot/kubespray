@@ -136,6 +136,26 @@ spec:
         property: {{ $app }}-key
 {{- end }}
 ---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: media-downloaders-narr-search-trigger-api-keys
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: media-downloaders-narr-search-trigger-api-keys
+  data:
+    - secretKey: RADARR_API_KEY
+      remoteRef:
+        key: vendor/selfhosted-app-tokens
+        property: radarr-key
+    - secretKey: SONARR_API_KEY
+      remoteRef:
+        key: vendor/selfhosted-app-tokens
+        property: sonarr-key
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
