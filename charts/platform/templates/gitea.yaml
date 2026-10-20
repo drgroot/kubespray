@@ -581,4 +581,17 @@ spec:
                     secretKeyRef:
                       name: gitea-runner-secrets
                       key: renovate-token
+                - name: PYTHON_VERSION
+                  value: {{ .Values.actionsVerions.python | quote }}
+                - name: TERRAFORM_VERSION
+                  value: {{ .Values.actionsVerions.terraform | quote }}
+                - name: VAULT_ACTION
+                  value: {{ .Values.actionsVerions.vault | quote }}
+                - name: HELM_VERSION
+                  value: {{ .Values.actionsVerions.helm | quote }}
+                - name: KUBELOGIN_VERSION
+                  value: {{ .Values.actionsVerions.kubelogin | quote }}
+                - name: KUBECTL_VERSION
+                  value: {{ .Values.actionsVerions.kubectl | quote }}
+
           restartPolicy: Never
