@@ -8,6 +8,7 @@ crossplane:
   enabled: true
   version: v2.4.2
   opentofuVersion: v1.1.9
+  ansibleVersion: v0.8.0
 
 vault:
   username: kubernetesadmin

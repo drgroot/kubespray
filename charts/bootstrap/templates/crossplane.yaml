@@ -56,4 +56,13 @@ metadata:
     argocd.argoproj.io/sync-wave: "4"
 spec:
   package: xpkg.upbound.io/upbound/provider-opentofu:{{ .Values.crossplane.opentofuVersion }}
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-ansible
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/provider-ansible:{{ .Values.crossplane.ansibleVersion }}
 {{- end }}
