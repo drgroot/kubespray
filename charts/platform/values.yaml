@@ -9,6 +9,14 @@ versions:
   authelia: 0.11.20
   gitea: 12.7.0
 
+actionsVerions:
+  python: 3.13
+  terraform: 1.6.3
+  vault: v2
+  helm: 3.10.3
+  kubelogin: v0.0.18
+  kubectl: v1.24.6
+
 crossplane:
   enabled: true
   iac:
