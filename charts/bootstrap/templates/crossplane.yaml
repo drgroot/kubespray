@@ -67,6 +67,10 @@ spec:
               env:
                 - name: XDG_CONFIG_HOME
                   value: /etc/opentofu
+                - name: HELM_CACHE_HOME
+                  value: /tmp/helm
+                - name: HELM_CONFIG_HOME
+                  value: /tmp/helm
               volumeMounts:
                 - name: oci-auth
                   mountPath: /etc/opentofu/containers/auth.json
