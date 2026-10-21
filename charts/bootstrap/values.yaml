@@ -8,6 +8,8 @@ crossplane:
   enabled: true
   version: v2.4.2
   opentofuVersion: v1.1.9
+  # Docker config secret available in the system-crossplane namespace.
+  opentofuOciAuthSecretName: cluster-docker-secrets
   ansibleVersion: v0.8.0
 
 vault:
