@@ -75,6 +75,7 @@ components:
 
     list:
       plex:
+        imagePullPolicy: IfNotPresent
         strategy:
           type: Recreate
         affinity:
