@@ -1,0 +1,70 @@
+{{- if .Values.nvidia.enabled -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.nvidia.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+{{- if .Values.nvidia.timeSlicing.enabled }}
+{{- $replicas := .Values.nvidia.timeSlicing.replicas | float64 }}
+{{- if or (lt $replicas 1.0) (ne $replicas (floor $replicas)) }}
+{{- fail "nvidia.timeSlicing.replicas must be a positive integer" }}
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nvidia-time-slicing
+  namespace: {{ .Values.nvidia.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+data:
+  default: |-
+    version: v1
+    flags:
+      migStrategy: none
+    sharing:
+      timeSlicing:
+        renameByDefault: {{ .Values.nvidia.timeSlicing.renameByDefault }}
+        failRequestsGreaterThanOne: {{ .Values.nvidia.timeSlicing.failRequestsGreaterThanOne }}
+        resources:
+          - name: nvidia.com/gpu
+            replicas: {{ .Values.nvidia.timeSlicing.replicas }}
+{{- end }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: system-nvidia
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true
+  destination:
+    namespace: {{ .Values.nvidia.namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: gpu-operator
+    repoURL: https://helm.ngc.nvidia.com/nvidia
+    targetRevision: {{ .Values.versions.nvidia | quote }}
+    helm:
+      releaseName: system-nvidia
+      valuesObject:
+        driver:
+          enabled: {{ .Values.nvidia.driver.enabled }}
+          version: {{ .Values.nvidia.driver.version | quote }}
+{{- if .Values.nvidia.timeSlicing.enabled }}
+        devicePlugin:
+          config:
+            name: nvidia-time-slicing
+            default: default
+{{- end }}
+{{- end }}

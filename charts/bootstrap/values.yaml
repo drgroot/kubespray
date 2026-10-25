@@ -1,16 +1,46 @@
 project: bootstrap
 
+versions:
+  nvidia: v25.3.2
+  envoy: v1.9.2
+  crossplane: v2.4.2
+  crossplaneOpenTofu: v1.1.9
+  crossplaneAnsible: v0.8.0
+  argoupdater: 0.18
+  ingressnginx: 4.13.2
+  externalsecrets: 2.11.0
+  nfsprovisioner: 4.0.18
+  keda: 2.21.0
+  certmanager: 1.21.2
+  externaldns: 1.21.1
+  prometheus: 77.3.0
+  reloader: 2.2.16
+
+nvidia:
+  enabled: true
+  namespace: gpu-operator
+  driver:
+    # Disable if NVIDIA drivers are already installed on the hosts.
+    enabled: true
+    version: "580.126.09"
+  timeSlicing:
+    # Set nvidia.enabled and this flag to true to share each GPU across pods.
+    # Shares do not provide GPU memory or fault isolation (unlike MIG).
+    enabled: false
+    # Number of advertised shares per physical GPU on all GPU nodes.
+    replicas: 4
+    # When true, pods must request nvidia.com/gpu.shared instead of nvidia.com/gpu.
+    renameByDefault: false
+    # Multiple shares do not guarantee proportionally more GPU time.
+    failRequestsGreaterThanOne: true
+
 envoy:
   enabled: true
-  version: v1.9.2
 
 crossplane:
   enabled: true
-  version: v2.4.2
-  opentofuVersion: v1.1.9
   # Docker config secret available in the system-crossplane namespace.
   opentofuOciAuthSecretName: cluster-docker-secrets
-  ansibleVersion: v0.8.0
 
 vault:
   username: kubernetesadmin
@@ -38,17 +68,6 @@ vault:
       failureThreshold: 3
       periodSeconds: 30
       timeoutSeconds: 5
-
-versions:
-  argoupdater: 0.18
-  ingressnginx: 4.13.2
-  externalsecrets: 2.11.0
-  nfsprovisioner: 4.0.18
-  keda: 2.21.0
-  certmanager: 1.21.2
-  externaldns: 1.21.1
-  prometheus: 77.3.0
-  reloader: 2.2.16
 
 domains:
   internal: k8s.private

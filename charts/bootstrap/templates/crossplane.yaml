@@ -30,7 +30,7 @@ spec:
   source:
     chart: crossplane
     repoURL: https://charts.crossplane.io/stable
-    targetRevision: {{ .Values.crossplane.version }}
+    targetRevision: {{ .Values.versions.crossplane }}
     helm:
       releaseName: system-crossplane
       values: |-
@@ -88,7 +88,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "4"
 spec:
-  package: xpkg.upbound.io/upbound/provider-opentofu:{{ .Values.crossplane.opentofuVersion }}
+  package: xpkg.upbound.io/upbound/provider-opentofu:{{ .Values.versions.crossplaneOpenTofu }}
   runtimeConfigRef:
     name: opentofu-oci-runtime
 ---
@@ -99,5 +99,5 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "4"
 spec:
-  package: xpkg.crossplane.io/crossplane-contrib/provider-ansible:{{ .Values.crossplane.ansibleVersion }}
+  package: xpkg.crossplane.io/crossplane-contrib/provider-ansible:{{ .Values.versions.crossplaneAnsible }}
 {{- end }}
