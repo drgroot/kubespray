@@ -28,7 +28,7 @@ spec:
   source:
     repoURL: oci://docker.io/envoyproxy/gateway-helm
     path: .
-    targetRevision: {{ .Values.envoy.version }}
+    targetRevision: {{ .Values.versions.envoy }}
     helm:
       releaseName: system-envoy
       values: |-
