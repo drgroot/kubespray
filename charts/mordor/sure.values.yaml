@@ -1,0 +1,129 @@
+fullnameOverride: sure
+
+image:
+  name: ghcr.io/we-promise/sure
+  tag: v0.7.5-hotfix.3
+
+imagePullSecrets:
+  - name: cluster-docker-secrets
+
+strategy:
+  type: Recreate
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+deploymentAnnotations:
+  secret.reloader.stakater.com/reload: sure-secrets,cluster-smtp-secrets
+
+envFrom: &sure-env-from
+  - secretRef:
+      name: sure-secrets
+  - secretRef:
+      name: cluster-smtp-secrets
+
+# Sure uses different names for the shared SMTP host and sender settings.
+env: &sure-email-env
+  - name: SMTP_ADDRESS
+    value: $(SMTP_HOST)
+  - name: EMAIL_SENDER
+    value: $(SMTP_FROM_EMAIL)
+  # Match Gitea's SMTP + STARTTLS rather than implicit TLS.
+  - name: SMTP_TLS_ENABLED
+    value: "false"
+
+# Prepare the shared database before either Rails or Sidekiq starts.
+initContainers:
+  - name: db-prepare
+    image: ghcr.io/we-promise/sure:v0.7.5-hotfix.3
+    command:
+      - /rails/bin/docker-entrypoint
+    args:
+      - ./bin/rails
+      - db:prepare
+    envFrom: *sure-env-from
+    env: *sure-email-env
+    volumeMounts:
+      - name: storage
+        mountPath: /rails/storage
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+
+sideCars:
+  - name: worker
+    image: ghcr.io/we-promise/sure:v0.7.5-hotfix.3
+    command:
+      - /rails/bin/docker-entrypoint
+    args:
+      - bundle
+      - exec
+      - sidekiq
+      - -C
+      - config/sidekiq.yml
+    envFrom: *sure-env-from
+    env: *sure-email-env
+    volumeMounts:
+      - name: storage
+        mountPath: /rails/storage
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: 2Gi
+
+ports:
+  - name: http
+    containerPort: 3000
+    protocol: TCP
+
+service:
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+      protocol: TCP
+
+probes:
+  startupProbe:
+    httpGet:
+      path: /up
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+  readinessProbe:
+    httpGet:
+      path: /up
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+  livenessProbe:
+    httpGet:
+      path: /up
+      port: http
+    periodSeconds: 30
+    timeoutSeconds: 5
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 1Gi
+
+volumeMounts:
+  - name: storage
+    mountPath: /rails/storage
+
+pvc:
+  enabled: true
+  name: storage
+  storage: 10Gi

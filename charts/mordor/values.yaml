@@ -22,7 +22,6 @@ crossplane:
           value: external-infra/vendor/cloudflare
         - key: output
           value: external-infra/iac/s3-postiz
-    
 
     s3-affine:
       enabled: true
@@ -34,6 +33,21 @@ crossplane:
           value: external-infra/vendor/minio
         - key: output
           value: external-infra/iac/s3-affine
+
+    postgres-sure:
+      enabled: true
+      type: postgres
+      provider: db
+      name: sure
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: sure
+        - key: output
+          value: external-infra/iac/postgres-sure
 
     postgres-bitwarden:
       enabled: true
