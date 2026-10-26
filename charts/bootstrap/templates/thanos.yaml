@@ -1,0 +1,348 @@
+{{- if .Values.prometheus.thanos.enabled }}
+{{- $thanos := .Values.prometheus.thanos }}
+{{- if not (has $thanos.store.storage.type (list "emptyDir" "pvc")) }}
+{{- fail "prometheus.thanos.store.storage.type must be emptyDir or pvc" }}
+{{- end }}
+{{- if not (has $thanos.compactor.storage.type (list "emptyDir" "pvc")) }}
+{{- fail "prometheus.thanos.compactor.storage.type must be emptyDir or pvc" }}
+{{- end }}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: thanos-objstore
+  namespace: {{ .Values.prometheus.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    {{- toYaml $thanos.s3.secretStore | nindent 4 }}
+  target:
+    name: thanos-objstore
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        objstore.yaml: |
+          type: S3
+          config:
+            bucket: {{ `{{ .bucket | toJson }}` }}
+            endpoint: {{ `{{ .endpoint | trimPrefix "https://" | trimPrefix "http://" | trimSuffix "/" | toJson }}` }}
+            bucket_lookup_type: path
+            region: {{ `{{ .region | toJson }}` }}
+            access_key: {{ `{{ .accessKey | toJson }}` }}
+            secret_key: {{ `{{ .secretKey | toJson }}` }}
+            insecure: {{ `{{ hasPrefix "http://" .endpoint }}` }}
+  data:
+    {{- range $key, $property := $thanos.s3.properties }}
+    - secretKey: {{ $key }}
+      remoteRef:
+        key: {{ $thanos.s3.remoteRef.key | quote }}
+        property: {{ $property | quote }}
+    {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-query
+  namespace: {{ .Values.prometheus.namespace }}
+spec:
+  selector:
+    app.kubernetes.io/name: thanos
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: query
+  ports:
+    - name: http
+      port: 9090
+      targetPort: http
+    - name: grpc
+      port: 10901
+      targetPort: grpc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-query
+  namespace: {{ .Values.prometheus.namespace }}
+spec:
+  replicas: {{ $thanos.query.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: query
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: thanos
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: query
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      {{- with $thanos.query.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $thanos.query.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: thanos
+          image: {{ printf "%s:%s" $thanos.image.repository $thanos.image.tag | quote }}
+          args:
+            - query
+            - --http-address=0.0.0.0:9090
+            - --grpc-address=0.0.0.0:10901
+            - --query.replica-label=prometheus_replica
+            - --endpoint=dnssrv+_grpc._tcp.prometheus-kube-prometheus-thanos-discovery.{{ .Values.prometheus.namespace }}.svc
+            - --endpoint=dnssrv+_grpc._tcp.thanos-store.{{ .Values.prometheus.namespace }}.svc
+          ports:
+            - name: http
+              containerPort: 9090
+            - name: grpc
+              containerPort: 10901
+          startupProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+          resources:
+            {{- toYaml $thanos.query.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-store
+  namespace: {{ .Values.prometheus.namespace }}
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: thanos
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: store
+  ports:
+    - name: http
+      port: 10902
+      targetPort: http
+    - name: grpc
+      port: 10901
+      targetPort: grpc
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-store
+  namespace: {{ .Values.prometheus.namespace }}
+spec:
+  serviceName: thanos-store
+  replicas: {{ $thanos.store.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: store
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: thanos
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: store
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      {{- with $thanos.store.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $thanos.store.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: thanos
+          image: {{ printf "%s:%s" $thanos.image.repository $thanos.image.tag | quote }}
+          args:
+            - store
+            - --http-address=0.0.0.0:10902
+            - --grpc-address=0.0.0.0:10901
+            - --objstore.config-file=/etc/thanos/objstore.yaml
+            - --data-dir=/var/thanos
+          ports:
+            - name: http
+              containerPort: 10902
+            - name: grpc
+              containerPort: 10901
+          startupProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+          resources:
+            {{- toYaml $thanos.store.resources | nindent 12 }}
+          volumeMounts:
+            - name: objstore
+              mountPath: /etc/thanos
+              readOnly: true
+            - name: data
+              mountPath: /var/thanos
+      volumes:
+        - name: objstore
+          secret:
+            secretName: thanos-objstore
+        {{- if eq $thanos.store.storage.type "emptyDir" }}
+        - name: data
+          emptyDir:
+            {{- toYaml $thanos.store.storage.emptyDir | nindent 12 }}
+        {{- end }}
+  {{- if eq $thanos.store.storage.type "pvc" }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- with $thanos.store.storage.storageClassName }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $thanos.store.storage.size | quote }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-compactor
+  namespace: {{ .Values.prometheus.namespace }}
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: thanos
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: compactor
+  ports:
+    - name: http
+      port: 10902
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-compactor
+  namespace: {{ .Values.prometheus.namespace }}
+spec:
+  serviceName: thanos-compactor
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: thanos
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: compactor
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: thanos
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: compactor
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      {{- with $thanos.compactor.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $thanos.compactor.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: thanos
+          image: {{ printf "%s:%s" $thanos.image.repository $thanos.image.tag | quote }}
+          args:
+            - compact
+            - --http-address=0.0.0.0:10902
+            - --objstore.config-file=/etc/thanos/objstore.yaml
+            - --data-dir=/var/thanos
+            - --wait
+            - --retention.resolution-raw={{ $thanos.compactor.retention.raw }}
+            - --retention.resolution-5m={{ $thanos.compactor.retention.fiveMinutes }}
+            - --retention.resolution-1h={{ $thanos.compactor.retention.oneHour }}
+          ports:
+            - name: http
+              containerPort: 10902
+          startupProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+          resources:
+            {{- toYaml $thanos.compactor.resources | nindent 12 }}
+          volumeMounts:
+            - name: objstore
+              mountPath: /etc/thanos
+              readOnly: true
+            - name: data
+              mountPath: /var/thanos
+      volumes:
+        - name: objstore
+          secret:
+            secretName: thanos-objstore
+        {{- if eq $thanos.compactor.storage.type "emptyDir" }}
+        - name: data
+          emptyDir:
+            {{- toYaml $thanos.compactor.storage.emptyDir | nindent 12 }}
+        {{- end }}
+  {{- if eq $thanos.compactor.storage.type "pvc" }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- with $thanos.compactor.storage.storageClassName }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $thanos.compactor.storage.size | quote }}
+  {{- end }}
+{{- end }}

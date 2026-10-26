@@ -114,7 +114,7 @@ crossplane:
           value: external-infra/metadata/authelia
         - key: capabilities
           value: list
-    
+
     authelia-yusuf:
       enabled: true
       type: vault
@@ -229,6 +229,17 @@ crossplane:
           value: external-infra/vendor/minio
         - key: output
           value: external-infra/iac/s3-pvcbackups-k8s
+
+    s3-thanos:
+      enabled: true
+      type: s3
+      provider: minio
+      name: thanos
+      vars:
+        - key: input
+          value: external-infra/vendor/minio
+        - key: output
+          value: external-infra/iac/s3-thanos
 
     s3-backups-k8s:
       enabled: true
@@ -1205,7 +1216,6 @@ bandersnatch:
     - yarl
     - zipp
     - zstandard
-
 
 gitea:
   actions:

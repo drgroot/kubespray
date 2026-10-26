@@ -1,7 +1,9 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: monitoring
+  name: {{ .Values.prometheus.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -19,7 +21,7 @@ spec:
       - ServerSideApply=true
       - CreateNamespace=true
   destination:
-    namespace: monitoring
+    namespace: {{ .Values.prometheus.namespace }}
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
@@ -29,12 +31,43 @@ spec:
     helm:
       releaseName: prometheus
       values: |-
-        namespaceOverride: monitoring
+        namespaceOverride: {{ .Values.prometheus.namespace }}
         alertmanager:
           enabled: false
 
+        {{- if .Values.prometheus.thanos.enabled }}
+        prometheus:
+          thanosService:
+            enabled: true
+          prometheusSpec:
+            retention: {{ .Values.prometheus.thanos.prometheus.retention | quote }}
+            disableCompaction: true
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: [ReadWriteOnce]
+                  {{- with .Values.prometheus.thanos.prometheus.storage.storageClassName }}
+                  storageClassName: {{ . | quote }}
+                  {{- end }}
+                  resources:
+                    requests:
+                      storage: {{ .Values.prometheus.thanos.prometheus.storage.size | quote }}
+            thanos:
+              image: {{ printf "%s:%s" .Values.prometheus.thanos.image.repository .Values.prometheus.thanos.image.tag | quote }}
+              objectStorageConfig:
+                existingSecret:
+                  name: thanos-objstore
+                  key: objstore.yaml
+        {{- end }}
+
         grafana:
           enabled: true
+
+          {{- if .Values.prometheus.thanos.enabled }}
+          sidecar:
+            datasources:
+              url: http://thanos-query.{{ .Values.prometheus.namespace }}.svc:9090
+          {{- end }}
 
           envValueFrom:
             GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
@@ -64,7 +97,7 @@ spec:
               allowed_groups: media-admin
 
           serviceMonitor:
-            namespace: monitoring
+            namespace: {{ .Values.prometheus.namespace }}
 
           persistence:
             enabled: false
@@ -88,7 +121,7 @@ apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: grafana-oidc
-  namespace: monitoring
+  namespace: {{ .Values.prometheus.namespace }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
 spec:
