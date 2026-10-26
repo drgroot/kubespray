@@ -1,0 +1,139 @@
+# Required Vault properties before sync:
+# - vendor/postgres: sure (database password consumed by Crossplane)
+# - vendor/sure: SECRET_KEY_BASE, ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY,
+#   ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY, ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+#   (keep these encryption keys stable across deployments)
+# - vendor/authelia-apps: client-secret-sure (shared with Authelia)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.project }}-sure
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  sources:
+    - path: charts/template-single
+      repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      helm:
+        values: |
+          pvc:
+            storageClass: {{ .Values.storage.default }}
+        valueFiles:
+          - $values/charts/mordor/sure.values.yaml
+    - repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      ref: values
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: sure-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: sure-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      engineVersion: v2
+      mergePolicy: Merge
+      data:
+        RAILS_ENV: production
+        SELF_HOSTED: "true"
+        AUTH_LOCAL_LOGIN_ENABLED: "false"
+        AUTH_LOCAL_ADMIN_OVERRIDE_ENABLED: "false"
+        AUTH_PASSKEY_LOGIN_ENABLED: "true"
+        ONBOARDING_STATE: closed
+        AUTH_JIT_MODE: create_and_link
+        RAILS_FORCE_SSL: "false"
+        RAILS_ASSUME_SSL: "true"
+        APP_DOMAIN: sure.{{ .Values.domains.external }}
+        APP_URL: https://sure.{{ .Values.domains.external }}
+        REDIS_URL: redis://redis.kube-platform.svc.cluster.local:6379/1
+        OIDC_ISSUER: https://auth.yusufali.ca
+        OIDC_CLIENT_ID: sure
+        OIDC_REDIRECT_URI: https://sure.{{ .Values.domains.external }}/auth/openid_connect/callback
+        OIDC_BUTTON_LABEL: Sign in with Authelia
+  data:
+    - secretKey: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+      remoteRef:
+        key: vendor/sure
+        property: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+    - secretKey: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+      remoteRef:
+        key: vendor/sure
+        property: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+    - secretKey: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+      remoteRef:
+        key: vendor/sure
+        property: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+    - secretKey: SECRET_KEY_BASE
+      remoteRef:
+        key: vendor/sure
+        property: SECRET_KEY_BASE
+    - secretKey: OIDC_CLIENT_SECRET
+      remoteRef:
+        key: vendor/authelia-apps
+        property: client-secret-sure
+    - secretKey: DB_HOST
+      remoteRef:
+        key: iac/postgres-sure
+        property: hostname
+    - secretKey: DB_PORT
+      remoteRef:
+        key: iac/postgres-sure
+        property: port
+    - secretKey: POSTGRES_USER
+      remoteRef:
+        key: iac/postgres-sure
+        property: username
+    - secretKey: POSTGRES_PASSWORD
+      remoteRef:
+        key: iac/postgres-sure
+        property: password
+    - secretKey: POSTGRES_DB
+      remoteRef:
+        key: iac/postgres-sure
+        property: database
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.project }}-sure
+  annotations:
+    external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 100m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - sure.{{ .Values.domains.external }}
+      secretName: wildcard-tls
+  rules:
+    - host: sure.{{ .Values.domains.external }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sure
+                port:
+                  number: 3000
