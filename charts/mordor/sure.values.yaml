@@ -46,9 +46,6 @@ initContainers:
       - db:prepare
     envFrom: *sure-env-from
     env: *sure-email-env
-    volumeMounts:
-      - name: storage
-        mountPath: /rails/storage
     resources:
       requests:
         cpu: 100m
@@ -69,9 +66,6 @@ sideCars:
       - config/sidekiq.yml
     envFrom: *sure-env-from
     env: *sure-email-env
-    volumeMounts:
-      - name: storage
-        mountPath: /rails/storage
     resources:
       requests:
         cpu: 100m
@@ -118,12 +112,3 @@ resources:
     memory: 256Mi
   limits:
     memory: 1Gi
-
-volumeMounts:
-  - name: storage
-    mountPath: /rails/storage
-
-pvc:
-  enabled: true
-  name: storage
-  storage: 10Gi
