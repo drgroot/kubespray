@@ -25,9 +25,6 @@ spec:
       repoURL: https://github.com/drgroot/kubespray.git
       targetRevision: HEAD
       helm:
-        values: |
-          pvc:
-            storageClass: {{ .Values.storage.default }}
         valueFiles:
           - $values/charts/mordor/sure.values.yaml
     - repoURL: https://github.com/drgroot/kubespray.git
@@ -53,6 +50,8 @@ spec:
       data:
         RAILS_ENV: production
         SELF_HOSTED: "true"
+        ACTIVE_STORAGE_SERVICE: generic_s3
+        GENERIC_S3_FORCE_PATH_STYLE: "true"
         AUTH_LOCAL_LOGIN_ENABLED: "false"
         AUTH_LOCAL_ADMIN_OVERRIDE_ENABLED: "false"
         AUTH_PASSKEY_LOGIN_ENABLED: "true"
@@ -68,6 +67,26 @@ spec:
         OIDC_REDIRECT_URI: https://sure.{{ .Values.domains.external }}/auth/openid_connect/callback
         OIDC_BUTTON_LABEL: Sign in with Authelia
   data:
+    - secretKey: GENERIC_S3_ACCESS_KEY_ID
+      remoteRef:
+        key: iac/s3-sure
+        property: accesskey
+    - secretKey: GENERIC_S3_SECRET_ACCESS_KEY
+      remoteRef:
+        key: iac/s3-sure
+        property: secretkey
+    - secretKey: GENERIC_S3_BUCKET
+      remoteRef:
+        key: iac/s3-sure
+        property: bucket
+    - secretKey: GENERIC_S3_REGION
+      remoteRef:
+        key: iac/s3-sure
+        property: region
+    - secretKey: GENERIC_S3_ENDPOINT
+      remoteRef:
+        key: iac/s3-sure
+        property: blob-url
     - secretKey: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
       remoteRef:
         key: vendor/sure

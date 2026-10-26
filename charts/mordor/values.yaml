@@ -34,6 +34,17 @@ crossplane:
         - key: output
           value: external-infra/iac/s3-affine
 
+    s3-sure:
+      enabled: true
+      type: s3
+      provider: minio
+      name: sure
+      vars:
+        - key: input
+          value: external-infra/vendor/minio
+        - key: output
+          value: external-infra/iac/s3-sure
+
     postgres-sure:
       enabled: true
       type: postgres
