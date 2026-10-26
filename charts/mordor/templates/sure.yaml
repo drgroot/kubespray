@@ -50,6 +50,7 @@ spec:
       data:
         RAILS_ENV: production
         SELF_HOSTED: "true"
+        ASSISTANT_TYPE: mcp_only
         ACTIVE_STORAGE_SERVICE: generic_s3
         GENERIC_S3_FORCE_PATH_STYLE: "true"
         AUTH_LOCAL_LOGIN_ENABLED: "false"
