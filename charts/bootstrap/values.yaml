@@ -175,3 +175,59 @@ tenants:
         path: "servc-helm-aks"
         valuesRepo: https://git.yusufali.ca/serv-c/tenant-charts.git
         valuesFile: "aks/onpremise.yaml"
+
+# Prometheus buffers recent data on a PVC; Thanos uploads blocks to MinIO.
+# Bucket and scoped credentials are provisioned by platform.crossplane.iac.s3-thanos.
+# One compactor owns this bucket; retain recent detail and longer-term trends.
+prometheus:
+  namespace: monitoring
+  thanos:
+    enabled: true
+    image:
+      repository: quay.io/thanos/thanos
+      tag: v0.42.4
+    prometheus:
+      retention: 24h
+      storage:
+        size: 20Gi
+        storageClassName: thorin-fast
+    s3:
+      secretStore:
+        name: external-infra
+        kind: ClusterSecretStore
+      remoteRef:
+        key: iac/s3-thanos
+      properties:
+        bucket: bucket
+        endpoint: blob-url
+        region: region
+        accessKey: accesskey
+        secretKey: secretkey
+    query:
+      replicas: 2
+      resources: {}
+      affinity: {}
+      tolerations: []
+    store:
+      replicas: 1
+      resources: {}
+      affinity: {}
+      tolerations: []
+      storage:
+        type: emptyDir
+        emptyDir: {}
+        size: 10Gi
+        storageClassName: thorin-fast
+    compactor:
+      resources: {}
+      affinity: {}
+      tolerations: []
+      storage:
+        type: pvc
+        emptyDir: {}
+        size: 20Gi
+        storageClassName: thorin-fast
+      retention:
+        raw: 30d
+        fiveMinutes: 60d
+        oneHour: 90d
