@@ -1,0 +1,57 @@
+import os
+import json
+from pathlib import Path
+from typing import List
+
+from src.com.actions.step import STEP
+from src.com.repo import MODIFIERS, RepoContext
+from src.com.run import get_children
+
+
+def get_monorepo_modules(ctx: RepoContext, m: MODIFIERS) -> List[str]:
+    configured_modules = m.get("monorepo-modules")
+    if isinstance(configured_modules, list) and all(
+        isinstance(module, str) for module in configured_modules
+    ):
+        return configured_modules
+
+    module_path = os.path.join(ctx.local_folder, m.get("monorepo-folder", ""))
+    manifest = Path(module_path) / "package.json"
+    if manifest.is_file():
+        workspaces = json.loads(manifest.read_text()).get("workspaces")
+        if isinstance(workspaces, dict):
+            workspaces = workspaces.get("packages")
+        if isinstance(workspaces, list):
+            root = Path(module_path)
+            modules = set()
+            for pattern in workspaces:
+                for folder in root.glob(pattern):
+                    package = folder / "package.json"
+                    if package.is_file() and not json.loads(package.read_text()).get("private", False):
+                        modules.add(folder.relative_to(root).as_posix())
+            return sorted(modules)
+    return get_children(module_path)
+
+
+def get_working_path(ctx: RepoContext, m: MODIFIERS) -> str:
+    return os.path.join(m.get("monorepo-folder", ""), "${{ matrix.package }}")
+
+
+def transform_steps(steps: List[STEP], ctx: RepoContext, m: MODIFIERS):
+    if_cond = "steps.changes.outputs.src == 'true'"
+    if m.get("workflow_action", "build"):
+        if_cond = " || ".join(
+            [if_cond, "startsWith(github.ref,format('refs/tags/{0}-', matrix.package))"]
+        )
+    if_cond = f"({if_cond})"
+
+    for step in steps:
+        step["if"] = " && ".join([x for x in (step.get("if", ""), if_cond) if x])
+
+        if "run" in step.keys():
+            step["working-directory"] = step.get(
+                "working-directory", get_working_path(ctx, m)
+            ).strip()
+
+            if step["working-directory"] == "":
+                del step["working-directory"]
