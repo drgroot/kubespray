@@ -1,4 +1,12 @@
 {{- if .Values.crossplane.enabled -}}
+# provider-ansible v0.8.0 requires this namespace for its coordination lease.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: upbound-system
+  labels:
+    tenant: approved
+---
 apiVersion: v1
 kind: Namespace
 metadata:
