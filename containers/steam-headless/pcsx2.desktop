@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PCSX2
+Comment=PlayStation 2 emulator
+Exec=/usr/local/bin/pcsx2 %f
+TryExec=/usr/local/bin/pcsx2
+Icon=/opt/pcsx2/PCSX2.png
+Terminal=false
+Categories=Game;Emulator;
