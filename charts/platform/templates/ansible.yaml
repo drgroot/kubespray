@@ -89,5 +89,5 @@ spec:
                 limit: all
               - playbook: ansible/post.yml
                 limit: all
-            no_log: true
+            no_log: false
 {{- end }}
