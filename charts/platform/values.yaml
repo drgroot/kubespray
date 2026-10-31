@@ -29,18 +29,20 @@ crossplane:
     secretNamespace: argocd
 
   iac:
-    github-docker-host:
+    github-vault-url:
       enabled: true
       type: github
       provider: reposecret
-      name: DOCKER_HOST
+      name: VAULT_URL
       vars:
         - key: path
-          value: external-infra/vendor/docker
+          value: external-infra/vendor/vault
         - key: property
-          value: public-host
+          value: url
         - key: repository
           value: kubespray
+        - key: org
+          value: drgroot
         - key: credentialpath
           value: external-infra/vendor/github
         - key: usernamekey
@@ -48,18 +50,20 @@ crossplane:
         - key: tokenkey
           value: token
 
-    github-docker-username:
+    github-vault-password:
       enabled: true
       type: github
       provider: reposecret
-      name: DOCKER_USERNAME
+      name: VAULT_PASSWORD
       vars:
         - key: path
-          value: external-infra/vendor/docker
+          value: external-infra/vendor/vault
         - key: property
-          value: public-username
+          value: password
         - key: repository
           value: kubespray
+        - key: org
+          value: drgroot
         - key: credentialpath
           value: external-infra/vendor/github
         - key: usernamekey
@@ -67,18 +71,20 @@ crossplane:
         - key: tokenkey
           value: token
 
-    github-docker-password:
+    github-vault-username:
       enabled: true
       type: github
       provider: reposecret
-      name: DOCKER_PASSWORD
+      name: VAULT_USERNAME
       vars:
         - key: path
-          value: external-infra/vendor/docker
+          value: external-infra/vendor/vault
         - key: property
-          value: public-password
+          value: username
         - key: repository
           value: kubespray
+        - key: org
+          value: drgroot
         - key: credentialpath
           value: external-infra/vendor/github
         - key: usernamekey
