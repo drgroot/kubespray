@@ -20,7 +20,7 @@ variable "repository" {
 }
 
 variable "name" {
-  description = "Name of the GitHub repository Actions secret."
+  description = "Name of the GitHub repository Actions and Dependabot secret."
   type        = string
 }
 
@@ -29,6 +29,12 @@ data "vault_generic_secret" "source" {
 }
 
 resource "github_actions_secret" "secret" {
+  repository      = var.repository
+  secret_name     = var.name
+  plaintext_value = data.vault_generic_secret.source.data[var.property]
+}
+
+resource "github_dependabot_secret" "secret" {
   repository      = var.repository
   secret_name     = var.name
   plaintext_value = data.vault_generic_secret.source.data[var.property]

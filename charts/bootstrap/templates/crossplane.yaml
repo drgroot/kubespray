@@ -72,6 +72,8 @@ spec:
         spec:
           containers:
             - name: package-runtime
+              args:
+                - --max-reconcile-rate={{ .Values.crossplane.opentofuMaxReconcileRate }}
               env:
                 - name: XDG_CONFIG_HOME
                   value: /etc/opentofu
