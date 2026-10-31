@@ -50,7 +50,7 @@ jobs:
         id: coder_secrets
         uses: hashicorp/vault-action@v2
         with:
-          url: ${{ secrets.VAULT_ADDRESS }}
+          url: https://vault.yusufali.ca
           method: userpass
           username: ${{ secrets.VAULT_USERNAME }}
           password: ${{ secrets.VAULT_PASSWORD }}
