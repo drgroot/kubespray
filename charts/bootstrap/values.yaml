@@ -23,6 +23,27 @@ nvidia:
     # Disable if NVIDIA drivers are already installed on the hosts.
     enabled: true
     version: "580.126.09"
+    # Migrating an existing Operator installation to driver CRDs requires a
+    # maintenance window and Operator reinstall; changing values alone is not enough.
+    nvidiaDriverCRD:
+      enabled: true
+      # Keep selectors disjoint: never let two driver resources select one node.
+      configs:
+        modern:
+          nodeSelector:
+            kubernetes.io/hostname: kube0
+          # Uses nvidia.driver.version when version is omitted.
+        legacy-kube5:
+          nodeSelector:
+            kubernetes.io/hostname: kube5
+          version: "470.256.02"
+          # NVIDIA does not publish R470 images for Ubuntu 24.04. Build and
+          # publish containers/nvidia-driver-470 before applying this configuration.
+          repository: docker.io/yusufservc
+          image: nvidia-driver
+          imagePullSecrets:
+            - cluster-docker-secrets
+          kernelModuleType: proprietary
   timeSlicing:
     # Set nvidia.enabled and this flag to true to share each GPU across pods.
     # Shares do not provide GPU memory or fault isolation (unlike MIG).

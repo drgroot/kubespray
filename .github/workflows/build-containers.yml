@@ -2,9 +2,6 @@ name: Build containers
 
 on:
   pull_request:
-    paths:
-      - containers/**
-      - .github/workflows/build-containers.yml
   push:
     branches: [main]
     paths:
@@ -81,32 +78,29 @@ jobs:
               - '.github/workflows/build-containers.yml'
       - name: Set image metadata
         id: metadata
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         env:
           PUBLISH_TAG: ${{ matrix.tag || 'latest' }}
-          CHANGED: ${{ steps.changes.outputs.src }}
           EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          build=false
           publish=false
           version="pr-${GITHUB_RUN_NUMBER}"
 
-          if [[ "$CHANGED" == true || "$EVENT" == schedule || "$EVENT" == workflow_dispatch ]]; then
-            build=true
-          fi
           if [[ "$GITHUB_REF" == refs/heads/main ]]; then
             version="$PUBLISH_TAG"
-            if [[ "$EVENT" != pull_request && "$build" == true ]]; then
+            if [[ "$EVENT" != pull_request ]]; then
               publish=true
             fi
           fi
 
-          echo "build=$build" >> "$GITHUB_OUTPUT"
           echo "publish=$publish" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - name: Set publish destination
         id: destination
-        if: steps.metadata.outputs.publish == 'true'
+        if: >-
+          (steps.changes.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+          && steps.metadata.outputs.publish == 'true'
         env:
           REGISTRY_HOST: ${{ secrets.DOCKER_HOST }}
           REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -120,17 +114,21 @@ jobs:
           echo "registry=$registry" >> "$GITHUB_OUTPUT"
           echo "image=$registry/$REGISTRY_USERNAME/$IMAGE_NAME" >> "$GITHUB_OUTPUT"
       - name: Log in to Docker registry
-        if: steps.metadata.outputs.publish == 'true'
+        if: >-
+          (steps.changes.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+          && steps.metadata.outputs.publish == 'true'
         uses: docker/login-action@v4
         with:
           registry: ${{ steps.destination.outputs.registry }}
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Set up Docker Buildx
-        if: steps.metadata.outputs.build == 'true'
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         uses: docker/setup-buildx-action@v4
       - name: Validate container build
-        if: steps.metadata.outputs.build == 'true' && steps.metadata.outputs.publish != 'true'
+        if: >-
+          (steps.changes.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+          && steps.metadata.outputs.publish != 'true'
         uses: docker/build-push-action@v7
         with:
           context: containers/${{ matrix.package }}
@@ -140,7 +138,9 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.package }}
           cache-to: type=gha,mode=max,scope=${{ matrix.package }}
       - name: Validate kernel module compilation
-        if: steps.metadata.outputs.build == 'true' && matrix.check-target != ''
+        if: >-
+          (steps.changes.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+          && matrix.check-target != ''
         uses: docker/build-push-action@v7
         with:
           context: containers/${{ matrix.package }}
@@ -150,7 +150,9 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.package }}
           cache-to: type=gha,mode=max,scope=${{ matrix.package }}
       - name: Build and publish container
-        if: steps.metadata.outputs.publish == 'true'
+        if: >-
+          (steps.changes.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+          && steps.metadata.outputs.publish == 'true'
         uses: docker/build-push-action@v7
         with:
           context: containers/${{ matrix.package }}
