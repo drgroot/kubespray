@@ -11,6 +11,7 @@
           # - open-iscsi
           - cron
           - jq
+          - iputils-ping
         state: latest
 - name: Install kubectl software
   hosts: kube_control_plane
