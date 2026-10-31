@@ -1,0 +1,93 @@
+{{- if and .Values.crossplane.enabled .Values.crossplane.ansible.enabled }}
+apiVersion: ansible.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: {{ .Release.Namespace }}-ansible
+spec:
+  credentials:
+    - filename: ssh_password
+      source: Secret
+      secretRef:
+        namespace: {{ .Values.crossplane.ansible.secretNamespace | quote }}
+        name: {{ .Values.crossplane.ansible.secretName | quote }}
+        key: password
+    - filename: id_rsa_pub
+      source: Secret
+      secretRef:
+        namespace: {{ .Values.crossplane.ansible.secretNamespace | quote }}
+        name: {{ .Values.crossplane.ansible.secretName | quote }}
+        key: id_rsa_pub
+---
+apiVersion: ansible.crossplane.io/v1alpha1
+kind: AnsibleRun
+metadata:
+  name: {{ .Release.Namespace }}-node-configuration
+  annotations:
+    ansible.crossplane.io/runPolicy: ObserveAndDelete
+spec:
+  deletionPolicy: Orphan
+  providerConfigRef:
+    name: {{ .Release.Namespace }}-ansible
+  forProvider:
+    inventoryInline: |
+      localhost ansible_connection=local
+    vars:
+      repository: {{ .Values.crossplane.ansible.repository | quote }}
+      revision: {{ .Values.crossplane.ansible.revision | quote }}
+      inventory: {{ .Values.crossplane.ansible.inventory | quote }}
+    playbookInline: |
+      - name: Configure inventory nodes
+        hosts: localhost
+        connection: local
+        gather_facts: false
+        tasks:
+          - name: Check out the configuration repository
+            ansible.builtin.git:
+              repo: "{{ `{{ repository }}` }}"
+              dest: "{{ `{{ playbook_dir }}` }}/repository"
+              version: "{{ `{{ revision }}` }}"
+              recursive: true
+
+          - name: Create an isolated environment for Kubespray
+            ansible.builtin.command:
+              argv:
+                - python3
+                - -m
+                - venv
+                - "{{ `{{ playbook_dir }}` }}/venv"
+              creates: "{{ `{{ playbook_dir }}` }}/venv/bin/python3"
+
+          - name: Install the repository's Ansible dependencies
+            ansible.builtin.pip:
+              requirements: "{{ `{{ playbook_dir }}` }}/repository/requirements.txt"
+              executable: "{{ `{{ playbook_dir }}` }}/venv/bin/pip"
+
+          - name: Run prerequisites, scale the cluster, and configure nodes
+            ansible.builtin.command:
+              argv:
+                - "{{ `{{ playbook_dir }}` }}/venv/bin/ansible-playbook"
+                - --inventory
+                - "{{ `{{ inventory }}` }}"
+                - "{{ `{{ item.playbook }}` }}"
+                - --limit
+                - "{{ `{{ item.limit }}` }}"
+                - --extra-vars
+                - "@ansible/auth.yml"
+                - --become
+              chdir: "{{ `{{ playbook_dir }}` }}/repository"
+            environment:
+              SSH_PASSWORD: "{{ `{{ lookup('ansible.builtin.file', playbook_dir + '/ssh_password', rstrip=False) }}` }}"
+              ID_RSA_PUB: "{{ `{{ lookup('ansible.builtin.file', playbook_dir + '/id_rsa_pub', rstrip=False) }}` }}"
+              ANSIBLE_HOST_KEY_CHECKING: "False"
+              ANSIBLE_STDOUT_CALLBACK: default
+              ANSIBLE_CONFIG: "{{ `{{ playbook_dir }}` }}/repository/ansible/kubespray/ansible.cfg"
+              ANSIBLE_ROLES_PATH: "{{ `{{ playbook_dir }}` }}/repository/ansible/kubespray/roles"
+            loop:
+              - playbook: ansible/prereqs.yml
+                limit: all
+              - playbook: ansible/kubespray/scale.yml
+                limit: all
+              - playbook: ansible/post.yml
+                limit: all
+            no_log: true
+{{- end }}

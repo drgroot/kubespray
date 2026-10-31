@@ -19,6 +19,15 @@ actionsVerions:
 
 crossplane:
   enabled: true
+
+  ansible:
+    enabled: true
+    repository: https://github.com/drgroot/kubespray.git
+    revision: main
+    inventory: inventory/sample/inventory.ini
+    secretName: ssh-password
+    secretNamespace: argocd
+
   iac:
     vault-user-servc:
       enabled: true
