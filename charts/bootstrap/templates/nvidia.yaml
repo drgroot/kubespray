@@ -3,6 +3,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: {{ .Values.nvidia.namespace }}
+  labels:
+    tenant: approved
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
 {{- if .Values.nvidia.timeSlicing.enabled }}
@@ -61,10 +63,30 @@ spec:
         driver:
           enabled: {{ .Values.nvidia.driver.enabled }}
           version: {{ .Values.nvidia.driver.version | quote }}
+          nvidiaDriverCRD:
+            enabled: {{ .Values.nvidia.driver.nvidiaDriverCRD.enabled }}
+            deployDefaultCR: false
 {{- if .Values.nvidia.timeSlicing.enabled }}
         devicePlugin:
           config:
             name: nvidia-time-slicing
             default: default
+{{- end }}
+{{- end }}
+{{- if and .Values.nvidia.enabled .Values.nvidia.driver.enabled .Values.nvidia.driver.nvidiaDriverCRD.enabled }}
+{{- range $name, $config := .Values.nvidia.driver.nvidiaDriverCRD.configs }}
+{{- if not $config.nodeSelector }}
+{{- fail (printf "nvidia.driver.nvidiaDriverCRD.configs.%s.nodeSelector must be non-empty to avoid overlapping drivers" $name) }}
+{{- end }}
+---
+apiVersion: nvidia.com/v1alpha1
+kind: NVIDIADriver
+metadata:
+  name: {{ $name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  {{- $defaults := dict "driverType" "gpu" "repository" "nvcr.io/nvidia" "image" "driver" "version" $.Values.nvidia.driver.version "kernelModuleType" "auto" "usePrecompiled" false }}
+  {{- toYaml (mustMergeOverwrite $defaults (deepCopy $config)) | nindent 2 }}
 {{- end }}
 {{- end }}
