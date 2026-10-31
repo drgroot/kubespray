@@ -1,0 +1,5 @@
+{
+  "image": "nvidia-driver",
+  "tag": "470.256.02-ubuntu24.04",
+  "check-target": "kernel-check"
+}
