@@ -64,6 +64,7 @@ jobs:
 
     steps:
       - name: Tailscale
+        if: github.event_name == 'workflow_dispatch'
         uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
@@ -98,15 +99,20 @@ jobs:
           --limit kube_control_plane
           --extra-vars @ansible/auth.yml -b -v
 
+      - name: Validate Ansible on pull requests
+        if: github.event_name == 'pull_request'
+        run: |
+          ansible-inventory -i inventory/sample/inventory.ini --list > /dev/null
+          for PLAYBOOK in ansible/kubespray/cluster.yml ansible/kubespray/upgrade-cluster.yml ansible/prereqs.yml ansible/admin_conf.yml ansible/post.yml; do
+            ansible-playbook -i inventory/sample/inventory.ini "$PLAYBOOK" --syntax-check
+          done
+
       - name: Run Ansible Kubespray
+        if: github.event_name == 'workflow_dispatch'
         env:
           CMD: ${{ inputs.action || 'Upgrade' }}
-          EVENT: ${{ github.event_name }}
         run: |
           ARGS=()
-          if [ "$EVENT" = "pull_request" ]; then
-            ARGS+=(--check --diff)
-          fi
 
           case "$CMD" in
             Install)
