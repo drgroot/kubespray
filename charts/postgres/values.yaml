@@ -7,6 +7,13 @@ fullnameOverride: ""
 
 annotations: {}
 
+# Allow up to 30 minutes for crash recovery and data-directory syncing on NFS.
+# Liveness and readiness checks start only after this probe succeeds.
+startupProbe:
+  failureThreshold: 180
+  periodSeconds: 10
+  timeoutSeconds: 5
+
 resources:
   requests:
     cpu: "250m"
