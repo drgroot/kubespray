@@ -1,0 +1,91 @@
+name: Test and Publish Steam Template
+
+on:
+  pull_request:
+    paths:
+      - charts/coder-template/**
+      - charts/media/chart/templates/steam.yaml
+      - charts/platform/templates/gateway.yaml
+      - .github/workflows/coder-template.yml
+  push:
+    branches: [main]
+    paths:
+      - charts/coder-template/**
+      - .github/workflows/coder-template.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coder-steam-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.17.1
+      - name: Validate template
+        working-directory: charts/coder-template
+        run: |
+          terraform fmt -recursive -check
+          terraform init -backend=false -input=false
+          terraform validate
+          terraform test
+
+  publish:
+    needs: validate
+    # Fork PRs run validation without access to publishing credentials.
+    if: >-
+      github.event_name != 'pull_request'
+      || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Read Coder credentials from Vault
+        id: coder_secrets
+        uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ secrets.VAULT_ADDRESS }}
+          method: userpass
+          username: ${{ secrets.VAULT_USERNAME }}
+          password: ${{ secrets.VAULT_PASSWORD }}
+          exportEnv: false
+          secrets: |
+            servc/data/iac/coder-onpremise url | CODER_URL ;
+            servc/data/iac/coder-onpremise token | CODER_TOKEN ;
+      - name: Set up Coder CLI
+        uses: coder/setup-action@v1
+        with:
+          access_url: ${{ steps.coder_secrets.outputs.CODER_URL }}
+          coder_session_token: ${{ steps.coder_secrets.outputs.CODER_TOKEN }}
+      - name: Set template version metadata
+        id: version
+        run: |
+          echo "name=git-${GITHUB_SHA:0:12}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+          echo "message=$(git log -1 --format=%s)" >> "$GITHUB_OUTPUT"
+      - name: Upload inactive template version
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          VERSION_MESSAGE: ${{ steps.version.outputs.message }}
+        run: |
+          coder templates push steam \
+            --display-name Steam \
+            --activate=false \
+            --name "$VERSION_NAME" \
+            --message "$VERSION_MESSAGE" \
+            --directory charts/coder-template \
+            --ignore-lockfile \
+            --yes
+      - name: Promote template version
+        if: github.ref == 'refs/heads/main'
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          coder templates versions promote \
+            --template steam \
+            --template-version "$VERSION_NAME"

@@ -1,0 +1,54 @@
+{{- /* Streaming ports only; appliance administration stays behind the Coder app. */ -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: steam-sunshine
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: steamheadless
+  ports:
+    {{- range $port := list 47984 47989 48010 }}
+    - name: sunshine-tcp-{{ $port }}
+      protocol: TCP
+      port: {{ $port }}
+      targetPort: {{ $port }}
+    {{- end }}
+    {{- range $port := list 47998 47999 48000 }}
+    - name: sunshine-udp-{{ $port }}
+      protocol: UDP
+      port: {{ $port }}
+      targetPort: {{ $port }}
+    {{- end }}
+{{- range $port := list 47984 47989 48010 }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: TCPRoute
+metadata:
+  name: sunshine-tcp-{{ $port }}
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: sunshine-tcp-{{ $port }}
+  rules:
+    - backendRefs:
+        - name: steam-sunshine
+          port: {{ $port }}
+{{- end }}
+{{- range $port := list 47998 47999 48000 }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: UDPRoute
+metadata:
+  name: sunshine-udp-{{ $port }}
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: sunshine-udp-{{ $port }}
+  rules:
+    - backendRefs:
+        - name: steam-sunshine
+          port: {{ $port }}
+{{- end }}

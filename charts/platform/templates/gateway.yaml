@@ -51,6 +51,33 @@ spec:
   gatewayClassName: envoy-nodeport
 
   listeners:
+    {{- range $port := list 47984 47989 48010 }}
+    - name: sunshine-tcp-{{ $port }}
+      protocol: TCP
+      port: {{ $port }}
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: media
+    {{- end }}
+    {{- range $port := list 47998 47999 48000 }}
+    - name: sunshine-udp-{{ $port }}
+      protocol: UDP
+      port: {{ $port }}
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: media
+    {{- end }}
+
     - name: frigate-rtsp
       protocol: TCP
       port: 8554
