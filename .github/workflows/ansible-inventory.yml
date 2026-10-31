@@ -1,0 +1,58 @@
+name: Sync Ansible inventory revision
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - inventory/sample/inventory.ini
+      - ansible/*.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ansible-inventory-revision
+  cancel-in-progress: false
+
+jobs:
+  update-revision:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Pin AnsibleRun to the latest inventory revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git checkout -B ansible-inventory-revision origin/main
+            INVENTORY_REVISION=$(git log -1 --format=%H -- inventory/sample/inventory.ini ':(glob)ansible/*.yaml' ':(glob)ansible/*.yml')
+            test -n "$INVENTORY_REVISION"
+
+            sed -i "/^  ansible:$/,/^  [^ ]/s/^    revision: .*/    revision: \"$INVENTORY_REVISION\"/" charts/platform/values.yaml
+            grep -Fq "    revision: \"$INVENTORY_REVISION\"" charts/platform/values.yaml
+
+            if git diff --quiet -- charts/platform/values.yaml; then
+              echo 'AnsibleRun already uses the latest inventory revision.'
+              exit 0
+            fi
+
+            git add charts/platform/values.yaml
+            git commit -m "chore: pin Ansible inventory to $INVENTORY_REVISION"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Main changed during attempt $attempt; retrying against its latest revision."
+          done
+
+          echo 'Failed to update the Ansible inventory revision.' >&2
+          exit 1
