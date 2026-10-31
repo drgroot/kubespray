@@ -41,6 +41,7 @@ crossplane:
   enabled: true
   # Docker config secret available in the system-crossplane namespace.
   opentofuOciAuthSecretName: cluster-docker-secrets
+  opentofuMaxReconcileRate: 3
 
 vault:
   username: kubernetesadmin
