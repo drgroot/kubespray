@@ -4,16 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'Action to perform'
+        description: "Action to perform"
         required: true
         type: choice
-        default: 'UpgradeAddons'
+        default: "Upgrade"
         options:
-          - UpgradeAddons
-          - ScaleNodes
           - Upgrade
+          - "Upgrade Apps"
           - Install
-          - Reset
 
 permissions:
   contents: read
@@ -34,7 +32,10 @@ jobs:
             ansible:
               - '.github/workflows/ansible.yml'
               - 'inventory/**'
-              - 'kubespray/**'
+              - '.gitmodules'
+              - 'requirements.txt'
+              - 'ansible/**'
+              - 'charts/application.yaml'
               - '*.yml'
 
   ansible-required:
@@ -54,6 +55,10 @@ jobs:
   ansible:
     runs-on: ubuntu-latest
 
+    env:
+      SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+      ANSIBLE_CONFIG: ${{ github.workspace }}/ansible/kubespray/ansible.cfg
+
     needs: changes
     if: needs.changes.outputs.ansible == 'true' || github.event_name == 'workflow_dispatch'
 
@@ -64,7 +69,7 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-    
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
@@ -75,70 +80,69 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.ID_RSA }}
-          name: id_rsa
-          known_hosts: unnecessary
-          if_key_exists: fail
-
       - name: Install Packages
-        run: pip install -r requirements.txt
-      
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+          pip install -r requirements.txt
+
       - name: Setup Ansible Roles
         run: |
-          rm kubespray/playbooks/roles || true
-          ln -s ../roles kubespray/playbooks/roles
+          rm ansible/kubespray/playbooks/roles || true
+          ln -s ../roles ansible/kubespray/playbooks/roles
 
-      - name: Run PreAnsible Jobs
-        if: github.ref == 'refs/heads/main'
-        run: ansible-playbook -i inventory/sample/inventory.ini additional.yml -b -v
+      - name: Run Prerequisites
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'Install'
+        run: >-
+          ansible-playbook -i inventory/sample/inventory.ini ansible/prereqs.yml
+          --limit kube_control_plane
+          --extra-vars @ansible/auth.yml -b -v
 
       - name: Run Ansible Kubespray
         env:
-          CMD: ${{ github.event.inputs.action }}
+          CMD: ${{ inputs.action || 'Upgrade' }}
           EVENT: ${{ github.event_name }}
-          ANSIBLE_CONFIG: ${{ github.workspace }}/kubespray/ansible.cfg
         run: |
-          CMD=${CMD:-"UpgradeAddons"}
-          echo $EVENT
-
-          if [ "$EVENT" != "pull_request" ]; then
-            ARGS="--check --diff"
+          ARGS=()
+          if [ "$EVENT" = "pull_request" ]; then
+            ARGS+=(--check --diff)
           fi
 
-          if [ "$CMD" == "Install" ]; then
-            ansible-playbook -i inventory/sample/inventory.ini kubespray/playbooks/facts.yml -b -v
-            ARGS="kubespray/cluster.yml -l kube_control_plane"
-          elif [ "$CMD" == "UpgradeAddons" ]; then
-            ARGS="kubespray/upgrade-cluster.yml --tags=apps"
-          elif [ "$CMD" == "ScaleNodes" ]; then
-            ARGS="kubespray/scale.yml"
-          elif [ "$CMD" == "Upgrade" ]; then
-            ARGS="kubespray/upgrade-cluster.yml"
-          elif [ "$CMD" == "Reset" ]; then
-            ARGS="kubespray/reset.yml -e reset_confirmation=yes"
-          fi
+          case "$CMD" in
+            Install)
+              PLAYBOOK=ansible/kubespray/cluster.yml
+              ARGS+=(--limit kube_control_plane)
+              ;;
+            Upgrade)
+              PLAYBOOK=ansible/kubespray/upgrade-cluster.yml
+              ;;
+            "Upgrade Apps")
+              PLAYBOOK=ansible/kubespray/upgrade-cluster.yml
+              ARGS+=(--tags=apps)
+              ;;
+            *)
+              echo "Unsupported action: $CMD" >&2
+              exit 1
+              ;;
+          esac
 
-          ansible-playbook -i inventory/sample/inventory.ini $ARGS -b -v
-
-      - name: Run Post Install
-        if: github.event_name != 'pull_request'
-        run: ansible-playbook -i inventory/sample/inventory.ini post_install.yml -b -v
+          ansible-playbook -i inventory/sample/inventory.ini "$PLAYBOOK" "${ARGS[@]}" \
+            --extra-vars @ansible/auth.yml -b -v
 
       - name: Get admin.conf
-        if: (github.event.inputs.action == 'Install' || github.event.inputs.action == 'UpgradeAddons') && github.event_name != 'pull_request'
-        env:
-          KUBE_CONFIG: ${{ github.workspace }}/admin.conf
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@192.168.1.10 "sudo cat /etc/kubernetes/super-admin.conf" > $KUBE_CONFIG
-          sed -i 's/127.0.0.1/192.168.1.10/g' $KUBE_CONFIG
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'Install'
+        run: >-
+          ansible-playbook -i inventory/sample/inventory.ini ansible/admin_conf.yml
+          --limit kube_control_plane
+          --extra-vars @ansible/auth.yml
+          --extra-vars "admin_conf_dest=$GITHUB_WORKSPACE/admin.conf" -b
 
       - name: Install Root Chart
-        if: (github.event.inputs.action == 'Install' || github.event.inputs.action == 'UpgradeAddons') && github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'Install'
         env:
           KUBECONFIG: ${{ github.workspace }}/admin.conf
+          ID_RSA: ${{ secrets.ID_RSA }}
+          ID_RSA_PUB: ${{ secrets.ID_RSA_PUB }}
         run: |
           sudo apt-get update
           sudo apt-get install -y curl
@@ -147,4 +151,12 @@ jobs:
 
           ./kubectl get ns argocd || ./kubectl create namespace argocd
           ./kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-          ./kubectl apply -f application.yaml
+          ./kubectl create secret generic ssh-password -n argocd \
+            --from-literal=password="$SSH_PASSWORD" \
+            --from-literal=id_rsa="$ID_RSA" \
+            --from-literal=id_rsa_pub="$ID_RSA_PUB" --dry-run=client -o yaml | ./kubectl apply -f -
+          ./kubectl apply -f charts/application.yaml
+
+      - name: Clean up credentials
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE/admin.conf"

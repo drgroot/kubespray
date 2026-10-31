@@ -1,0 +1,21 @@
+---
+- name: Fetch control plane admin configuration
+  hosts: kube_control_plane
+  gather_facts: false
+  tasks:
+    - name: Fetch super-admin configuration from the first control plane
+      ansible.builtin.fetch:
+        src: /etc/kubernetes/super-admin.conf
+        dest: "{{ admin_conf_dest }}"
+        flat: true
+      run_once: true
+      no_log: true
+
+    - name: Set the API server address for the runner
+      ansible.builtin.replace:
+        path: "{{ admin_conf_dest }}"
+        regexp: '127\.0\.0\.1'
+        replace: "{{ ansible_host | default(inventory_hostname) }}"
+      delegate_to: localhost
+      become: false
+      run_once: true

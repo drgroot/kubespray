@@ -1,0 +1,4 @@
+---
+ansible_password: "{{ lookup('ansible.builtin.env', 'SSH_PASSWORD') }}"
+ansible_become_password: "{{ lookup('ansible.builtin.env', 'SSH_PASSWORD') }}"
+ansible_ssh_common_args: "-o PreferredAuthentications=password -o PubkeyAuthentication=no"
