@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export HOME="${USER_HOME:-/home/steamheadless}"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_CACHE_HOME="$HOME/.cache"
+
+case "${0##*/}" in
+    pcsx2)
+        mkdir -p "$XDG_CONFIG_HOME/PCSX2"
+        # PCSX2 appends /PCSX2 to -datapath. The extracted AppImage needs no FUSE.
+        exec /opt/pcsx2/AppRun -datapath "$XDG_CONFIG_HOME" "$@"
+        ;;
+    dolphin-emu)
+        exec /usr/bin/dolphin-emu "$@"
+        ;;
+    mupen64plus)
+        mkdir -p "$XDG_CONFIG_HOME/mupen64plus"
+        exec /usr/bin/mupen64plus --configdir "$XDG_CONFIG_HOME/mupen64plus" "$@"
+        ;;
+    *)
+        echo "Run this launcher as pcsx2, dolphin-emu, or mupen64plus." >&2
+        exit 2
+        ;;
+esac

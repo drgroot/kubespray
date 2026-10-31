@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export HOME="${USER_HOME:-/home/steamheadless}"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_CACHE_HOME="$HOME/.cache"
+cd "$HOME"
+exec /bin/bash /run/steam-headless/coder-agent/bootstrap
