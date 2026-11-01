@@ -1,5 +1,11 @@
 fullnameOverride: media
 storage:
+  games:
+    enabled: true
+    storageClass: thorin-nobackup
+    accessMode: ReadWriteMany
+    size: 100Gi
+    mountPath: /mnt/games
   media:
     enabled: true
     storageClass: thorin-nobackup

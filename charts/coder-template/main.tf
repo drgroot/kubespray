@@ -87,13 +87,13 @@ resource "coder_app" "steam" {
 
 data "kubernetes_persistent_volume_claim_v1" "games" {
   metadata {
-    name      = "media-media"
+    name      = "media-games"
     namespace = local.namespace
   }
 }
 
 # Keep the home and appliance state when a workspace stops; delete them only
-# when the workspace is deleted. Games belong to the existing media claim.
+# when the workspace is deleted. Games belong to the chart-managed games claim.
 resource "kubernetes_persistent_volume_claim_v1" "home" {
   metadata {
     name      = "${local.name}-home"

@@ -70,15 +70,15 @@ run "started" {
   }
 
   # Scenario: persistent paths. Expect home and appliance state to use the
-  # private home PVC, and games to reference the existing shared media PVC.
+  # private home PVC, and games to reference the chart-managed games PVC.
   assert {
     condition = (
       kubernetes_persistent_volume_claim_v1.home.spec[0].storage_class_name == "thorin-default" &&
       anytrue([for mount in kubernetes_pod_v1.steam[0].spec[0].container[0].volume_mount : mount.name == "home" && mount.mount_path == "/home/steamheadless" && mount.sub_path == "home"]) &&
       anytrue([for mount in kubernetes_pod_v1.steam[0].spec[0].container[0].volume_mount : mount.name == "home" && mount.mount_path == "/var/lib/steam-headless" && mount.sub_path == "state"]) &&
-      anytrue([for volume in kubernetes_pod_v1.steam[0].spec[0].volume : volume.name == "games" && try(volume.persistent_volume_claim[0].claim_name, "") == "media-media"])
+      anytrue([for volume in kubernetes_pod_v1.steam[0].spec[0].volume : volume.name == "games" && try(volume.persistent_volume_claim[0].claim_name, "") == "media-games"])
     )
-    error_message = "Home/state must persist privately and games must use the existing media-media claim."
+    error_message = "Home/state must persist privately and games must use the chart-managed media-games claim."
   }
 
   # Scenario: Sunshine gateway. Expect the fixed Pod name and label used by the
