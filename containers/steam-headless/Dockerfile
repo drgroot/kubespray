@@ -44,6 +44,7 @@ COPY --chmod=755 init-emulators.sh /usr/local/sh-init.d/95-configure_emulators.s
 COPY --chmod=755 start-coder-agent /usr/local/bin/start-coder-agent
 COPY --chmod=755 start-steam-headless /usr/local/bin/start-steam-headless
 COPY coder-agent.service /etc/systemd/system/coder-agent.service
+COPY steam-local-runtime.conf /etc/systemd/system/steam-headless-steam.service.d/20-local-runtime.conf
 COPY pcsx2.desktop /usr/share/applications/pcsx2.desktop
 
 ENV PUID=1000 \
