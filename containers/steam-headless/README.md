@@ -2,8 +2,8 @@
 
 Uses `josh5/steam-headless:latest` as the base, with PCSX2 2.8.2 (official
 AppImage, checksum verified and extracted so FUSE is unnecessary), Dolphin,
-and Mupen64Plus including its plugins. Supports Linux amd64. The current upstream
-latest image uses Fedora and systemd.
+and Gopher64 1.1.42 (official standalone executable, checksum verified).
+Supports Linux amd64. The current upstream latest image uses Fedora and systemd.
 
 Startup prefers a visible NVIDIA DRM render device for both the compositor and
 encoder, using the PCI vendor rather than a fixed `renderD` number. Explicit
@@ -43,6 +43,7 @@ docker build --pull -t steam-headless:local containers/steam-headless
 The existing container build workflow discovers this directory automatically.
 Use `--pull` to fetch the latest base image on each build. Update `PCSX2_VERSION`
 and `PCSX2_SHA256` together when upgrading PCSX2.
+Update `GOPHER64_VERSION` and `GOPHER64_SHA256` together when upgrading Gopher64.
 
 ## Persistent configuration
 
@@ -55,10 +56,10 @@ without overwriting emulator settings.
 | --- | --- | --- |
 | PCSX2 | `~/.config/PCSX2/inis` | BIOS, memory cards and save states under `~/.config/PCSX2` |
 | Dolphin | `~/.config/dolphin-emu` | `~/.local/share/dolphin-emu` |
-| Mupen64Plus | `~/.config/mupen64plus/mupen64plus.cfg` | `~/.local/share/mupen64plus` |
+| Gopher64 | `~/.config/gopher64` | `~/.local/share/gopher64` (saves), `~/.cache/gopher64` (cache) |
 
-Here `~` is `/home/steamheadless`. Launch `pcsx2` or `dolphin-emu` from the desktop
-menu or a terminal. Run N64 games with `mupen64plus /mnt/games/n64/game.z64`.
+Here `~` is `/home/steamheadless`. Launch `pcsx2`, `dolphin-emu`, or `gopher64` from
+the desktop menu or a terminal. Run N64 games with `gopher64 /mnt/games/n64/game.z64`.
 Configs are generated on first use. Put your PS2 BIOS dump in
 `/home/steamheadless/.config/PCSX2/bios` and select it in PCSX2's first-run wizard.
 Games can live on a separate `/mnt/games` mount.
@@ -85,4 +86,5 @@ app can proxy the UI with subdomain routing. Configure authentication and GPU
 access following the current upstream documentation.
 
 References: [Steam Headless](https://github.com/Steam-Headless/docker-steam-headless),
+[Gopher64](https://github.com/gopher64/gopher64),
 [Coder template tutorial](https://coder.com/docs/tutorials/template-from-scratch/).
