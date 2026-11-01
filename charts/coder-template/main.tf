@@ -49,10 +49,25 @@ data "coder_parameter" "memory" {
   }
 }
 
+data "coder_parameter" "iscsi" {
+  name         = "iscsi"
+  display_name = "Home iSCSI volume"
+  description  = "Portal;target IQN;LUN. Defaults to the 1024 GiB Steam LUN on Thorin."
+  type         = "string"
+  default      = "192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;3"
+  mutable      = true
+  order        = 3
+
+  validation {
+    regex = "^[^;[:space:]]+;iqn\\.[^;[:space:]]+;[0-9]+$"
+    error = "Enter portal;target IQN;LUN, for example 192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;3."
+  }
+}
+
 locals {
-  namespace = "media"
-  name      = "steam-${data.coder_workspace.me.id}"
-  image     = "dockerhub.yusufali.ca/yusufali/steam-headless:latest"
+  home_iscsi = split(";", data.coder_parameter.iscsi.value)
+  namespace  = "media"
+  image      = "dockerhub.yusufali.ca/yusufali/steam-headless:latest"
   sunshine_ports = {
     https   = { port = 47984, protocol = "TCP" }
     http    = { port = 47989, protocol = "TCP" }
@@ -90,28 +105,6 @@ data "kubernetes_persistent_volume_claim_v1" "games" {
     name      = "media-games"
     namespace = local.namespace
   }
-}
-
-# Keep the home and appliance state when a workspace stops; delete them only
-# when the workspace is deleted. Games belong to the chart-managed games claim.
-resource "kubernetes_persistent_volume_claim_v1" "home" {
-  metadata {
-    name      = "${local.name}-home"
-    namespace = local.namespace
-    labels    = local.labels
-  }
-
-  spec {
-    access_modes       = ["ReadWriteOnce"]
-    storage_class_name = "thorin-default"
-    resources {
-      requests = {
-        storage = "100Gi"
-      }
-    }
-  }
-
-  wait_until_bound = false
 }
 
 resource "kubernetes_pod_v1" "steam" {
@@ -287,8 +280,12 @@ resource "kubernetes_pod_v1" "steam" {
 
     volume {
       name = "home"
-      persistent_volume_claim {
-        claim_name = kubernetes_persistent_volume_claim_v1.home.metadata[0].name
+      iscsi {
+        target_portal = local.home_iscsi[0]
+        iqn           = local.home_iscsi[1]
+        lun           = tonumber(local.home_iscsi[2])
+        fs_type       = "ext4"
+        read_only     = false
       }
     }
     volume {

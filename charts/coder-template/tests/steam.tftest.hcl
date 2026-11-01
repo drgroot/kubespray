@@ -1,7 +1,9 @@
 # Scenarios:
 # - Normal: starting a workspace creates one GPU Pod with persistent home/state
-#   and uses the existing games claim, with defaults of 4 CPUs and 8 GiB.
-# - Edge: stopping a workspace removes its Pod while retaining its home PVC.
+#   on the 1024 GiB Steam iSCSI LUN and uses the existing games claim,
+#   with defaults of 4 CPUs and 8 GiB.
+# - Edge: stopping a workspace removes its Pod while leaving the external iSCSI LUN intact.
+# - Normal: a custom iSCSI tuple changes the portal, IQN, and LUN together.
 # - Normal: changing CPU and memory updates both resource requests and limits.
 # - Normal: the fixed Pod identity matches the chart-managed Service selector,
 #   with Sunshine streaming ports and no collision with the gateway's host ports.
@@ -40,6 +42,13 @@ override_data {
   }
 }
 
+override_data {
+  target = data.coder_parameter.iscsi
+  values = {
+    value = "192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;3"
+  }
+}
+
 run "started" {
   command = plan
 
@@ -70,15 +79,24 @@ run "started" {
   }
 
   # Scenario: persistent paths. Expect home and appliance state to use the
-  # private home PVC, and games to reference the chart-managed games PVC.
+  # Steam iSCSI LUN, and games to reference the chart-managed games PVC.
   assert {
     condition = (
-      kubernetes_persistent_volume_claim_v1.home.spec[0].storage_class_name == "thorin-default" &&
+      data.coder_parameter.iscsi.default == "192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;3" &&
+      anytrue([for volume in kubernetes_pod_v1.steam[0].spec[0].volume : volume.name == "home" && try(
+        volume.iscsi[0].target_portal == "192.168.1.3:3260" &&
+        volume.iscsi[0].iqn == "iqn.2026-01.com.middleearth:thorin" &&
+        volume.iscsi[0].lun == 3 &&
+        volume.iscsi[0].fs_type == "ext4" &&
+        volume.iscsi[0].read_only == false &&
+        length(volume.persistent_volume_claim) == 0,
+        false
+      )]) &&
       anytrue([for mount in kubernetes_pod_v1.steam[0].spec[0].container[0].volume_mount : mount.name == "home" && mount.mount_path == "/home/steamheadless" && mount.sub_path == "home"]) &&
       anytrue([for mount in kubernetes_pod_v1.steam[0].spec[0].container[0].volume_mount : mount.name == "home" && mount.mount_path == "/var/lib/steam-headless" && mount.sub_path == "state"]) &&
       anytrue([for volume in kubernetes_pod_v1.steam[0].spec[0].volume : volume.name == "games" && try(volume.persistent_volume_claim[0].claim_name, "") == "media-games"])
     )
-    error_message = "Home/state must persist privately and games must use the chart-managed media-games claim."
+    error_message = "Home/state must persist on Steam iSCSI LUN 3 and games must use the chart-managed media-games claim."
   }
 
   # Scenario: Sunshine gateway. Expect the fixed Pod name and label used by the
@@ -116,14 +134,13 @@ run "stopped" {
     }
   }
 
-  # Scenario: start_count=0. Expect no Pod and the same home PVC identity as the
-  # started plan, so a stop/start does not replace persistent workspace data.
+  # Scenario: start_count=0. Expect no Pod. The external iSCSI LUN is not a
+  # Terraform resource, so stopping the workspace cannot destroy its data.
   assert {
     condition = (
-      length(kubernetes_pod_v1.steam) == 0 &&
-      kubernetes_persistent_volume_claim_v1.home.metadata[0].name == "steam-00000000-0000-0000-0000-000000000001-home"
+      length(kubernetes_pod_v1.steam) == 0
     )
-    error_message = "Stopping a workspace must retain its stable home PVC and remove its Pod."
+    error_message = "Stopping a workspace must remove its Pod."
   }
 }
 
@@ -155,5 +172,30 @@ run "resized" {
       kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].limits["nvidia.com/gpu"] == "1"
     )
     error_message = "CPU and memory changes must update requests and limits without changing the GPU allocation."
+  }
+}
+
+run "custom_iscsi" {
+  command = plan
+
+  override_data {
+    target = data.coder_parameter.iscsi
+    values = {
+      value = "192.0.2.10:3260;iqn.2026-01.example:steam;7"
+    }
+  }
+
+  # Scenario: custom portal;IQN;LUN. Expect all three selected values on the
+  # home volume, with the same persistent home/state mounts.
+  assert {
+    condition = anytrue([
+      for volume in kubernetes_pod_v1.steam[0].spec[0].volume : volume.name == "home" && try(
+        volume.iscsi[0].target_portal == "192.0.2.10:3260" &&
+        volume.iscsi[0].iqn == "iqn.2026-01.example:steam" &&
+        volume.iscsi[0].lun == 7,
+        false
+      )
+    ])
+    error_message = "The home volume must use the selected iSCSI portal, IQN, and numeric LUN."
   }
 }
