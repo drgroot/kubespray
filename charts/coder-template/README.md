@@ -42,10 +42,12 @@ and the media chart (Service and routes) before starting a workspace.
 The namespace must already contain `media-media` and `cluster-docker-secrets`.
 The custom image must have been published by the container build workflow.
 
-The Pod uses its own network namespace, host input devices, `/run/udev`, and a
-privileged container for the desktop and systemd. `/run` and `/dev/shm` use
-memory-backed volumes. The NVIDIA runtime provides GPU devices and driver
-libraries.
+The Pod uses its own network namespace, private writable `/dev/input` and
+`/run/udev` directories, and the host's `/dev/uinput` for virtual controllers.
+Its input daemon populates its own device nodes and udev database before the
+desktop starts. The privileged container runs the desktop and systemd; `/run`,
+`/run/udev`, and `/dev/shm` use memory-backed volumes. The NVIDIA runtime
+provides GPU devices and driver libraries.
 
 Open the owner-only **Steam** app in Coder to reach the HTTPS UI on port 8483
 and complete initial setup, which enables Sunshine. Use the same app for

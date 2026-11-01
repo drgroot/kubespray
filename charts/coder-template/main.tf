@@ -282,7 +282,6 @@ resource "kubernetes_pod_v1" "steam" {
       volume_mount {
         name       = "udev"
         mount_path = "/run/udev"
-        read_only  = true
       }
     }
 
@@ -317,10 +316,8 @@ resource "kubernetes_pod_v1" "steam" {
     }
     volume {
       name = "input"
-      host_path {
-        path = "/dev/input"
-        type = "Directory"
-      }
+      # shinputd discovers virtual devices into the container's private input tree.
+      empty_dir {}
     }
     volume {
       name = "uinput"
@@ -331,9 +328,9 @@ resource "kubernetes_pod_v1" "steam" {
     }
     volume {
       name = "udev"
-      host_path {
-        path = "/run/udev"
-        type = "Directory"
+      # The input daemon writes its own udev database before starting KWin.
+      empty_dir {
+        medium = "Memory"
       }
     }
   }

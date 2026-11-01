@@ -5,6 +5,8 @@
 # - Normal: changing CPU and memory updates both resource requests and limits.
 # - Normal: the fixed Pod identity matches the chart-managed Service selector,
 #   with Sunshine streaming ports and no collision with the gateway's host ports.
+# - Edge: shinputd requires writable private input/udev directories; a read-only
+#   host udev mount prevents the compositor and UI from starting.
 
 mock_provider "coder" {}
 mock_provider "kubernetes" {}
@@ -90,6 +92,16 @@ run "started" {
       alltrue([for port in kubernetes_pod_v1.steam[0].spec[0].container[0].port : port.host_port == null])
     )
     error_message = "The fixed Steam Pod must match the chart-managed Service and expose Sunshine without using host ports."
+  }
+
+  # Scenario: input discovery startup. Expect private emptyDir volumes for the
+  # input tree and udev database, mounted writable so shinputd can initialize.
+  assert {
+    condition = (
+      alltrue([for volume in kubernetes_pod_v1.steam[0].spec[0].volume : length(volume.empty_dir) == 1 && length(volume.host_path) == 0 if contains(["input", "udev"], volume.name)]) &&
+      alltrue([for mount in kubernetes_pod_v1.steam[0].spec[0].container[0].volume_mount : mount.read_only != true if contains(["input", "udev"], mount.name)])
+    )
+    error_message = "Input discovery requires private writable /dev/input and /run/udev volumes."
   }
 }
 
