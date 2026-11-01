@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: steam-remote-play
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: steamheadless
+  ports:
+    {{- range $port := list 27036 27037 }}
+    - name: remote-play-tcp-{{ $port }}
+      protocol: TCP
+      port: {{ $port }}
+      targetPort: {{ $port }}
+    {{- end }}
+    {{- range $port := list 27031 27036 }}
+    - name: remote-play-udp-{{ $port }}
+      protocol: UDP
+      port: {{ $port }}
+      targetPort: {{ $port }}
+    {{- end }}
+{{- range $port := list 27036 27037 }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: TCPRoute
+metadata:
+  name: steam-remote-play-tcp-{{ $port }}
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: steam-remote-play-tcp-{{ $port }}
+  rules:
+    - backendRefs:
+        - name: steam-remote-play
+          port: {{ $port }}
+{{- end }}
+{{- range $port := list 27031 27036 }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: UDPRoute
+metadata:
+  name: steam-remote-play-udp-{{ $port }}
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: steam-remote-play-udp-{{ $port }}
+  rules:
+    - backendRefs:
+        - name: steam-remote-play
+          port: {{ $port }}
+{{- end }}

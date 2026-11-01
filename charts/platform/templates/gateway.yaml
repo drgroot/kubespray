@@ -51,6 +51,32 @@ spec:
   gatewayClassName: envoy-nodeport
 
   listeners:
+    {{- range $port := list 27036 27037 }}
+    - name: steam-remote-play-tcp-{{ $port }}
+      protocol: TCP
+      port: {{ $port }}
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: media
+    {{- end }}
+    {{- range $port := list 27031 27036 }}
+    - name: steam-remote-play-udp-{{ $port }}
+      protocol: UDP
+      port: {{ $port }}
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: media
+    {{- end }}
     {{- range $port := list 47984 47989 48010 }}
     - name: sunshine-tcp-{{ $port }}
       protocol: TCP

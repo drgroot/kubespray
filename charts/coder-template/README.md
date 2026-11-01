@@ -87,6 +87,17 @@ Steam Pod becomes ready.
 
 Port mapping follows the [Sunshine networking documentation](https://docs.lizardbyte.dev/projects/sunshine/v0.22.2/about/advanced_usage.html#port).
 
+## Steam Remote Play through Gateway API
+
+The media chart also owns the `media/steam-remote-play` Service, selecting the
+same Steam Pod, with TCPRoutes and UDPRoutes to dedicated gateway listeners.
+The gateway exposes TCP 27036 and 27037, and UDP 27031 and 27036, following
+[Steam's Remote Play documentation](https://help.steampowered.com/en/faqs/view/0689-74B8-92AC-10F2).
+Enable Remote Play in Steam's settings and connect through the gateway node IP,
+such as `192.168.1.10`. LAN broadcast discovery does not traverse these routes;
+use manual host pairing in Steam Link when discovery does not find the host.
+These ports share the same single active workspace restriction as Sunshine.
+
 ## Validation and publication
 
 `.github/workflows/coder-template.yml` formats, validates, and runs Terraform
