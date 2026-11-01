@@ -7,8 +7,9 @@ description: Steam Headless with PCSX2, Dolphin, and Mupen64Plus on the on-premi
 
 This Coder template creates the Pod `media/steamheadless` using
 `dockerhub.yusufali.ca/yusufali/steam-headless:latest`, always pulled through the
-on-premise Docker mirror. CPU cores and memory in GiB are the only workspace
-parameters; defaults are 4 cores and 8 GiB. The Pod requests one
+on-premise Docker mirror. Workspace parameters select CPU cores, memory in GiB,
+and the home iSCSI volume; defaults are 4 cores, 8 GiB, and Steam LUN 3 on Thorin.
+The Pod requests one
 `nvidia.com/gpu` allocation through the `nvidia` runtime class. With the cluster's
 current time-slicing configuration, that allocation is one GPU share.
 
@@ -20,11 +21,22 @@ The template preserves the image's startup command and supplies
 
 ## Storage
 
-Each workspace gets a 100 GiB PVC on `thorin-default`, named using its workspace
-ID. Its `home` subdirectory mounts at `/home/steamheadless`, and its root-owned
-`state` subdirectory mounts at `/var/lib/steam-headless` so appliance identity,
-authentication, and TLS state survive restarts. Stopping a workspace deletes
-only its Pod. Deleting the workspace also deletes its home PVC.
+Home and appliance state use the existing 1024 GiB Steam iSCSI LUN directly,
+formatted as ext4. The `iscsi` workspace parameter uses `portal;target IQN;LUN`
+format and defaults to:
+
+```text
+192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;3
+```
+
+The target identifies LUN 3 as `steam_zp` and reports 1,099,511,627,776 bytes
+(1024 GiB). LUN 4 is the common development home and is not the Steam volume.
+The Steam LUN's `home` subdirectory mounts at `/home/steamheadless`, and its
+root-owned `state` subdirectory mounts at `/var/lib/steam-headless` so appliance
+identity, authentication, and TLS state survive restarts. Stopping or deleting
+a workspace removes its Pod without deleting the external LUN. All workspaces
+using the default refer to the same home and state; run only one at a time.
+The template no longer creates an NFS home PVC.
 
 Games mount read/write at `/mnt/games` from the `games` subdirectory of the
 chart-managed `media-games` PVC (100 GiB, ReadWriteMany) on `thorin-nobackup`, declared in
@@ -40,8 +52,10 @@ directory into the new claim's `games` directory before restarting the workspace
 ## Cluster requirements
 
 Coder's existing `coder-workspace-perms` role grants `servc-infra/coder`
-permissions to manage Pods and PVCs in `media`. The media chart owns the Service
-and routes, so Coder needs no additional RBAC. Sync platform (gateway listeners)
+permissions to manage Pods and read PVCs in `media`. Kubernetes nodes running
+the Pod must have an iSCSI initiator installed and reach Thorin on TCP 3260.
+The media chart owns the Service and routes, so Coder needs no additional RBAC.
+Sync platform (gateway listeners)
 and the media chart (Service and routes) before starting a workspace.
 The namespace must already contain `media-games` and `cluster-docker-secrets`.
 The custom image must have been published by the container build workflow.
@@ -81,7 +95,7 @@ these Sunshine routes.
 The fixed gateway address and ports serve **one active Steam workspace**.
 The fixed Pod name `steamheadless` reserves that endpoint for one workspace.
 Stop the active workspace before starting a different Steam workspace.
-Stopping deletes only the Pod while retaining the home PVC and shared games.
+Stopping deletes only the Pod while retaining the iSCSI home/state and shared games.
 The chart-managed Service and routes remain, with no backend until the next
 Steam Pod becomes ready.
 
