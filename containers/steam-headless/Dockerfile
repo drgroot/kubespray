@@ -24,6 +24,11 @@ USER root
 RUN dnf install -y --setopt=install_weak_deps=False dolphin-emu mupen64plus \
     && dnf clean all
 
+# The persistent NVIDIA cache can carry NFS ACLs that the container filesystem
+# cannot preserve. Copy the libraries and links without those permissions/xattrs.
+RUN sed -i 's/^    cp -a /    cp -a --no-preserve=mode,xattr,context /' \
+    /usr/local/bin/steam-headless-provision-nvidia-compat32
+
 COPY --from=pcsx2 /opt/pcsx2 /opt/pcsx2
 COPY --chmod=755 emulator-launcher /usr/local/bin/emulator-launcher
 COPY --chmod=755 init-emulators.sh /usr/local/sh-init.d/95-configure_emulators.sh
