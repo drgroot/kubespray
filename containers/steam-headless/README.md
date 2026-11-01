@@ -15,6 +15,16 @@ Startup also restores Fedora's 64-bit NVIDIA GBM backend link when the runtime
 only injects a Debian-layout link. Without it, Sunshine can select Mesa for
 capture, fail NVENC initialization, and stream green frames through its Vulkan
 fallback.
+When NVIDIA is selected, the compositor service also uses NVIDIA's EGL vendor
+explicitly. KWin's virtual backend can otherwise render on an AMD integrated GPU
+despite the selected DRM device, causing PipeWire format negotiation to fail
+and Moonlight to display a black screen.
+The Plasma desktop shell uses Qt software rendering on NVIDIA to avoid a failed
+Wayland EGL context leaving only the wallpaper visible, with no working panel
+or desktop context menu. This setting is scoped to Plasma's service; games and
+Sunshine retain hardware acceleration.
+Plasma gets up to two minutes to register its desktop shell on the persistent
+home, rather than being torn down after the upstream ten-second startup limit.
 
 The image also adjusts upstream's Steam supervisor to tolerate runtime
 extraction and updater restarts while Valve's launcher is alive. First startup
