@@ -15,12 +15,11 @@ case "${0##*/}" in
     dolphin-emu)
         exec /usr/bin/dolphin-emu "$@"
         ;;
-    mupen64plus)
-        mkdir -p "$XDG_CONFIG_HOME/mupen64plus"
-        exec /usr/bin/mupen64plus --configdir "$XDG_CONFIG_HOME/mupen64plus" "$@"
+    gopher64)
+        exec /opt/gopher64/gopher64 "$@"
         ;;
     *)
-        echo "Run this launcher as pcsx2, dolphin-emu, or mupen64plus." >&2
+        echo "Run this launcher as pcsx2, dolphin-emu, or gopher64." >&2
         exit 2
         ;;
 esac

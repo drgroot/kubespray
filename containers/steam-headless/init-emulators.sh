@@ -10,12 +10,13 @@ install -d -m 0755 -o "${PUID:?}" -g "${PGID:?}" \
     "$USER_HOME/.config/PCSX2" \
     "$USER_HOME/.config/PCSX2/bios" \
     "$USER_HOME/.config/dolphin-emu" \
-    "$USER_HOME/.config/mupen64plus" \
+    "$USER_HOME/.config/gopher64" \
     "$USER_HOME/.local" \
     "$USER_HOME/.local/share" \
     "$USER_HOME/.local/share/dolphin-emu" \
-    "$USER_HOME/.local/share/mupen64plus" \
-    "$USER_HOME/.cache"
+    "$USER_HOME/.local/share/gopher64" \
+    "$USER_HOME/.cache" \
+    "$USER_HOME/.cache/gopher64"
 
 # The template supplies coder_agent.main.init_script and its matching token as
 # environment variables. Upstream clears the environment before starting systemd,
