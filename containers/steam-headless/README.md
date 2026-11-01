@@ -11,6 +11,11 @@ encoder, using the PCI vendor rather than a fixed `renderD` number. Explicit
 The GPU Operator must provide the DRM/KMS-capable driver image configured in the
 bootstrap chart; the stock compute driver image omits `nvidia-drm`.
 
+The image also adjusts upstream's Steam supervisor to tolerate runtime
+extraction and updater restarts while Valve's launcher is alive. First startup
+can take longer on NFS; it must not be treated as a Steam crash just because the
+client binary temporarily exits during an update.
+
 ```sh
 docker build --pull -t steam-headless:local containers/steam-headless
 ```
