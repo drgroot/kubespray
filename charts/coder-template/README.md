@@ -27,11 +27,15 @@ authentication, and TLS state survive restarts. Stopping a workspace deletes
 only its Pod. Deleting the workspace also deletes its home PVC.
 
 Games mount read/write at `/mnt/games` from the `games` subdirectory of the
-existing `media-media` PVC on `thorin-nobackup`, declared in
+chart-managed `media-games` PVC (100 GiB, ReadWriteMany) on `thorin-nobackup`, declared in
 `charts/media/values.yaml`. An init container creates the directories with the
 required ownership. This template never creates or deletes the shared games PVC.
 Steam's shared library lives at `/mnt/games/GameLibrary/Steam`; emulator ROMs can
 also be stored under `/mnt/games`.
+
+Sync the media chart before starting a workspace so the games claim exists.
+For workspaces previously using `media-media`, copy that claim's `games`
+directory into the new claim's `games` directory before restarting the workspace.
 
 ## Cluster requirements
 
@@ -39,7 +43,7 @@ Coder's existing `coder-workspace-perms` role grants `servc-infra/coder`
 permissions to manage Pods and PVCs in `media`. The media chart owns the Service
 and routes, so Coder needs no additional RBAC. Sync platform (gateway listeners)
 and the media chart (Service and routes) before starting a workspace.
-The namespace must already contain `media-media` and `cluster-docker-secrets`.
+The namespace must already contain `media-games` and `cluster-docker-secrets`.
 The custom image must have been published by the container build workflow.
 
 The Pod uses its own network namespace, private writable `/dev/input` and
