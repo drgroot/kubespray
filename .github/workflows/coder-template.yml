@@ -51,9 +51,8 @@ jobs:
         uses: hashicorp/vault-action@v2
         with:
           url: ${{ secrets.VAULT_URL }}
-          method: userpass
-          username: ${{ secrets.VAULT_USERNAME }}
-          password: ${{ secrets.VAULT_PASSWORD }}
+          method: token
+          token: ${{ secrets.VAULT_TOKEN }}
           exportEnv: false
           secrets: |
             servc/data/iac/coder-onpremise url | CODER_URL ;

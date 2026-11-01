@@ -50,37 +50,16 @@ crossplane:
         - key: tokenkey
           value: token
 
-    github-vault-password:
+    github-vault-token:
       enabled: true
       type: github
       provider: reposecret
-      name: VAULT_PASSWORD
+      name: VAULT_TOKEN
       vars:
         - key: path
           value: external-infra/vendor/vault
         - key: property
-          value: password
-        - key: repository
-          value: kubespray
-        - key: org
-          value: drgroot
-        - key: credentialpath
-          value: external-infra/vendor/github
-        - key: usernamekey
-          value: username
-        - key: tokenkey
           value: token
-
-    github-vault-username:
-      enabled: true
-      type: github
-      provider: reposecret
-      name: VAULT_USERNAME
-      vars:
-        - key: path
-          value: external-infra/vendor/vault
-        - key: property
-          value: username
         - key: repository
           value: kubespray
         - key: org
