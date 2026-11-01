@@ -25,4 +25,30 @@ if [[ -n "${COMPOSITOR_RENDER_DEVICE:-}" ]]; then
     export ENCODER_RENDER_DEVICE="${ENCODER_RENDER_DEVICE:-$COMPOSITOR_RENDER_DEVICE}"
 fi
 
+# KWin's virtual backend can choose the AMD EGL device even when KWIN_DRM_DEVICES
+# points at NVIDIA. Restrict the compositor's EGL vendor so its exported frames
+# and Sunshine's NVENC importer use the same GPU. Upstream clears the startup
+# environment, so configure the systemd services directly. Plasma's Wayland EGL
+# context can fail in this image; render only its desktop shell in software.
+compositor_device="${COMPOSITOR_RENDER_DEVICE:-}"
+compositor_vendor="/sys/class/drm/${compositor_device##*/}/device/vendor"
+for desktop_service in compositor plasma; do
+    desktop_egl_override="/etc/systemd/system/steam-headless-${desktop_service}.service.d/20-nvidia-egl.conf"
+    if [[ -r "$compositor_vendor" && "$(<"$compositor_vendor")" == 0x10de ]]; then
+        install -d "${desktop_egl_override%/*}"
+        if [[ "$desktop_service" == compositor ]]; then
+            printf '%s\n' '[Service]' \
+                'Environment=__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json' \
+                >"$desktop_egl_override"
+        else
+            printf '%s\n' '[Service]' \
+                'Environment=QT_QUICK_BACKEND=software' \
+                'Environment=QT_WAYLAND_CLIENT_BUFFER_INTEGRATION=shm' \
+                >"$desktop_egl_override"
+        fi
+    else
+        rm -f "$desktop_egl_override"
+    fi
+done
+
 exec /usr/local/bin/steam-headless-init "$@"

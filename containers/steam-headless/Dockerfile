@@ -33,6 +33,11 @@ COPY patch-steam-supervisor.py /usr/local/libexec/patch-steam-supervisor.py
 RUN python3 /usr/local/libexec/patch-steam-supervisor.py /usr/local/bin/steam-headless-steam \
     && bash -n /usr/local/bin/steam-headless-steam
 
+# Plasma's first launch on the persistent NFS home can exceed ten seconds.
+RUN sed -i 's/for _ in {1\.\.200}; do/for _ in {1..2400}; do/' \
+        /usr/local/bin/steam-headless-plasma \
+    && bash -n /usr/local/bin/steam-headless-plasma
+
 COPY --from=pcsx2 /opt/pcsx2 /opt/pcsx2
 COPY --chmod=755 emulator-launcher /usr/local/bin/emulator-launcher
 COPY --chmod=755 init-emulators.sh /usr/local/sh-init.d/95-configure_emulators.sh
