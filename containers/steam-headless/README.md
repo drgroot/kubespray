@@ -5,6 +5,12 @@ AppImage, checksum verified and extracted so FUSE is unnecessary), Dolphin,
 and Mupen64Plus including its plugins. Supports Linux amd64. The current upstream
 latest image uses Fedora and systemd.
 
+Startup prefers a visible NVIDIA DRM render device for both the compositor and
+encoder, using the PCI vendor rather than a fixed `renderD` number. Explicit
+`COMPOSITOR_RENDER_DEVICE` and `ENCODER_RENDER_DEVICE` settings take precedence.
+The GPU Operator must provide the DRM/KMS-capable driver image configured in the
+bootstrap chart; the stock compute driver image omits `nvidia-drm`.
+
 ```sh
 docker build --pull -t steam-headless:local containers/steam-headless
 ```

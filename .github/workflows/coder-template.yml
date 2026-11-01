@@ -2,11 +2,6 @@ name: Test and Publish Steam Template
 
 on:
   pull_request:
-    paths:
-      - charts/coder-template/**
-      - charts/media/chart/templates/steam.yaml
-      - charts/platform/templates/gateway.yaml
-      - .github/workflows/coder-template.yml
   push:
     branches: [main]
     paths:
@@ -16,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: coder-steam-${{ github.ref }}
@@ -24,12 +20,25 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    outputs:
+      template: ${{ steps.filter.outputs.template }}
     steps:
       - uses: actions/checkout@v7
+      - name: Detect template changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            template:
+              - 'charts/coder-template/**'
+              - '.github/workflows/coder-template.yml'
+
       - uses: hashicorp/setup-terraform@v3
+        if: steps.filter.outputs.template == 'true' || github.event_name == 'workflow_dispatch'
         with:
           terraform_version: 1.17.1
       - name: Validate template
+        if: steps.filter.outputs.template == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: charts/coder-template
         run: |
           terraform fmt -recursive -check
@@ -41,8 +50,9 @@ jobs:
     needs: validate
     # Fork PRs run validation without access to publishing credentials.
     if: >-
-      github.event_name != 'pull_request'
-      || github.event.pull_request.head.repo.full_name == github.repository
+      (needs.validate.outputs.template == 'true' || github.event_name == 'workflow_dispatch')
+      && (github.event_name != 'pull_request'
+      || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

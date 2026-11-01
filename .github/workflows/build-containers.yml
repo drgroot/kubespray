@@ -39,7 +39,7 @@ jobs:
           containers = []
           for dockerfile in sorted(Path("containers").glob("*/Dockerfile")):
               package = dockerfile.parent.name
-              options = {"image": package, "tag": "latest", "check-target": ""}
+              options = {"image": package, "tag": "latest", "check-target": "", "kernel-version": ""}
               config = dockerfile.parent / "build.json"
               if config.is_file():
                   overrides = json.loads(config.read_text())
@@ -152,7 +152,7 @@ jobs:
           tags: local/${{ matrix.package }}:${{ steps.metadata.outputs.version }}
           cache-from: type=gha,scope=${{ matrix.package }}
           cache-to: type=gha,mode=max,scope=${{ matrix.package }}
-      - name: Validate kernel module compilation
+      - name: Validate driver kernel module compilation
         if: >-
           (steps.changes.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
           && matrix.check-target != ''
@@ -160,6 +160,8 @@ jobs:
         with:
           context: containers/${{ matrix.package }}
           target: ${{ matrix.check-target }}
+          build-args: |
+            KERNEL_VERSION=${{ matrix.kernel-version }}
           platforms: linux/amd64
           push: false
           cache-from: type=gha,scope=${{ matrix.package }}
