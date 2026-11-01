@@ -32,6 +32,17 @@ nvidia:
         modern:
           nodeSelector:
             kubernetes.io/hostname: kube0
+          repository: dockerhub.yusufali.ca/yusufali
+          image: nvidia-driver-drm
+          imagePullPolicy: Always
+          imagePullSecrets:
+            - cluster-docker-secrets
+          manager:
+            env:
+              - name: ENABLE_GPU_POD_EVICTION
+                value: "true"
+              - name: ENABLE_AUTO_DRAIN
+                value: "false"
           # Uses nvidia.driver.version when version is omitted.
   timeSlicing:
     # Set nvidia.enabled and this flag to true to share each GPU across pods.

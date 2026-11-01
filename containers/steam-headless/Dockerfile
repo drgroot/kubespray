@@ -33,6 +33,7 @@ COPY --from=pcsx2 /opt/pcsx2 /opt/pcsx2
 COPY --chmod=755 emulator-launcher /usr/local/bin/emulator-launcher
 COPY --chmod=755 init-emulators.sh /usr/local/sh-init.d/95-configure_emulators.sh
 COPY --chmod=755 start-coder-agent /usr/local/bin/start-coder-agent
+COPY --chmod=755 start-steam-headless /usr/local/bin/start-steam-headless
 COPY coder-agent.service /etc/systemd/system/coder-agent.service
 COPY pcsx2.desktop /usr/share/applications/pcsx2.desktop
 
@@ -51,5 +52,6 @@ RUN ln -s emulator-launcher /usr/local/bin/pcsx2 \
     && /usr/local/sh-init.d/95-configure_emulators.sh \
     && systemctl enable coder-agent.service
 
-# Keep upstream's root command and systemd: they initialize the desktop,
-# GPU, audio, Steam, and the user before launching the optional Coder agent.
+# Select the NVIDIA render node before upstream prepares the desktop environment.
+# Keep upstream's root/systemd initialization and optional Coder agent service.
+CMD ["/usr/local/bin/start-steam-headless"]

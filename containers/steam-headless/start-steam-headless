@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# DRM numbering can change when GPUs or modules are added. Prefer a visible
+# NVIDIA render node by PCI vendor instead of selecting the first AMD/iGPU node.
+if [[ -z "${COMPOSITOR_RENDER_DEVICE:-}" ]]; then
+    for device in /sys/class/drm/renderD*; do
+        [[ -r "$device/device/vendor" ]] || continue
+        if [[ "$(<"$device/device/vendor")" == 0x10de && -c "/dev/dri/${device##*/}" ]]; then
+            export COMPOSITOR_RENDER_DEVICE="/dev/dri/${device##*/}"
+            break
+        fi
+    done
+fi
+
+if [[ -n "${COMPOSITOR_RENDER_DEVICE:-}" ]]; then
+    export ENCODER_RENDER_DEVICE="${ENCODER_RENDER_DEVICE:-$COMPOSITOR_RENDER_DEVICE}"
+fi
+
+exec /usr/local/bin/steam-headless-init "$@"

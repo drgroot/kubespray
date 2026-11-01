@@ -1,0 +1,6 @@
+{
+  "image": "nvidia-driver-drm",
+  "tag": "580.126.09-ubuntu24.04",
+  "check-target": "kernel-check",
+  "kernel-version": "6.8.0-147-generic"
+}
