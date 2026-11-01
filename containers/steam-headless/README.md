@@ -30,6 +30,11 @@ The image also adjusts upstream's Steam supervisor to tolerate runtime
 extraction and updater restarts while Valve's launcher is alive. First startup
 can take longer on NFS; it must not be treated as a Steam crash just because the
 client binary temporarily exits during an update.
+Steam's generated Pressure Vessel runtime lives in the container-local
+`/var/cache/steam-headless-steam-runtime`. Copying and preparing its libraries on
+the NFS home can delay the Steam window for minutes. Account data and games
+remain on their existing persistent mounts; the runtime cache is recreated
+when the container is replaced.
 
 ```sh
 docker build --pull -t steam-headless:local containers/steam-headless
