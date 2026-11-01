@@ -11,6 +11,11 @@ encoder, using the PCI vendor rather than a fixed `renderD` number. Explicit
 The GPU Operator must provide the DRM/KMS-capable driver image configured in the
 bootstrap chart; the stock compute driver image omits `nvidia-drm`.
 
+Startup also restores Fedora's 64-bit NVIDIA GBM backend link when the runtime
+only injects a Debian-layout link. Without it, Sunshine can select Mesa for
+capture, fail NVENC initialization, and stream green frames through its Vulkan
+fallback.
+
 The image also adjusts upstream's Steam supervisor to tolerate runtime
 extraction and updater restarts while Valve's launcher is alive. First startup
 can take longer on NFS; it must not be treated as a Steam crash just because the

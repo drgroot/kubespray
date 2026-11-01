@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# The NVIDIA runtime can inject Debian's GBM link into this Fedora image while
+# leaving Fedora's 64-bit backend directory empty. Its Debian link then points
+# at an absent allocator library, so capture falls back to the wrong GPU.
+if [[ -e /usr/lib64/libnvidia-allocator.so.1 && ! -e /usr/lib64/gbm/nvidia-drm_gbm.so ]]; then
+    install -d /usr/lib64/gbm
+    ln -sfn ../libnvidia-allocator.so.1 /usr/lib64/gbm/nvidia-drm_gbm.so
+fi
+
 # DRM numbering can change when GPUs or modules are added. Prefer a visible
 # NVIDIA render node by PCI vendor instead of selecting the first AMD/iGPU node.
 if [[ -z "${COMPOSITOR_RENDER_DEVICE:-}" ]]; then
