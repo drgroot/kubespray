@@ -4,7 +4,10 @@
 #   with defaults of 4 CPUs and 8 GiB.
 # - Edge: stopping a workspace removes its Pod while leaving the external iSCSI LUN intact.
 # - Normal: a custom iSCSI tuple changes the portal, IQN, and LUN together.
+# - Normal: the 5 TiB library LUN mounts at Steam's steamapps path and is writable
+#   by UID/GID 1000; selecting a custom library LUN leaves the home LUN unchanged.
 # - Normal: changing CPU and memory updates both resource requests and limits.
+# - Normal: a custom library mount path moves the mount while preserving its LUN.
 # - Normal: the fixed Pod identity matches the chart-managed Service selector,
 #   with Sunshine streaming ports and no collision with the gateway's host ports.
 # - Edge: shinputd requires writable private input/udev directories; a read-only
@@ -39,6 +42,20 @@ override_data {
   target = data.coder_parameter.memory
   values = {
     value = "8"
+  }
+}
+
+override_data {
+  target = data.coder_parameter.steamapps_mount_path
+  values = {
+    value = "/home/steamheadless/.local/share/Steam/steamapps"
+  }
+}
+
+override_data {
+  target = data.coder_parameter.steamapps_iscsi
+  values = {
+    value = "192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;5"
   }
 }
 
@@ -97,6 +114,26 @@ run "started" {
       anytrue([for volume in kubernetes_pod_v1.steam[0].spec[0].volume : volume.name == "games" && try(volume.persistent_volume_claim[0].claim_name, "") == "media-games"])
     )
     error_message = "Home/state must persist on Steam iSCSI LUN 3 and games must use the chart-managed media-games claim."
+  }
+
+  # Scenario: default library storage. Expect LUN 5 at steamapps, with the
+  # same volume mounted in the init container to prepare UID/GID 1000 ownership.
+  assert {
+    condition = (
+      data.coder_parameter.steamapps_iscsi.default == "192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;5" &&
+      data.coder_parameter.steamapps_mount_path.default == "/home/steamheadless/.local/share/Steam/steamapps" &&
+      anytrue([for volume in kubernetes_pod_v1.steam[0].spec[0].volume : volume.name == "steamapps" && try(
+        volume.iscsi[0].target_portal == "192.168.1.3:3260" &&
+        volume.iscsi[0].iqn == "iqn.2026-01.com.middleearth:thorin" &&
+        volume.iscsi[0].lun == 5 &&
+        volume.iscsi[0].fs_type == "ext4" &&
+        volume.iscsi[0].read_only == false,
+        false
+      )]) &&
+      anytrue([for mount in kubernetes_pod_v1.steam[0].spec[0].container[0].volume_mount : mount.name == "steamapps" && mount.mount_path == "/home/steamheadless/.local/share/Steam/steamapps" && (mount.sub_path == null || mount.sub_path == "")]) &&
+      anytrue([for mount in kubernetes_pod_v1.steam[0].spec[0].init_container[0].volume_mount : mount.name == "steamapps" && mount.mount_path == "/steamapps"])
+    )
+    error_message = "Steam's default library must mount writable LUN 5 at steamapps with the same volume available for ownership preparation."
   }
 
   # Scenario: Sunshine gateway. Expect the fixed Pod name and label used by the
@@ -197,5 +234,53 @@ run "custom_iscsi" {
       )
     ])
     error_message = "The home volume must use the selected iSCSI portal, IQN, and numeric LUN."
+  }
+}
+
+run "custom_steamapps_iscsi" {
+  command = plan
+
+  override_data {
+    target = data.coder_parameter.steamapps_iscsi
+    values = {
+      value = "192.0.2.20:3260;iqn.2026-01.example:games;8"
+    }
+  }
+
+  # Scenario: custom library tuple. Expect its portal/IQN/LUN on steamapps,
+  # while home still uses Thorin LUN 3.
+  assert {
+    condition = (
+      anytrue([for volume in kubernetes_pod_v1.steam[0].spec[0].volume : volume.name == "steamapps" && try(
+        volume.iscsi[0].target_portal == "192.0.2.20:3260" &&
+        volume.iscsi[0].iqn == "iqn.2026-01.example:games" &&
+        volume.iscsi[0].lun == 8,
+        false
+      )]) &&
+      anytrue([for volume in kubernetes_pod_v1.steam[0].spec[0].volume : volume.name == "home" && try(volume.iscsi[0].lun == 3, false)])
+    )
+    error_message = "The library must use its selected iSCSI tuple independently of home."
+  }
+}
+
+run "custom_steamapps_mount_path" {
+  command = plan
+
+  override_data {
+    target = data.coder_parameter.steamapps_mount_path
+    values = {
+      value = "/mnt/steam-library/steamapps"
+    }
+  }
+
+  # Scenario: custom absolute mount path. Expect the library mounted at the
+  # selected path, with the default LUN 5 and init ownership mount preserved.
+  assert {
+    condition = (
+      anytrue([for mount in kubernetes_pod_v1.steam[0].spec[0].container[0].volume_mount : mount.name == "steamapps" && mount.mount_path == "/mnt/steam-library/steamapps"]) &&
+      anytrue([for volume in kubernetes_pod_v1.steam[0].spec[0].volume : volume.name == "steamapps" && try(volume.iscsi[0].lun == 5, false)]) &&
+      anytrue([for mount in kubernetes_pod_v1.steam[0].spec[0].init_container[0].volume_mount : mount.name == "steamapps" && mount.mount_path == "/steamapps"])
+    )
+    error_message = "The selected library mount path must be used without changing the library LUN or ownership preparation."
   }
 }

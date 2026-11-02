@@ -8,7 +8,8 @@ description: Steam Headless with PCSX2, Dolphin, and Mupen64Plus on the on-premi
 This Coder template creates the Pod `media/steamheadless` using
 `dockerhub.yusufali.ca/yusufali/steam-headless:latest`, always pulled through the
 on-premise Docker mirror. Workspace parameters select CPU cores, memory in GiB,
-and the home iSCSI volume; defaults are 4 cores, 8 GiB, and Steam LUN 3 on Thorin.
+and the home and Steam library iSCSI volumes; defaults are 4 cores, 8 GiB,
+Steam home LUN 3, and Steam games LUN 5 on Thorin.
 The Pod requests one
 `nvidia.com/gpu` allocation through the `nvidia` runtime class. With the cluster's
 current time-slicing configuration, that allocation is one GPU share.
@@ -42,8 +43,31 @@ Games mount read/write at `/mnt/games` from the `games` subdirectory of the
 chart-managed `media-games` PVC (100 GiB, ReadWriteMany) on `thorin-nobackup`, declared in
 `charts/media/values.yaml`. An init container creates the directories with the
 required ownership. This template never creates or deletes the shared games PVC.
-Steam's shared library lives at `/mnt/games/GameLibrary/Steam`; emulator ROMs can
+Steam's optional shared library lives at `/mnt/games/GameLibrary/Steam`; emulator ROMs can
 also be stored under `/mnt/games`.
+
+The default Steam library mounts a separate ext4 iSCSI volume directly at
+`/home/steamheadless/.local/share/Steam/steamapps` (`~/.local/share/Steam/steamapps`
+in workspace terminals). Set `steamapps_mount_path` to change the mount location;
+use an absolute container path, since `~` is not expanded. Changing the mount path
+does not change Steam's library settings; select the new library location in Steam
+if needed. The `steamapps_iscsi` parameter defaults to:
+
+```text
+192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;5
+```
+
+LUN 5 identifies as `steam_ga` and reports 5,497,558,138,880 bytes (5 TiB).
+The init container sets the volume root's ownership to UID/GID 1000. Kubernetes
+mounts it as ext4 and may initialize an unformatted LUN on first use. The external
+library LUN survives workspace stops and deletion; use it from one workspace at a
+time, like the home LUN.
+
+When updating an existing workspace, the mount covers any `steamapps` files
+already stored on the home LUN. Those files remain on the home LUN; this template
+does not migrate them. Stop Steam and copy any games you want to retain to the
+new LUN before using the new mount, or reinstall them after updating the template
+and restarting the workspace.
 
 Sync the media chart before starting a workspace so the games claim exists.
 For workspaces previously using `media-media`, copy that claim's `games`
@@ -95,7 +119,7 @@ these Sunshine routes.
 The fixed gateway address and ports serve **one active Steam workspace**.
 The fixed Pod name `steamheadless` reserves that endpoint for one workspace.
 Stop the active workspace before starting a different Steam workspace.
-Stopping deletes only the Pod while retaining the iSCSI home/state and shared games.
+Stopping deletes only the Pod while retaining the iSCSI home/state, Steam library, and shared games.
 The chart-managed Service and routes remain, with no backend until the next
 Steam Pod becomes ready.
 
