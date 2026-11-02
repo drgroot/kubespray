@@ -333,6 +333,21 @@ crossplane:
         - key: output
           value: external-infra/iac/postgres-coder
 
+    postgres-grafana:
+      enabled: true
+      type: postgres
+      provider: db
+      name: grafana
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: authelia
+        - key: output
+          value: external-infra/iac/postgres-grafana
+
     postgres-authelia:
       enabled: true
       type: postgres
