@@ -64,10 +64,41 @@ data "coder_parameter" "iscsi" {
   }
 }
 
+data "coder_parameter" "steamapps_iscsi" {
+  name         = "steamapps_iscsi"
+  display_name = "Steam library iSCSI volume"
+  description  = "Portal;target IQN;LUN. Defaults to the 5 TiB Steam games LUN on Thorin."
+  type         = "string"
+  default      = "192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;5"
+  mutable      = true
+  order        = 4
+
+  validation {
+    regex = "^[^;[:space:]]+;iqn\\.[^;[:space:]]+;[0-9]+$"
+    error = "Enter portal;target IQN;LUN, for example 192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;5."
+  }
+}
+
+data "coder_parameter" "steamapps_mount_path" {
+  name         = "steamapps_mount_path"
+  display_name = "Steam library mount path"
+  description  = "Absolute path inside the workspace. The default is ~/.local/share/Steam/steamapps for steamheadless."
+  type         = "string"
+  default      = "/home/steamheadless/.local/share/Steam/steamapps"
+  mutable      = true
+  order        = 5
+
+  validation {
+    regex = "^/[^[:space:]]+$"
+    error = "Enter an absolute directory path, for example /home/steamheadless/.local/share/Steam/steamapps."
+  }
+}
+
 locals {
-  home_iscsi = split(";", data.coder_parameter.iscsi.value)
-  namespace  = "media"
-  image      = "dockerhub.yusufali.ca/yusufali/steam-headless:latest"
+  home_iscsi      = split(";", data.coder_parameter.iscsi.value)
+  steamapps_iscsi = split(";", data.coder_parameter.steamapps_iscsi.value)
+  namespace       = "media"
+  image           = "dockerhub.yusufali.ca/yusufali/steam-headless:latest"
   sunshine_ports = {
     https   = { port = 47984, protocol = "TCP" }
     http    = { port = 47989, protocol = "TCP" }
@@ -134,9 +165,9 @@ resource "kubernetes_pod_v1" "steam" {
       image             = "dockerhub.yusufali.ca/library/alpine:3.24"
       image_pull_policy = "Always"
       command = ["/bin/sh", "-ec", <<-EOT
-        mkdir -p /workspace/home /workspace/state /shared/games
-        chown 1000:1000 /workspace/home /shared/games
-        chmod 0755 /workspace/home /shared/games
+        mkdir -p /workspace/home/.local/share/Steam /workspace/state /shared/games
+        chown 1000:1000 /workspace/home /workspace/home/.local /workspace/home/.local/share /workspace/home/.local/share/Steam /shared/games /steamapps
+        chmod 0755 /workspace/home /shared/games /steamapps
         chown 0:0 /workspace/state
         chmod 0700 /workspace/state
         chmod 1777 /tmp /dev/shm
@@ -154,6 +185,10 @@ resource "kubernetes_pod_v1" "steam" {
       volume_mount {
         name       = "games"
         mount_path = "/shared"
+      }
+      volume_mount {
+        name       = "steamapps"
+        mount_path = "/steamapps"
       }
       volume_mount {
         name       = "tmp"
@@ -253,6 +288,10 @@ resource "kubernetes_pod_v1" "steam" {
         sub_path   = "games"
       }
       volume_mount {
+        name       = "steamapps"
+        mount_path = data.coder_parameter.steamapps_mount_path.value
+      }
+      volume_mount {
         name       = "shm"
         mount_path = "/dev/shm"
       }
@@ -284,6 +323,16 @@ resource "kubernetes_pod_v1" "steam" {
         target_portal = local.home_iscsi[0]
         iqn           = local.home_iscsi[1]
         lun           = tonumber(local.home_iscsi[2])
+        fs_type       = "ext4"
+        read_only     = false
+      }
+    }
+    volume {
+      name = "steamapps"
+      iscsi {
+        target_portal = local.steamapps_iscsi[0]
+        iqn           = local.steamapps_iscsi[1]
+        lun           = tonumber(local.steamapps_iscsi[2])
         fs_type       = "ext4"
         read_only     = false
       }
