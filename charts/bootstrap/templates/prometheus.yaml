@@ -70,12 +70,31 @@ spec:
           {{- end }}
 
           envValueFrom:
+            GF_DATABASE_HOST:
+              secretKeyRef:
+                name: grafana-database
+                key: host
+            GF_DATABASE_NAME:
+              secretKeyRef:
+                name: grafana-database
+                key: database
+            GF_DATABASE_USER:
+              secretKeyRef:
+                name: grafana-database
+                key: username
+            GF_DATABASE_PASSWORD:
+              secretKeyRef:
+                name: grafana-database
+                key: password
             GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
               secretKeyRef:
                 name: grafana-oidc
                 key: client-secret
 
           grafana.ini:
+            database:
+              type: postgres
+              ssl_mode: disable
             server:
               root_url: https://grafana.{{ .Values.domains.external }}/
             auth:
@@ -116,6 +135,31 @@ spec:
               - secretName: grafana-general-tls
                 hosts:
                   - grafana.{{ .Values.domains.external }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: grafana-database
+  namespace: {{ .Values.prometheus.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: grafana-database
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      engineVersion: v2
+      mergePolicy: Merge
+      data:
+        host: '{{ `{{ .hostname }}:{{ .port }}` }}'
+  dataFrom:
+    - extract:
+        key: iac/postgres-grafana
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
