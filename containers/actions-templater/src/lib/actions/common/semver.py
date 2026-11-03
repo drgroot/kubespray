@@ -93,6 +93,7 @@ changelog: WORKFLOW_GENERATOR = {
         "run-name": "CHANGELOG",
         "on": {
             "workflow_dispatch": {},
+            "schedule": [{"cron": "0 0 * * *"}],
         },
         "permissions": {
             "contents": "write",
