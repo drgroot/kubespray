@@ -14,7 +14,7 @@ versions:
   certmanager: 1.21.2
   externaldns: 1.23.0
   prometheus: 77.3.0
-  reloader: 2.2.16
+  reloader: 2.2.19
 
 nvidia:
   enabled: true
