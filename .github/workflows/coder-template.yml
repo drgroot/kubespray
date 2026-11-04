@@ -33,7 +33,7 @@ jobs:
               - 'charts/coder-template/**'
               - '.github/workflows/coder-template.yml'
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         if: steps.filter.outputs.template == 'true' || github.event_name == 'workflow_dispatch'
         with:
           terraform_version: 1.17.1
