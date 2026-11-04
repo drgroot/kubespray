@@ -1,3 +1,6 @@
+# Scenarios added for resource validation:
+# - Normal: resource values above the former maximums are accepted.
+# - Edge: a request above a nonzero limit fails, including while stopped.
 # Scenarios:
 # - Normal: starting a workspace creates one GPU Pod with persistent home/state
 #   on the 1024 GiB Steam iSCSI LUN and uses the existing games claim,
@@ -6,7 +9,8 @@
 # - Normal: a custom iSCSI tuple changes the portal, IQN, and LUN together.
 # - Normal: the 5 TiB library LUN mounts at Steam's steamapps path and is writable
 #   by UID/GID 1000; selecting a custom library LUN leaves the home LUN unchanged.
-# - Normal: changing CPU and memory updates both resource requests and limits.
+# - Normal: CPU and memory requests and limits can be different.
+# - Edge: zero requests, zero limits, mixed zeros, and all zeros omit only selected entries.
 # - Normal: a custom library mount path moves the mount while preserving its LUN.
 # - Normal: the fixed Pod identity matches the chart-managed Service selector,
 #   with Sunshine streaming ports and no collision with the gateway's host ports.
@@ -40,6 +44,20 @@ override_data {
 
 override_data {
   target = data.coder_parameter.memory
+  values = {
+    value = "8"
+  }
+}
+
+override_data {
+  target = data.coder_parameter.cpu_limit
+  values = {
+    value = "4"
+  }
+}
+
+override_data {
+  target = data.coder_parameter.memory_limit
   values = {
     value = "8"
   }
@@ -198,14 +216,28 @@ run "resized" {
     }
   }
 
-  # Scenario: CPU=6, memory=16. Expect matching requests and limits of 6 CPUs
-  # and 16 GiB, while the GPU allocation remains fixed at one.
+  override_data {
+    target = data.coder_parameter.cpu_limit
+    values = {
+      value = "8"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.memory_limit
+    values = {
+      value = "24"
+    }
+  }
+
+  # Scenario: requests CPU=6/memory=16, limits CPU=8/memory=24. Expect
+  # independent planned values, while the GPU allocation remains fixed at one.
   assert {
     condition = (
       kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].requests["cpu"] == "6" &&
-      kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].limits["cpu"] == "6" &&
+      kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].limits["cpu"] == "8" &&
       kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].requests["memory"] == "16Gi" &&
-      kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].limits["memory"] == "16Gi" &&
+      kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].limits["memory"] == "24Gi" &&
       kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].limits["nvidia.com/gpu"] == "1"
     )
     error_message = "CPU and memory changes must update requests and limits without changing the GPU allocation."
@@ -282,5 +314,285 @@ run "custom_steamapps_mount_path" {
       anytrue([for mount in kubernetes_pod_v1.steam[0].spec[0].init_container[0].volume_mount : mount.name == "steamapps" && mount.mount_path == "/steamapps"])
     )
     error_message = "The selected library mount path must be used without changing the library LUN or ownership preparation."
+  }
+}
+
+run "zero_limits" {
+  command = plan
+
+  override_data {
+    target = data.coder_parameter.cpu
+    values = {
+      value = "4"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.memory
+    values = {
+      value = "8"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.cpu_limit
+    values = {
+      value = "0"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.memory_limit
+    values = {
+      value = "0"
+    }
+  }
+
+  # Scenario: requests CPU/memory=[4, 8], limits CPU/memory=[0, 0].
+  # Expect zero-valued entries absent and all other values, including GPU, preserved.
+  assert {
+    condition     = kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].requests == tomap({ "nvidia.com/gpu" = "1", "cpu" = "4", "memory" = "8Gi" })
+    error_message = "Zero-valued requests must be omitted without changing other resources."
+  }
+  assert {
+    condition     = kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].limits == tomap({ "nvidia.com/gpu" = "1" })
+    error_message = "Zero-valued limits must be omitted without changing other resources."
+  }
+}
+
+run "zero_requests" {
+  command = plan
+
+  override_data {
+    target = data.coder_parameter.cpu
+    values = {
+      value = "0"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.memory
+    values = {
+      value = "0"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.cpu_limit
+    values = {
+      value = "8"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.memory_limit
+    values = {
+      value = "24"
+    }
+  }
+
+  # Scenario: requests CPU/memory=[0, 0], limits CPU/memory=[8, 24].
+  # Expect zero-valued entries absent and all other values, including GPU, preserved.
+  assert {
+    condition     = kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].requests == tomap({ "nvidia.com/gpu" = "1" })
+    error_message = "Zero-valued requests must be omitted without changing other resources."
+  }
+  assert {
+    condition     = kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].limits == tomap({ "nvidia.com/gpu" = "1", "cpu" = "8", "memory" = "24Gi" })
+    error_message = "Zero-valued limits must be omitted without changing other resources."
+  }
+}
+
+run "mixed_zero" {
+  command = plan
+
+  override_data {
+    target = data.coder_parameter.cpu
+    values = {
+      value = "4"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.memory
+    values = {
+      value = "0"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.cpu_limit
+    values = {
+      value = "0"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.memory_limit
+    values = {
+      value = "24"
+    }
+  }
+
+  # Scenario: requests CPU/memory=[4, 0], limits CPU/memory=[0, 24].
+  # Expect zero-valued entries absent and all other values, including GPU, preserved.
+  assert {
+    condition     = kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].requests == tomap({ "nvidia.com/gpu" = "1", "cpu" = "4" })
+    error_message = "Zero-valued requests must be omitted without changing other resources."
+  }
+  assert {
+    condition     = kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].limits == tomap({ "nvidia.com/gpu" = "1", "memory" = "24Gi" })
+    error_message = "Zero-valued limits must be omitted without changing other resources."
+  }
+}
+
+run "all_zero" {
+  command = plan
+
+  override_data {
+    target = data.coder_parameter.cpu
+    values = {
+      value = "0"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.memory
+    values = {
+      value = "0"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.cpu_limit
+    values = {
+      value = "0"
+    }
+  }
+
+  override_data {
+    target = data.coder_parameter.memory_limit
+    values = {
+      value = "0"
+    }
+  }
+
+  # Scenario: requests CPU/memory=[0, 0], limits CPU/memory=[0, 0].
+  # Expect zero-valued entries absent and all other values, including GPU, preserved.
+  assert {
+    condition     = kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].requests == tomap({ "nvidia.com/gpu" = "1" })
+    error_message = "Zero-valued requests must be omitted without changing other resources."
+  }
+  assert {
+    condition     = kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].limits == tomap({ "nvidia.com/gpu" = "1" })
+    error_message = "Zero-valued limits must be omitted without changing other resources."
+  }
+}
+
+run "cpu_request_exceeds_limit" {
+  command = plan
+
+  # Scenario: cpu request=100, limit=99, workspace started.
+  # Expected outcome: planning rejects the corresponding limit data source.
+  override_data {
+    target = data.coder_parameter.cpu
+    values = { value = "100" }
+  }
+  override_data {
+    target = data.coder_parameter.cpu_limit
+    values = { value = "99" }
+  }
+  expect_failures = [data.coder_parameter.cpu_limit]
+}
+
+run "cpu_request_exceeds_limit_stopped" {
+  command = plan
+
+  # Scenario: cpu request=100, limit=99, workspace stopped.
+  # Expected outcome: planning rejects the corresponding limit data source.
+  override_data {
+    target = data.coder_parameter.cpu
+    values = { value = "100" }
+  }
+  override_data {
+    target = data.coder_parameter.cpu_limit
+    values = { value = "99" }
+  }
+  override_data {
+    target = data.coder_workspace.me
+    values = {
+      id          = "00000000-0000-0000-0000-000000000001"
+      start_count = 0
+    }
+  }
+  expect_failures = [data.coder_parameter.cpu_limit]
+}
+
+run "memory_request_exceeds_limit" {
+  command = plan
+
+  # Scenario: memory request=100, limit=99, workspace started.
+  # Expected outcome: planning rejects the corresponding limit data source.
+  override_data {
+    target = data.coder_parameter.memory
+    values = { value = "100" }
+  }
+  override_data {
+    target = data.coder_parameter.memory_limit
+    values = { value = "99" }
+  }
+  expect_failures = [data.coder_parameter.memory_limit]
+}
+
+run "memory_request_exceeds_limit_stopped" {
+  command = plan
+
+  # Scenario: memory request=100, limit=99, workspace stopped.
+  # Expected outcome: planning rejects the corresponding limit data source.
+  override_data {
+    target = data.coder_parameter.memory
+    values = { value = "100" }
+  }
+  override_data {
+    target = data.coder_parameter.memory_limit
+    values = { value = "99" }
+  }
+  override_data {
+    target = data.coder_workspace.me
+    values = {
+      id          = "00000000-0000-0000-0000-000000000001"
+      start_count = 0
+    }
+  }
+  expect_failures = [data.coder_parameter.memory_limit]
+}
+
+run "resources_above_former_maximums" {
+  command = plan
+
+  # Scenario: CPU=32 and memory=128 GiB for requests and limits.
+  # Expected outcome: plan succeeds and retains values above the former caps.
+  override_data {
+    target = data.coder_parameter.cpu
+    values = { value = "32" }
+  }
+  override_data {
+    target = data.coder_parameter.cpu_limit
+    values = { value = "32" }
+  }
+  override_data {
+    target = data.coder_parameter.memory
+    values = { value = "128" }
+  }
+  override_data {
+    target = data.coder_parameter.memory_limit
+    values = { value = "128" }
+  }
+  assert {
+    condition = alltrue([
+      for resources in [kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].requests, kubernetes_pod_v1.steam[0].spec[0].container[0].resources[0].limits] :
+      resources["cpu"] == "32" && resources["memory"] == "128Gi"
+    ])
+    error_message = "Resource values above the former maximums must be retained."
   }
 }
