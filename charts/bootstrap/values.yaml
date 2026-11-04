@@ -3,7 +3,7 @@ project: bootstrap
 versions:
   nvidia: v25.3.2
   envoy: 1.9.3
-  crossplane: v2.4.2
+  crossplane: 2.4.3
   crossplaneOpenTofu: v1.1.9
   crossplaneAnsible: v0.8.0
   argoupdater: "0.18"
