@@ -76,7 +76,7 @@ spec:
             memory: 2Gi
 
         backup:
-          image: dockerhub.yusufali.ca/rclone/rclone:latest
+          image: dockerhub.yusufali.ca/rclone/rclone:latest@sha256:2687085f718d3c628f7fdfb77c52a1d344332aed543110bb88088f2c70d43eb5
           secretStore:
             name: external-infra
             type: ClusterSecretStore
