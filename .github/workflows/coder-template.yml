@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Read Coder credentials from Vault
         id: coder_secrets
-        uses: hashicorp/vault-action@v2
+        uses: hashicorp/vault-action@v4
         with:
           url: ${{ secrets.VAULT_URL }}
           method: token

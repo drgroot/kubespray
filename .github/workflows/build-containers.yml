@@ -101,7 +101,7 @@ jobs:
         if: >-
           (steps.changes.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
           && steps.metadata.outputs.publish == 'true'
-        uses: hashicorp/vault-action@v2
+        uses: hashicorp/vault-action@v4
         with:
           url: ${{ secrets.VAULT_URL }}
           method: token
