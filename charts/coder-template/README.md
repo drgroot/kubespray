@@ -7,9 +7,20 @@ description: Steam Headless with PCSX2, Dolphin, and Mupen64Plus on the on-premi
 
 This Coder template creates the Pod `media/steamheadless` using
 `dockerhub.yusufali.ca/yusufali/steam-headless:latest`, always pulled through the
-on-premise Docker mirror. Workspace parameters select CPU cores, memory in GiB,
+on-premise Docker mirror. Workspace parameters select independent CPU and memory requests and limits,
 and the home and Steam library iSCSI volumes; defaults are 4 cores, 8 GiB,
 Steam home LUN 3, and Steam games LUN 5 on Thorin.
+The `cpu` and `memory` parameters set requests; `cpu_limit` and `memory_limit`
+set limits. CPU values are cores and memory values are GiB. Defaults are 4 cores
+and 8 GiB for both requests and limits. Set any value to `0` to omit that entry;
+setting both values for a resource to `0` omits both its request and limit.
+There are no fixed maximums. Validation rejects a request exceeding its nonzero
+limit; a limit of `0` allows any nonnegative request. These omissions apply
+to the submitted Pod configuration: [Kubernetes defaults an omitted request to
+its limit](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+when a limit is set and no admission-time default request applies. Namespace
+policies may also supply defaults for omitted entries.
+
 The Pod requests one
 `nvidia.com/gpu` allocation through the `nvidia` runtime class. With the cluster's
 current time-slicing configuration, that allocation is one GPU share.

@@ -23,29 +23,71 @@ data "coder_workspace_owner" "me" {}
 
 data "coder_parameter" "cpu" {
   name         = "cpu"
-  display_name = "CPU cores"
+  display_name = "CPU request (cores)"
+  description  = "CPU request. Set to 0 to omit."
   type         = "number"
   default      = "4"
   mutable      = true
   order        = 1
 
   validation {
-    min = 1
-    max = 16
+    min = 0
   }
 }
 
 data "coder_parameter" "memory" {
   name         = "memory"
-  display_name = "Memory (GiB)"
+  display_name = "Memory request (GiB)"
+  description  = "Memory request. Set to 0 to omit."
   type         = "number"
   default      = "8"
+  mutable      = true
+  order        = 3
+
+  validation {
+    min = 0
+  }
+}
+
+data "coder_parameter" "cpu_limit" {
+  name         = "cpu_limit"
+  display_name = "CPU limit (cores)"
+  description  = "Set to 0 to omit the limit. Otherwise, must be at least the corresponding request."
+  type         = "number"
+  default      = "4"
   mutable      = true
   order        = 2
 
   validation {
-    min = 4
-    max = 48
+    min = 0
+  }
+
+  lifecycle {
+    postcondition {
+      condition     = tonumber(self.value) == 0 || tonumber(data.coder_parameter.cpu.value) <= tonumber(self.value)
+      error_message = "CPU request cannot exceed its limit unless the limit is 0 (omitted)."
+    }
+  }
+}
+
+data "coder_parameter" "memory_limit" {
+  name         = "memory_limit"
+  display_name = "Memory limit (GiB)"
+  description  = "Set to 0 to omit the limit. Otherwise, must be at least the corresponding request."
+  type         = "number"
+  default      = "8"
+  mutable      = true
+  order        = 4
+
+  validation {
+    min = 0
+  }
+
+  lifecycle {
+    postcondition {
+      condition     = tonumber(self.value) == 0 || tonumber(data.coder_parameter.memory.value) <= tonumber(self.value)
+      error_message = "Memory request cannot exceed its limit unless the limit is 0 (omitted)."
+    }
   }
 }
 
@@ -56,7 +98,7 @@ data "coder_parameter" "iscsi" {
   type         = "string"
   default      = "192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;3"
   mutable      = true
-  order        = 3
+  order        = 5
 
   validation {
     regex = "^[^;[:space:]]+;iqn\\.[^;[:space:]]+;[0-9]+$"
@@ -71,7 +113,7 @@ data "coder_parameter" "steamapps_iscsi" {
   type         = "string"
   default      = "192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;5"
   mutable      = true
-  order        = 4
+  order        = 6
 
   validation {
     regex = "^[^;[:space:]]+;iqn\\.[^;[:space:]]+;[0-9]+$"
@@ -86,7 +128,7 @@ data "coder_parameter" "steamapps_mount_path" {
   type         = "string"
   default      = "/home/steamheadless/.local/share/Steam/steamapps"
   mutable      = true
-  order        = 5
+  order        = 7
 
   validation {
     regex = "^/[^[:space:]]+$"
@@ -213,16 +255,16 @@ resource "kubernetes_pod_v1" "steam" {
       }
 
       resources {
-        requests = {
-          cpu              = data.coder_parameter.cpu.value
-          memory           = "${data.coder_parameter.memory.value}Gi"
-          "nvidia.com/gpu" = "1"
-        }
-        limits = {
-          cpu              = data.coder_parameter.cpu.value
-          memory           = "${data.coder_parameter.memory.value}Gi"
-          "nvidia.com/gpu" = "1"
-        }
+        requests = merge(
+          { "nvidia.com/gpu" = "1" },
+          tonumber(data.coder_parameter.cpu.value) == 0 ? {} : { cpu = data.coder_parameter.cpu.value },
+          tonumber(data.coder_parameter.memory.value) == 0 ? {} : { memory = "${data.coder_parameter.memory.value}Gi" },
+        )
+        limits = merge(
+          { "nvidia.com/gpu" = "1" },
+          tonumber(data.coder_parameter.cpu_limit.value) == 0 ? {} : { cpu = data.coder_parameter.cpu_limit.value },
+          tonumber(data.coder_parameter.memory_limit.value) == 0 ? {} : { memory = "${data.coder_parameter.memory_limit.value}Gi" },
+        )
       }
 
       env {
