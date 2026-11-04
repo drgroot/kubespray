@@ -6,21 +6,18 @@ updates:
       interval: weekly
 
   - package-ecosystem: terraform
+    # Include every current and future Terraform module.
     directories:
-      - /terraform/gitea-token
-      - /terraform/gitea-user
-      - /terraform/postgres-db
-      - /terraform/s3-b2
-      - /terraform/s3-minio
-      - /terraform/s3-ovh
+      - "/terraform/**"
+      - /charts/coder-template
     schedule:
       interval: weekly
 
   - package-ecosystem: helm
+    # Renovate handles Mordor images and bootstrap custom version fields.
     directories:
       - /charts/bootstrap
       - /charts/media/chart
-      - /charts/mordor
       - /charts/platform
       - /charts/postgres
       - /charts/template-multi
