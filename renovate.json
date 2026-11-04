@@ -203,7 +203,7 @@
     },
     {
       "customType": "regex",
-      "description": "Mordor image.name/tag pairs; authenticate to the configured registry",
+      "description": "Mordor image.name/tag pairs",
       "managerFilePatterns": [
         "/^charts/mordor/.*\\.ya?ml$/"
       ],
@@ -227,7 +227,7 @@
     },
     {
       "customType": "regex",
-      "description": "Digest updates for latest tags: Mordor image.name/tag pairs; authenticate to the configured registry",
+      "description": "Digest updates for latest tags: Mordor image.name/tag pairs",
       "managerFilePatterns": [
         "/^charts/mordor/.*\\.ya?ml$/"
       ],
@@ -253,6 +253,16 @@
     }
   ],
   "packageRules": [
+    {
+      "description": "Look up mirror images on Docker Hub while retaining mirror references",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchDepNames": [
+        "/^dockerhub\\.yusufali\\.ca\\//"
+      ],
+      "overridePackageName": "{{{replace '^dockerhub\\.yusufali\\.ca/' 'docker.io/' depName}}}"
+    },
     {
       "description": "Argo Image Updater consumes release-X.Y Git refs, not vX.Y.Z tags",
       "matchDepNames": [
