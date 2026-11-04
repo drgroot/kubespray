@@ -207,7 +207,7 @@ prometheus:
     enabled: true
     image:
       repository: quay.io/thanos/thanos
-      tag: v0.42.4
+      tag: v0.42.5
     prometheus:
       retention: 24h
       storage:
