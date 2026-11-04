@@ -2,7 +2,7 @@ fullnameOverride: bitwarden
 
 image:
   name: dockerhub.yusufali.ca/vaultwarden/server
-  tag: 1.37.1
+  tag: 1.37.5
 
 imagePullSecrets:
   - name: cluster-docker-secrets
