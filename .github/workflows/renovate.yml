@@ -1,0 +1,99 @@
+name: Renovate
+
+on:
+  # Check daily, then run every third UTC day. Unlike */3 in the day-of-month
+  # field, this keeps the three-day cadence across month boundaries.
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  schedule:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.cadence.outputs.run }}
+    steps:
+      - name: Check three-day cadence
+        id: cadence
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          utc_day=$(( $(date -u +%s) / 86400 ))
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]] || (( utc_day % 3 == 0 )); then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+          fi
+
+  renovate:
+    needs: schedule
+    if: needs.schedule.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Read Docker mirror credentials from Vault
+        id: docker_secrets
+        uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ secrets.VAULT_URL }}
+          method: token
+          token: ${{ secrets.VAULT_TOKEN }}
+          exportEnv: false
+          secrets: |
+            external-infra/data/vendor/docker host-mirror | DOCKER_MIRROR_HOST ;
+            external-infra/data/vendor/docker mirror-username | DOCKER_MIRROR_USERNAME ;
+            external-infra/data/vendor/docker mirror-password | DOCKER_MIRROR_PASSWORD ;
+      - name: Configure Renovate mirror authentication
+        env:
+          MIRROR_HOST: ${{ steps.docker_secrets.outputs.DOCKER_MIRROR_HOST }}
+          MIRROR_USERNAME: ${{ steps.docker_secrets.outputs.DOCKER_MIRROR_USERNAME }}
+          MIRROR_PASSWORD: ${{ steps.docker_secrets.outputs.DOCKER_MIRROR_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from urllib.parse import urlsplit
+
+          host = os.environ["MIRROR_HOST"].strip().rstrip("/")
+          parsed = urlsplit(host if "://" in host else "https://" + host)
+          if (parsed.scheme != "https" or not parsed.hostname
+                  or parsed.username or parsed.password or parsed.path
+                  or parsed.query or parsed.fragment):
+              raise SystemExit("Vault mirror host must be an HTTPS registry hostname")
+          if not os.environ["MIRROR_USERNAME"] or not os.environ["MIRROR_PASSWORD"]:
+              raise SystemExit("Vault Docker mirror credentials are empty")
+          rules = json.dumps([{
+              "hostType": "docker",
+              "matchHost": "https://" + parsed.netloc,
+              "username": os.environ["MIRROR_USERNAME"],
+              "password": os.environ["MIRROR_PASSWORD"],
+          }])
+          # Mask the serialized form too, including JSON-escaped credentials.
+          print("::add-mask::" + rules.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"))
+          with open(os.environ["GITHUB_ENV"], "a") as env_file:
+              env_file.write("RENOVATE_HOST_RULES=" + rules + "\n")
+          PY
+      # GitHub access uses the built-in token; Vault uses the existing secrets above.
+      # Enable Settings > Actions > General > Workflow permissions >
+      # Allow GitHub Actions to create and approve pull requests.
+      # PRs opened with GITHUB_TOKEN do not trigger other Actions workflows.
+      - name: Open dependency update pull requests
+        uses: renovatebot/github-action@v46.3.12
+        with:
+          token: ${{ github.token }}
+        env:
+          RENOVATE_PLATFORM: github
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_AUTODISCOVER: 'false'
+          RENOVATE_ONBOARDING: 'false'
+          RENOVATE_REQUIRE_CONFIG: required
+          RENOVATE_GIT_AUTHOR: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
