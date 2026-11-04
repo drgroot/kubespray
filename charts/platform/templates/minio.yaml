@@ -119,6 +119,9 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: minio-create-tfstate-bucket
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
   labels:
     app: minio
 spec:
