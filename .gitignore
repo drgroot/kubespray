@@ -37,6 +37,8 @@ __pycache__/
 .Python
 env/
 build/
+# Workflow generators are source code, not Python build output.
+!containers/actions-templater/src/lib/actions/build/
 credentials/
 develop-eggs/
 dist/
