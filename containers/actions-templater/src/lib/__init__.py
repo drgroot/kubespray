@@ -3,7 +3,7 @@ import os
 ACTION_DEFAULT_DEPENDABOT_INTERVAL = os.getenv(
     "ACTION_DEFAULT_DEPENDABOT_INTERVAL", "daily"
 )
-NODEJS_VERSION = os.getenv("NODEJS_VERSION", "current") or "current"
+NODEJS_VERSION = os.getenv("NODEJS_VERSION", "lts/*") or "lts/*"
 PYTHON_VERSION = float(os.getenv("PYTHON_VERSION", "3.14") or "3.14")
 JQ_VERSION = os.getenv("JQ_VERSION", "1.6")
 MAVEN_VERSION = os.getenv("MAVEN_VERSION", "3.9.1")
