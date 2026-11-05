@@ -72,7 +72,7 @@ class NpmWorkspaceTests(unittest.TestCase):
         self.assertNotIn("Setup Version", steps)
         self.assertNotIn("Settle Depends", steps)
         setup = next(step for step in job["steps"] if step.get("uses", "").startswith("actions/setup-node@"))
-        self.assertEqual(setup["with"]["node-version"], "24")
+        self.assertEqual(setup["with"]["node-version"], "lts/*")
 
     def test_tests_include_application_and_shared_changes(self):
         """Normal input: Angular application and two siblings. Expect all three test
