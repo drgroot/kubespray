@@ -12,7 +12,6 @@ def workspace_defaults(ctx, m, *, tests=False):
         return m
     settings = dict(m)
     directory = get_working_path(ctx, m)
-    settings.setdefault("node_version", "24")
     settings.setdefault("npm_working_directory", directory)
     settings.setdefault("npm_install_command", "npm install --prefix . --workspaces=false --include=dev")
     settings.setdefault("filter_paths", [

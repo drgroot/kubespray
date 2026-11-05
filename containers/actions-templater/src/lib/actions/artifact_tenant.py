@@ -147,7 +147,6 @@ def artifact_tenant_build_workflow(ctx: RepoContext, m: MODIFIERS) -> Workflow:
     npm_modifiers = {
         **_build_modifiers(ctx, m, "typings", "npm"),
         "version_file": "../pyproject.toml",
-        "node_version": m.get("node_version", "24"),
         "npm_cache_path": "typings/js/package-lock.json",
         "npm_setup_steps": [python(ctx, m), compiler_dependencies],
         "npm_install_command": "npm ci --ignore-scripts --registry=https://registry.npmjs.org",
