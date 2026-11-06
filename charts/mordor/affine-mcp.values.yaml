@@ -1,6 +1,6 @@
 image:
   name: ghcr.io/dawncr0w/affine-mcp-server
-  tag: "3.5.1"
+  tag: "3.11.0"
 
 imagePullSecrets:
   - name: cluster-docker-secrets
