@@ -597,7 +597,7 @@ spec:
         - name: cluster-docker-secrets
       containers:
         - name: temporal
-          image: dockerhub.yusufali.ca/temporalio/auto-setup:1.28.1
+          image: dockerhub.yusufali.ca/temporalio/auto-setup:1.29.7
           envFrom:
             - secretRef:
                 name: postiz-temporal-postgres
