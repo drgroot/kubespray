@@ -17,26 +17,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  schedule:
-    runs-on: ubuntu-latest
-    outputs:
-      run: ${{ steps.cadence.outputs.run }}
-    steps:
-      - name: Check three-day cadence
-        id: cadence
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-        run: |
-          utc_day=$(( $(date -u +%s) / 86400 ))
-          if [[ "$EVENT_NAME" == "workflow_dispatch" ]] || (( utc_day % 3 == 0 )); then
-            echo 'run=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'run=false' >> "$GITHUB_OUTPUT"
-          fi
-
   renovate:
-    needs: schedule
-    if: needs.schedule.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
