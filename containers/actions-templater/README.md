@@ -1,5 +1,10 @@
 # Actions templater
 
+Set `"changelog_auto": false` in `.github/actions.json` to generate the changelog
+workflow with manual dispatch and no cron schedule. Omitting the setting or
+setting it to `true` keeps the daily schedule. This also applies to tenant
+changelog workflows.
+
 For repositories with `artifact-tenant`, actions maker generates one `build.yml`
 with independent UI, ETL, pip typings, and Node.js typings jobs. Pip and npm use
 the same `typings-<version>` release tag and publish only their own distribution.
