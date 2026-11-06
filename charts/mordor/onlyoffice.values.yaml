@@ -2,7 +2,7 @@ fullnameOverride: onlyoffice
 
 image:
   name: dockerhub.yusufali.ca/onlyoffice/documentserver
-  tag: 9.4.0.1
+  tag: 10.0.0.1
 
 imagePullSecrets:
   - name: cluster-docker-secrets
