@@ -302,7 +302,7 @@ spec:
         - name: cluster-docker-secrets
       containers:
         - name: nginx
-          image: dockerhub.yusufali.ca/library/nginx:1.27-alpine
+          image: dockerhub.yusufali.ca/library/nginx:1.31-alpine
           ports:
             - name: http
               containerPort: 8080
