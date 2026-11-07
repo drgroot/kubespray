@@ -45,8 +45,14 @@ volumeMounts:
   - name: storage
     mountPath: /srv
     subPath: data
+  - name: social-media
+    mountPath: /srv/social_media
 
 volumes:
+  - name: social-media
+    nfs:
+      server: 192.168.1.3
+      path: /nobackup/models/social_media
   - name: filebrowser-config
     secret:
       secretName: filebrowser-config
