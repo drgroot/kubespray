@@ -71,6 +71,48 @@ crossplane:
         - key: tokenkey
           value: token
 
+    github-comfyui-vid-vault-url:
+      enabled: true
+      type: github
+      provider: reposecret
+      name: VAULT_URL
+      vars:
+        - key: path
+          value: external-infra/vendor/vault
+        - key: property
+          value: url
+        - key: repository
+          value: comfyui-vid
+        - key: org
+          value: drgroot
+        - key: credentialpath
+          value: external-infra/vendor/github
+        - key: usernamekey
+          value: username
+        - key: tokenkey
+          value: token
+
+    github-comfyui-vid-vault-token:
+      enabled: true
+      type: github
+      provider: reposecret
+      name: VAULT_TOKEN
+      vars:
+        - key: path
+          value: external-infra/vendor/vault
+        - key: property
+          value: token
+        - key: repository
+          value: comfyui-vid
+        - key: org
+          value: drgroot
+        - key: credentialpath
+          value: external-infra/vendor/github
+        - key: usernamekey
+          value: username
+        - key: tokenkey
+          value: token
+
     vault-user-servc:
       enabled: true
       type: vault
