@@ -19,7 +19,7 @@ actionsVerions:
 
 # The list owns the complete router forwarding table, including removals.
 router:
-  enabled: false
+  enabled: true
   port: 80
   useSSL: false
   forwardingEnabled: true
