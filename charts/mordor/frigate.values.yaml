@@ -2,7 +2,7 @@ fullnameOverride: frigate
 
 image:
   name: ghcr.io/blakeblackshear/frigate
-  tag: 0.16.4
+  tag: 0.18.2
 imagePullSecrets:
   - name: cluster-docker-secrets
 
