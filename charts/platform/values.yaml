@@ -17,6 +17,27 @@ actionsVerions:
   kubelogin: v0.0.18
   kubectl: v1.24.6
 
+# The list owns the complete router forwarding table, including removals.
+router:
+  enabled: false
+  port: 80
+  useSSL: false
+  forwardingEnabled: true
+  # Synced from ClusterSecretStore external-infra, vendor/router (ip, username, password).
+  secretName: router-credentials
+  secretNamespace: argocd
+  portForwards:
+    - name: HTTPS
+      protocol: tcp
+      externalPort: 443
+      internalIP: 192.168.1.10
+      internalPort: 443
+    - name: HTTP
+      protocol: tcp
+      externalPort: 80
+      internalIP: 192.168.1.10
+      internalPort: 80
+
 crossplane:
   enabled: true
 

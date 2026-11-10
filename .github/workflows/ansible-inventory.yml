@@ -6,7 +6,8 @@ on:
       - main
     paths:
       - inventory/sample/inventory.ini
-      - ansible/*.yml
+      - 'ansible/**'
+      - '!ansible/kubespray/**'
 
 permissions:
   contents: write
@@ -35,7 +36,7 @@ jobs:
           for attempt in 1 2 3; do
             git fetch origin main
             git checkout -B ansible-inventory-revision origin/main
-            INVENTORY_REVISION=$(git log -1 --format=%H -- inventory/sample/inventory.ini ':(glob)ansible/*.yaml' ':(glob)ansible/*.yml')
+            INVENTORY_REVISION=$(git log -1 --format=%H -- inventory/sample/inventory.ini ansible ':!ansible/kubespray')
             test -n "$INVENTORY_REVISION"
 
             sed -i "/^  ansible:$/,/^  [^ ]/s/^    revision: .*/    revision: \"$INVENTORY_REVISION\"/" charts/platform/values.yaml

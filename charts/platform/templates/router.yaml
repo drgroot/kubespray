@@ -1,0 +1,107 @@
+{{- if and .Values.crossplane.enabled .Values.crossplane.ansible.enabled .Values.router.enabled }}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ .Values.router.secretName }}
+  namespace: {{ .Values.router.secretNamespace }}
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: {{ .Values.router.secretName }}
+    creationPolicy: Owner
+  data:
+    {{- range $key := list "ip" "username" "password" }}
+    - secretKey: {{ $key }}
+      remoteRef:
+        key: vendor/router
+        property: {{ $key }}
+    {{- end }}
+---
+apiVersion: ansible.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: {{ .Release.Namespace }}-router
+spec:
+  credentials:
+    {{- range $key := list "ip" "username" "password" }}
+    - filename: router_{{ $key }}
+      source: Secret
+      secretRef:
+        namespace: {{ $.Values.router.secretNamespace | quote }}
+        name: {{ $.Values.router.secretName | quote }}
+        key: {{ $key }}
+    {{- end }}
+---
+apiVersion: ansible.crossplane.io/v1alpha1
+kind: AnsibleRun
+metadata:
+  name: {{ .Release.Namespace }}-router-port-forwards
+  annotations:
+    ansible.crossplane.io/runPolicy: ObserveAndDelete
+spec:
+  deletionPolicy: Orphan
+  providerConfigRef:
+    name: {{ .Release.Namespace }}-router
+  forProvider:
+    inventoryInline: |
+      localhost ansible_connection=local
+    vars:
+      repository: {{ .Values.crossplane.ansible.repository | quote }}
+      revision: {{ .Values.crossplane.ansible.revision | quote }}
+      router:
+        port: {{ .Values.router.port }}
+        useSSL: {{ .Values.router.useSSL }}
+        forwardingEnabled: {{ .Values.router.forwardingEnabled }}
+        portForwards: {{ .Values.router.portForwards | toJson }}
+    playbookInline: |
+      - name: Run router configuration from the repository
+        hosts: localhost
+        connection: local
+        gather_facts: false
+        tasks:
+          - name: Check out the configuration repository
+            ansible.builtin.git:
+              repo: "{{ `{{ repository }}` }}"
+              dest: "{{ `{{ playbook_dir }}` }}/repository"
+              version: "{{ `{{ revision }}` }}"
+              recursive: false
+
+          - name: Create an isolated environment for AsusRouter
+            ansible.builtin.command:
+              argv:
+                - python3
+                - -m
+                - venv
+                - "{{ `{{ playbook_dir }}` }}/router-venv"
+              creates: "{{ `{{ playbook_dir }}` }}/router-venv/bin/python3"
+
+          - name: Install router Ansible dependencies
+            ansible.builtin.pip:
+              requirements: "{{ `{{ playbook_dir }}` }}/repository/ansible/router/requirements.txt"
+              executable: "{{ `{{ playbook_dir }}` }}/router-venv/bin/pip"
+
+          - name: Write router variables
+            ansible.builtin.copy:
+              dest: "{{ `{{ playbook_dir }}` }}/router-vars.json"
+              mode: "0600"
+              content: "{{ `{{ {'router': router} | to_json }}` }}"
+
+          - name: Reconcile router forwarding rules
+            ansible.builtin.command:
+              argv:
+                - "{{ `{{ playbook_dir }}` }}/router-venv/bin/ansible-playbook"
+                - --inventory
+                - localhost,
+                - ansible/router/playbook.yml
+                - --extra-vars
+                - "@{{ `{{ playbook_dir }}` }}/router-vars.json"
+              chdir: "{{ `{{ playbook_dir }}` }}/repository"
+            environment:
+              ROUTER_IP: "{{ `{{ lookup('ansible.builtin.file', playbook_dir + '/router_ip', rstrip=False) | trim }}` }}"
+              ROUTER_USERNAME: "{{ `{{ lookup('ansible.builtin.file', playbook_dir + '/router_username', rstrip=False) | trim }}` }}"
+              ROUTER_PASSWORD: "{{ `{{ lookup('ansible.builtin.file', playbook_dir + '/router_password', rstrip=False) }}` }}"
+              ANSIBLE_STDOUT_CALLBACK: default
+            no_log: true
+{{- end }}
