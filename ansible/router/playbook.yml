@@ -1,5 +1,5 @@
 ---
-- name: Reconcile ASUS router port forwards
+- name: Reconcile ASUS router configuration
   hosts: localhost
   connection: local
   gather_facts: false
@@ -15,4 +15,15 @@
         username: "{{ lookup('ansible.builtin.env', 'ROUTER_USERNAME') }}"
         password: "{{ lookup('ansible.builtin.env', 'ROUTER_PASSWORD') }}"
         port_forwards: "{{ router.portForwards }}"
+      no_log: true
+
+    - name: Apply the desired DHCP reservations
+      asusrouter_dhcp_reservations:
+        hostname: "{{ lookup('ansible.builtin.env', 'ROUTER_IP') }}"
+        port: "{{ router.port | default(80) }}"
+        use_ssl: "{{ router.useSSL | default(false) }}"
+        username: "{{ lookup('ansible.builtin.env', 'ROUTER_USERNAME') }}"
+        password: "{{ lookup('ansible.builtin.env', 'ROUTER_PASSWORD') }}"
+        reservations: "{{ router.dchp.reservations }}"
+      when: router.dchp is defined
       no_log: true

@@ -55,6 +55,9 @@ spec:
         useSSL: {{ .Values.router.useSSL }}
         forwardingEnabled: {{ .Values.router.forwardingEnabled }}
         portForwards: {{ .Values.router.portForwards | toJson }}
+        {{- if hasKey .Values.router "dchp" }}
+        dchp: {{ .Values.router.dchp | toJson }}
+        {{- end }}
     playbookInline: |
       - name: Run router configuration from the repository
         hosts: localhost
@@ -88,7 +91,7 @@ spec:
               mode: "0600"
               content: "{{ `{{ {'router': router} | to_json }}` }}"
 
-          - name: Reconcile router forwarding rules
+          - name: Reconcile router configuration
             ansible.builtin.command:
               argv:
                 - "{{ `{{ playbook_dir }}` }}/router-venv/bin/ansible-playbook"
