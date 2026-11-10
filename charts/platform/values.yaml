@@ -74,6 +74,56 @@ router:
       externalPort: 80
       internalIP: 192.168.1.10
       internalPort: 80
+    - name: SunshineTCP47984
+      protocol: tcp
+      externalPort: 47984
+      internalIP: 192.168.1.10
+      internalPort: 47984
+    - name: SunshineTCP47989
+      protocol: tcp
+      externalPort: 47989
+      internalIP: 192.168.1.10
+      internalPort: 47989
+    - name: SunshineTCP48010
+      protocol: tcp
+      externalPort: 48010
+      internalIP: 192.168.1.10
+      internalPort: 48010
+    - name: SunshineUDP47998
+      protocol: udp
+      externalPort: 47998
+      internalIP: 192.168.1.10
+      internalPort: 47998
+    - name: SunshineUDP47999
+      protocol: udp
+      externalPort: 47999
+      internalIP: 192.168.1.10
+      internalPort: 47999
+    - name: SunshineUDP48000
+      protocol: udp
+      externalPort: 48000
+      internalIP: 192.168.1.10
+      internalPort: 48000
+    - name: SteamRemotePlayTCP27036
+      protocol: tcp
+      externalPort: 27036
+      internalIP: 192.168.1.10
+      internalPort: 27036
+    - name: SteamRemotePlayTCP27037
+      protocol: tcp
+      externalPort: 27037
+      internalIP: 192.168.1.10
+      internalPort: 27037
+    - name: SteamRemotePlayUDP27031
+      protocol: udp
+      externalPort: 27031
+      internalIP: 192.168.1.10
+      internalPort: 27031
+    - name: SteamRemotePlayUDP27036
+      protocol: udp
+      externalPort: 27036
+      internalIP: 192.168.1.10
+      internalPort: 27036
 
 crossplane:
   enabled: true
