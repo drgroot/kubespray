@@ -2,7 +2,8 @@
 
 Uses `josh5/steam-headless:latest` as the base, with PCSX2 2.8.2 (official
 AppImage, checksum verified and extracted so FUSE is unnecessary), Dolphin,
-and Gopher64 1.1.42 (official standalone executable, checksum verified).
+Gopher64 1.1.42 (official standalone executable, checksum verified), and
+Eden 0.2.1 (official amd64 PGO AppImage, checksum verified and extracted).
 Supports Linux amd64. The current upstream latest image uses Fedora and systemd.
 
 Startup prefers a visible NVIDIA DRM render device for both the compositor and
@@ -44,6 +45,7 @@ The existing container build workflow discovers this directory automatically.
 Use `--pull` to fetch the latest base image on each build. Update `PCSX2_VERSION`
 and `PCSX2_SHA256` together when upgrading PCSX2.
 Update `GOPHER64_VERSION` and `GOPHER64_SHA256` together when upgrading Gopher64.
+Update `EDEN_VERSION` and `EDEN_SHA256` together when upgrading Eden.
 
 ## Persistent configuration
 
@@ -57,12 +59,16 @@ without overwriting emulator settings.
 | PCSX2 | `~/.config/PCSX2/inis` | BIOS, memory cards and save states under `~/.config/PCSX2` |
 | Dolphin | `~/.config/dolphin-emu` | `~/.local/share/dolphin-emu` |
 | Gopher64 | `~/.config/gopher64` | `~/.local/share/gopher64` (saves), `~/.cache/gopher64` (cache) |
+| Eden | `~/.config/eden` | `~/.local/share/eden` (keys, firmware, saves), `~/.cache/eden` (cache) |
 
-Here `~` is `/home/steamheadless`. Launch `pcsx2`, `dolphin-emu`, or `gopher64` from
+Here `~` is `/home/steamheadless`. Launch `pcsx2`, `dolphin-emu`, `gopher64`, or `eden` from
 the desktop menu or a terminal. Run N64 games with `gopher64 /mnt/games/n64/game.z64`.
 Configs are generated on first use. Put your PS2 BIOS dump in
 `/home/steamheadless/.config/PCSX2/bios` and select it in PCSX2's first-run wizard.
 Games can live on a separate `/mnt/games` mount.
+Launch Switch games with `eden /mnt/games/switch/game.xci`, or use Eden's desktop
+entry. Install your own Switch keys and firmware through Eden's first-run setup;
+these are stored under the persistent home and are not included in the image.
 
 ## Coder integration
 
@@ -87,4 +93,5 @@ access following the current upstream documentation.
 
 References: [Steam Headless](https://github.com/Steam-Headless/docker-steam-headless),
 [Gopher64](https://github.com/gopher64/gopher64),
+[Eden releases](https://git.eden-emu.dev/eden-emu/eden/releases),
 [Coder template tutorial](https://coder.com/docs/tutorials/template-from-scratch/).

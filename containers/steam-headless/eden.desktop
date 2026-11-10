@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Eden
+Comment=Nintendo Switch emulator
+Exec=/usr/local/bin/eden %f
+TryExec=/usr/local/bin/eden
+Icon=/opt/eden/dev.eden_emu.eden.svg
+Terminal=false
+Categories=Game;Emulator;
