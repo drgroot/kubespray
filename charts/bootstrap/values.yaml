@@ -1,7 +1,7 @@
 project: bootstrap
 
 versions:
-  nvidia: v25.3.2
+  nvidia: v25.10.1
   envoy: 1.10.0
   crossplane: 2.4.3
   crossplaneOpenTofu: v1.1.11
