@@ -1,5 +1,5 @@
-ASUS router port forwards
-========================
+ASUS router configuration
+=========================
 
 The platform Helm chart creates a dedicated Crossplane AnsibleRun when
 ``crossplane.enabled``, ``crossplane.ansible.enabled``, and ``router.enabled``
@@ -24,6 +24,11 @@ Add this to your platform chart values::
       forwardingEnabled: true
       secretName: router-credentials
       secretNamespace: argocd
+      dchp:
+        reservations:
+          - name: thorin
+            ip: 192.168.1.3
+            mac: 24:5E:BE:81:85:01
       portForwards:
         - name: HTTPS
           protocol: tcp
@@ -53,16 +58,47 @@ list while router.enabled remains true.
 
 The run compares the current table before writing, restarts the firewall only
 when needed, and verifies the saved configuration. Rule order is ignored.
-The provider's ObserveAndDelete run policy executes on observation, allowing
-drift to be corrected. Credentials and the final task output are hidden with
+The provider's ObserveAndDelete policy applies changes when the AnsibleRun
+parameters change; it does not continuously repair router drift. Credentials and the final task output are hidden with
 Ansible no_log. The module supports check mode without changing the router.
 
 The module uses the package's public async_api_hook and async_run_service
 methods, NVRAM constants, and rule serializer. It applies the complete table
-and global forwarding state together in a single firewall restart. The playbook is ansible/router/playbook.yml and the module is in ansible/router/library.
+and global forwarding state together in a single firewall restart. The playbook
+is ansible/router/playbook.yml and the modules are in ansible/router/library.
 The AnsibleRun checks out crossplane.ansible.repository at its configured
 revision and installs ansible/router/requirements.txt. The inventory revision
 workflow also tracks changes to the router files, keeping the checkout current.
+
+DHCP reservations
+-----------------
+
+The key ``router.dchp.reservations`` follows the spelling in the platform values.
+It owns the complete reservation table: entries omitted from the list are removed,
+and an empty list clears the table. Omit ``router.dchp`` entirely to leave
+reservations unmanaged. Managing the table enables manual DHCP assignments
+(``dhcp_static_x``); it does not change whether the DHCP server itself is enabled.
+
+Each reservation has ``mac``, ``ip``, and an optional ``name``. An empty name
+preserves an unnamed reservation. Names are saved as DHCP hostnames, not client
+UI nicknames. MAC addresses, IP addresses, and nonempty names must be unique.
+Reserved IPs must be usable addresses on the router's LAN, excluding the router
+address itself. Input is validated before any DHCP setting is changed.
+
+The module changes only ``dhcp_staticlist`` and ``dhcp_static_x``, then restarts
+dnsmasq and verifies the saved table. That restart can briefly interrupt DNS and
+DHCP service. DHCP pool boundaries, lease duration, global DNS servers, and
+other router settings are preserved. Existing per-device DNS overrides are kept
+for retained MAC addresses; an optional ``dns`` property can explicitly set or
+clear a device's override.
+
+The platform values include all 11 reservations from the RT-BE88U settings export.
+Four entries had no hostname in the export; their supplied names in values are
+retained. The backup is only used for importing reservations, never restored to
+the router.
+
+Validation
+----------
 
 Run the offline tests after installing ansible/router/requirements.txt::
 
