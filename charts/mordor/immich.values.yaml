@@ -59,7 +59,7 @@ components:
         runAsGroup: 1000
       image:
         name: ghcr.io/immich-app/immich-server
-        tag: v2.6.1
+        tag: v2.7.5
 
     list:
       machine-learning:
