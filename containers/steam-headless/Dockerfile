@@ -31,6 +31,23 @@ RUN test "$(dpkg --print-architecture)" = amd64 \
     && echo "${GOPHER64_SHA256}  /opt/gopher64/gopher64" | sha256sum -c - \
     && chmod +x /opt/gopher64/gopher64
 
+FROM debian:trixie-slim AS eden
+ARG EDEN_VERSION=0.2.1
+ARG EDEN_SHA256=7a28bf988b0648831989722bdbaa90ab31371b403808199813e0ea7c8b25ba6d
+RUN test "$(dpkg --print-architecture)" = amd64 \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fL --retry 3 \
+        "https://stable.eden-emu.dev/v${EDEN_VERSION}/Eden-Linux-v${EDEN_VERSION}-amd64-clang-pgo.AppImage" \
+        -o /tmp/eden.AppImage \
+    && echo "${EDEN_SHA256}  /tmp/eden.AppImage" | sha256sum -c - \
+    && chmod +x /tmp/eden.AppImage \
+    && cd /opt \
+    && /tmp/eden.AppImage --appimage-extract \
+    && mv "$(readlink -f squashfs-root)" eden \
+    && rm /tmp/eden.AppImage
+
 FROM josh5/steam-headless:latest
 USER root
 
@@ -54,6 +71,7 @@ RUN sed -i 's/for _ in {1\.\.200}; do/for _ in {1..2400}; do/' \
 
 COPY --from=pcsx2 /opt/pcsx2 /opt/pcsx2
 COPY --from=gopher64 /opt/gopher64 /opt/gopher64
+COPY --from=eden /opt/eden /opt/eden
 COPY --chmod=755 emulator-launcher /usr/local/bin/emulator-launcher
 COPY --chmod=755 init-emulators.sh /usr/local/sh-init.d/95-configure_emulators.sh
 COPY --chmod=755 start-coder-agent /usr/local/bin/start-coder-agent
@@ -62,6 +80,7 @@ COPY coder-agent.service /etc/systemd/system/coder-agent.service
 COPY steam-local-runtime.conf /etc/systemd/system/steam-headless-steam.service.d/20-local-runtime.conf
 COPY pcsx2.desktop /usr/share/applications/pcsx2.desktop
 COPY gopher64.desktop /usr/share/applications/gopher64.desktop
+COPY eden.desktop /usr/share/applications/eden.desktop
 
 ENV PUID=1000 \
     PGID=1000 \
@@ -73,6 +92,7 @@ ENV PUID=1000 \
 RUN ln -s emulator-launcher /usr/local/bin/pcsx2 \
     && ln -s emulator-launcher /usr/local/bin/dolphin-emu \
     && ln -s emulator-launcher /usr/local/bin/gopher64 \
+    && ln -s emulator-launcher /usr/local/bin/eden \
     && sed -i -E 's|^(Exec=)(/usr/bin/)?dolphin-emu|\1/usr/local/bin/dolphin-emu|' \
         /usr/share/applications/dolphin-emu.desktop \
     && /usr/local/sh-init.d/95-configure_emulators.sh \

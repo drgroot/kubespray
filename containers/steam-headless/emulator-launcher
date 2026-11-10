@@ -18,8 +18,11 @@ case "${0##*/}" in
     gopher64)
         exec /opt/gopher64/gopher64 "$@"
         ;;
+    eden)
+        exec /opt/eden/AppRun "$@"
+        ;;
     *)
-        echo "Run this launcher as pcsx2, dolphin-emu, or gopher64." >&2
+        echo "Run this launcher as pcsx2, dolphin-emu, gopher64, or eden." >&2
         exit 2
         ;;
 esac
