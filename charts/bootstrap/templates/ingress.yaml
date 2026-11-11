@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kube-networking
+  name: system-networking
   labels:
     tenant: approved
 ---
@@ -20,7 +20,7 @@ spec:
     syncOptions:
       - ServerSideApply=true
   destination:
-    namespace: kube-networking
+    namespace: system-networking
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
@@ -45,7 +45,7 @@ spec:
             minReplicas: 1
           
           metrics:
-            namespace: kube-networking
+            namespace: system-networking
             enabled: true
             serviceMonitor:
               enabled: true
