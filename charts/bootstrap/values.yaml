@@ -147,11 +147,6 @@ tenants:
         updateStrategy: digest
         helmImageName: components.narrs.list.sonarr.image.name
         helmImageVersion: components.narrs.list.sonarr.image.tag
-      - name: romarr
-        image: ghcr.io/blizzhacker/romarr:latest
-        updateStrategy: digest
-        helmImageName: components.narrs.list.romarr.image.name
-        helmImageVersion: components.narrs.list.romarr.image.tag
       - name: plex
         image: plexinc/pms-docker:latest
         updateStrategy: digest
