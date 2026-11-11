@@ -174,11 +174,6 @@ spec:
                 subject:
                   - group:media-admin
                   - group:media-dev
-              - domain: romarr.{{ .Values.domains.external }}
-                policy: one_factor
-                subject:
-                  - group:media-admin
-                  - group:media-dev
               - domain: prowlarr.{{ .Values.domains.external }}
                 policy: one_factor
                 subject:
