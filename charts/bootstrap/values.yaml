@@ -1,7 +1,7 @@
 project: bootstrap
 
 versions:
-  nvidia: v25.10.1
+  nvidia: v26.7.2
   envoy: 1.10.0
   crossplane: 2.4.3
   crossplaneOpenTofu: v1.1.11
@@ -23,7 +23,7 @@ nvidia:
   driver:
     # Disable if NVIDIA drivers are already installed on the hosts.
     enabled: true
-    version: "580.126.09"
+    version: "580.196.07"
     # Migrating an existing Operator installation to driver CRDs requires a
     # maintenance window and Operator reinstall; changing values alone is not enough.
     nvidiaDriverCRD:

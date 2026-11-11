@@ -5,6 +5,9 @@ image:
 strategy:
   type: Recreate
 
+deploymentAnnotations:
+  secret.reloader.stakater.com/reload: filebrowser-config
+
 imagePullSecrets:
   - name: cluster-docker-secrets
 
@@ -84,9 +87,16 @@ ingress:
           pathType: Prefix
 
 probes:
+  startupProbe:
+    httpGet:
+      path: /health
+      port: 80
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
   livenessProbe:
     httpGet:
-      path: /
+      path: /health
       port: 80
     initialDelaySeconds: 30
     periodSeconds: 15
@@ -95,7 +105,7 @@ probes:
     failureThreshold: 5
   readinessProbe:
     httpGet:
-      path: /
+      path: /health
       port: 80
     initialDelaySeconds: 10
     periodSeconds: 10

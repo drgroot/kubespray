@@ -79,7 +79,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install Packages
         run: |
@@ -156,7 +156,7 @@ jobs:
           chmod +x kubectl
 
           ./kubectl get ns argocd || ./kubectl create namespace argocd
-          ./kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+          ./kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.6.1/manifests/install.yaml
           ./kubectl create secret generic ssh-password -n argocd \
             --from-literal=password="$SSH_PASSWORD" \
             --from-literal=id_rsa="$ID_RSA" \
