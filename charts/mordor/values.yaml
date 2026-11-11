@@ -1,0 +1,104 @@
+project: lol
+
+storage:
+  default: default
+  backup: default
+  ssd: default
+
+domains:
+  internal: example.com
+  external: exampe.com
+
+crossplane:
+  enabled: true
+  iac:
+    s3-postiz:
+      enabled: true
+      type: s3
+      provider: cloudflare
+      name: postiz
+      vars:
+        - key: input
+          value: external-infra/vendor/cloudflare
+        - key: output
+          value: external-infra/iac/s3-postiz
+
+    s3-affine:
+      enabled: true
+      type: s3
+      provider: minio
+      name: affine
+      vars:
+        - key: input
+          value: external-infra/vendor/minio
+        - key: output
+          value: external-infra/iac/s3-affine
+
+    s3-sure:
+      enabled: true
+      type: s3
+      provider: minio
+      name: sure
+      vars:
+        - key: input
+          value: external-infra/vendor/minio
+        - key: output
+          value: external-infra/iac/s3-sure
+
+    postgres-sure:
+      enabled: true
+      type: postgres
+      provider: db
+      name: sure
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: sure
+        - key: output
+          value: external-infra/iac/postgres-sure
+
+    postgres-bitwarden:
+      enabled: true
+      type: postgres
+      provider: db
+      name: bitwarden
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: bitwarden
+        - key: output
+          value: external-infra/iac/postgres-bitwarden
+    postgres-postiz:
+      enabled: true
+      type: postgres
+      provider: db
+      name: postiz
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: postiz
+        - key: output
+          value: external-infra/iac/postgres-postiz
+    postgres-postiz-temporal:
+      enabled: true
+      type: postgres
+      provider: db
+      name: postiz-temporal
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: postiz-temporal
+        - key: output
+          value: external-infra/iac/postgres-postiz-temporal

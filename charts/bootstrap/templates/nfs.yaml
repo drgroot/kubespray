@@ -1,0 +1,112 @@
+{{- range $storageClass := .Values.storageClasses }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nfs-{{ $storageClass.name }}
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ $.Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ $.Values.project }}
+  source:
+    chart: nfs-subdir-external-provisioner
+    repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+    targetRevision: {{ $.Values.versions.nfsprovisioner }}
+    helm:
+      releaseName: nfs-{{ $storageClass.name }}
+      values: |-
+        nfs:
+          server: {{ $storageClass.hostname }}
+          path: {{ $storageClass.mountPath }}
+        storageClass:
+          name: {{ $storageClass.prefix }}{{ $storageClass.name }}
+          provisionerName: nfs.io/nfs-{{ $storageClass.name }}
+          accessModes: ReadWriteMany
+          onDelete: retain
+          pathPattern: "${.PVC.namespace}/${.PVC.name}"
+          mountOptions:
+            - vers=4
+---
+{{- if and $storageClass.backup $storageClass.backup.enabled }}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: nfs-{{ $storageClass.name }}-backup-rclone
+  namespace: {{ $.Release.Namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: {{ $storageClass.backup.secretStore.name }}
+    kind: {{ $storageClass.backup.secretStore.type }}
+  target:
+    name: nfs-{{ $storageClass.name }}-backup-rclone
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: rclone.conf
+      remoteRef:
+        key: {{ $storageClass.backup.rclone.remoteRef.key }}
+        property: {{ $storageClass.backup.rclone.remoteRef.property }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nfs-{{ $storageClass.name }}-backup
+  namespace: {{ $.Release.Namespace }}
+spec:
+  schedule: {{ $storageClass.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+            - name: cluster-docker-secrets
+          restartPolicy: OnFailure
+          containers:
+            - name: rclone
+              image: {{ $storageClass.backup.image }}
+              imagePullPolicy: IfNotPresent
+              args:
+                - copy
+                - --config=/config/rclone/rclone.conf
+                - --transfers=16
+                - --checkers=32
+                - --s3-chunk-size=64M
+                - --s3-upload-concurrency=8
+                {{- range $folder := $storageClass.backup.ignoreFolders }}
+                - --exclude={{ trimAll "/" $folder }}/**
+                {{- end }}
+                - /nfs
+                - s3:nfs/{{ $storageClass.name }}
+              volumeMounts:
+                - name: nfs
+                  mountPath: /nfs
+                - name: rclone-config
+                  mountPath: /config/rclone
+                  readOnly: true
+          volumes:
+            - name: nfs
+              nfs:
+                server: {{ $storageClass.hostname }}
+                path: {{ $storageClass.mountPath }}
+            - name: rclone-config
+              secret:
+                secretName: nfs-{{ $storageClass.name }}-backup-rclone
+---
+{{- end }}
+{{- end }}

@@ -1,0 +1,79 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: db
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    path: charts/postgres
+    repoURL: https://github.com/drgroot/kubespray.git
+    targetRevision: main
+    helm:
+      releaseName: db
+      values: |-
+        fullnameOverride: db
+
+        image: dockerhub.yusufali.ca/library/postgres:16.3
+        imagePullSecrets:
+          - name: cluster-docker-secrets
+
+        storageclass: {{ .Values.storage.fast }}
+
+        resources:
+          requests:
+            cpu: "1"
+            memory: "2Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+
+        configuration:
+          shared_buffers: 512MB
+          effective_cache_size: 1536MB
+          maintenance_work_mem: 256MB
+          work_mem: 8MB
+          effective_io_concurrency: 32
+          random_page_cost: 1.5
+          max_wal_size: 2GB
+          checkpoint_completion_target: 0.9
+
+        secrets:
+          secretStore:
+            name: external-infra
+            type: ClusterSecretStore
+          username:
+            remoteRef:
+              key: vendor/postgres
+              property: root-username
+          password:
+            remoteRef:
+              key: vendor/postgres
+              property: root-password
+          pushsecret:
+            enabled: true
+            secretStore:
+              name: external-infra
+              type: ClusterSecretStore
+            remoteKey: iac/postgres
+
+        backup:
+          image: dockerhub.yusufali.ca/rclone/rclone:latest
+          secretStore:
+            name: external-infra
+            type: ClusterSecretStore
+          rclone:
+            remoteRef:
+              key: iac/s3-db-backups
+              property: rclone

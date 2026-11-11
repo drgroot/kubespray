@@ -1,0 +1,259 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: nodeport-proxy
+  namespace: system-envoy
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      useListenerPortAsContainerPort: true
+      envoyService:
+        type: NodePort
+      envoyDaemonSet:
+        container:
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              template:
+                spec:
+                  hostNetwork: true
+                  dnsPolicy: ClusterFirstWithHostNet
+        strategy:
+          rollingUpdate:
+            maxUnavailable: 1
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy-nodeport
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: nodeport-proxy
+    namespace: system-envoy
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: gateway
+  namespace: system-envoy
+spec:
+  gatewayClassName: envoy-nodeport
+
+  listeners:
+    {{- range $port := list 27036 27037 }}
+    - name: steam-remote-play-tcp-{{ $port }}
+      protocol: TCP
+      port: {{ $port }}
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: media
+    {{- end }}
+    {{- range $port := list 27031 27036 }}
+    - name: steam-remote-play-udp-{{ $port }}
+      protocol: UDP
+      port: {{ $port }}
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: media
+    {{- end }}
+    {{- range $port := list 47984 47989 48010 }}
+    - name: sunshine-tcp-{{ $port }}
+      protocol: TCP
+      port: {{ $port }}
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: media
+    {{- end }}
+    {{- range $port := list 47998 47999 48000 }}
+    - name: sunshine-udp-{{ $port }}
+      protocol: UDP
+      port: {{ $port }}
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: media
+    {{- end }}
+
+    - name: frigate-rtsp
+      protocol: TCP
+      port: 8554
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: All
+
+    - name: frigate-webrtc-tcp
+      protocol: TCP
+      port: 8555
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: All
+
+    - name: frigate-webrtc-udp
+      protocol: UDP
+      port: 8555
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+        namespaces:
+          from: All
+
+    - name: syncthing-tcptransfer
+      protocol: TCP
+      port: 22000
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: All
+
+    - name: syncthing-quic
+      protocol: UDP
+      port: 22000
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+        namespaces:
+          from: All
+
+    - name: syncthing-discovery
+      protocol: UDP
+      port: 21027
+      allowedRoutes:
+        kinds:
+          - kind: UDPRoute
+        namespaces:
+          from: All
+
+    - name: postgres
+      protocol: TCP
+      port: 5432
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: All
+
+    - name: ingress-https
+      protocol: TCP
+      port: 443
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: Same
+
+    - name: ingress-http
+      protocol: TCP
+      port: 80
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: postgres
+  namespace: system-envoy
+spec:
+  parentRefs:
+    - name: gateway
+      sectionName: postgres
+  rules:
+    - backendRefs:
+        - name: db
+          namespace: kube-platform
+          port: 5432
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: ingress-https
+  namespace: system-envoy
+spec:
+  parentRefs:
+    - name: gateway
+      sectionName: ingress-https
+  rules:
+    - backendRefs:
+        - name: ingress-nginx-controller
+          namespace: system-networking
+          port: 443
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: ingress-http
+  namespace: system-envoy
+spec:
+  parentRefs:
+    - name: gateway
+      sectionName: ingress-http
+  rules:
+    - backendRefs:
+        - name: ingress-nginx-controller
+          namespace: system-networking
+          port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: ingress
+  namespace: system-networking
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: TCPRoute
+      namespace: system-envoy
+  to:
+    - group: ""
+      kind: Service
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: postgres-gateway
+  namespace: kube-platform
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: TCPRoute
+      namespace: system-envoy
+  to:
+    - group: ""
+      kind: Service

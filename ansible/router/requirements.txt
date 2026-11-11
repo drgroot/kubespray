@@ -1,0 +1,2 @@
+ansible-core==2.17.14
+asusrouter==1.21.3

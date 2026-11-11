@@ -1,0 +1,206 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: npm-htpasswd
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: npm-htpasswd
+    template:
+      type: Opaque
+      data:
+        htpasswd: |
+          {{ `{{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD "bcrypt" }}` }}
+          {{ `{{ htpasswd .npm_read_user .npm_read_password "bcrypt" }}` }}
+  data:
+    - remoteRef:
+        key: vendor/npm
+        property: username
+      secretKey: PRIVATE_USERNAME
+    - remoteRef:
+        key: vendor/npm
+        property: password
+      secretKey: PRIVATE_PASSWORD
+    - remoteRef:
+        key: vendor/npm
+        property: read-username
+      secretKey: npm_read_user
+    - remoteRef:
+        key: vendor/npm
+        property: read-password
+      secretKey: npm_read_password
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npm-config
+data:
+  config.yaml: |
+    listen: 0.0.0.0:4873
+    storage: /verdaccio/storage
+    web:
+      showDownloadTarball: false
+      showRaw: false
+    auth:
+      htpasswd:
+        file: /htpasswd/htpasswd
+        max_users: -1
+    uplinks:
+      npmjs:
+        url: https://registry.npmjs.org/
+        cache: true
+    packages:
+      '@servc/*':
+        access: $authenticated
+        publish: lowercaseusername
+
+      '@*/*':
+        access: $all
+        proxy: npmjs
+
+      '**':
+        access: $all
+        proxy: npmjs
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: npm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: {{ .Values.storage.nobackup }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: npm
+  labels:
+    app: npm
+spec:
+  selector:
+    matchLabels:
+      app: npm
+  template:
+    metadata:
+      labels:
+        app: npm
+    spec:
+      imagePullSecrets:
+        - name: cluster-docker-secrets
+      volumes:
+        - name: npmdata
+          persistentVolumeClaim:
+            claimName: npm
+        - name: config
+          configMap:
+            name: npm-config
+        - name: htppasswd
+          secret:
+            secretName: npm-htpasswd
+      containers:
+        - name: app
+          image: {{ tpl .Values.npm.image.registry . }}{{ .Values.npm.image.repository }}:{{ .Values.npm.image.tag }}
+          ports:
+            - containerPort: 4873
+              name: http
+          resources:
+            {{- with.Values.npm.resources }}
+            requests:
+              {{- toYaml . | nindent 14 }}
+            limits:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /-/ping
+              port: 4873
+            initialDelaySeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /-/ping
+              port: http
+            initialDelaySeconds: 5
+          volumeMounts:
+            - name: htppasswd
+              mountPath: /htpasswd
+            - name: npmdata
+              mountPath: /verdaccio/storage
+            - name: config
+              mountPath: /verdaccio/conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: npm
+  labels:
+    app: npm
+spec:
+  selector:
+    app: npm
+  ports:
+    - protocol: TCP
+      port: 4873
+      targetPort: 4873
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: npm
+  annotations:
+    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
+    nginx.ingress.kubernetes.io/client_max_body_size: 512m
+    nginx.ingress.kubernetes.io/proxy-body-size: 512m
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Host $host;
+      proxy_set_header X-Original-URI $request_uri;
+spec:
+  tls:
+    - hosts:
+        - "*.{{ .Values.domains.external }}"
+      secretName: wildcard-external
+  ingressClassName: nginx
+  rules:
+    - host: npm.{{ .Values.domains.external }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: npm
+                port:
+                  number: 4873
+            path: /
+            pathType: Prefix
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: npm-web-rps
+spec:
+  scaleTargetRef:
+    name: npm
+    kind: Deployment
+  pollingInterval: 10
+  cooldownPeriod: 300
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-kube-prometheus-prometheus.system-monitoring.svc:9090
+        metricName: npm_web_rps_per_pod
+        threshold: "3"
+        query: |
+          sum(rate(nginx_ingress_controller_requests{exported_namespace="{{ .Release.Namespace }}",ingress="npm"}[1m]))
+          /
+          count(kube_pod_info{namespace="{{ .Release.Namespace }}",pod=~"npm-.*"})

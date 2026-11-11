@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: system-networking
+  labels:
+    tenant: approved
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap-external-ingress
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: system-networking
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: ingress-nginx
+    repoURL: https://kubernetes.github.io/ingress-nginx
+    targetRevision: {{ .Values.versions.ingressnginx }}
+    helm:
+      releaseName: ingress-nginx
+      values: |-
+        controller:
+          allowSnippetAnnotations: true
+          config:
+            annotations-risk-level: "Critical"
+
+          tolerations:
+            - key: node-role.kubernetes.io/master
+              operator: Equal
+              effect: NoSchedule
+          
+          autoscaling:
+            enabled: false
+            minReplicas: 1
+          
+          metrics:
+            namespace: system-networking
+            enabled: true
+            serviceMonitor:
+              enabled: true
+              additionalLabels:
+                release: prometheus
+              namespaceSelector:
+                any: true
+
+          replicaCount: 1
+
+          resources:
+            requests:
+              memory: 250Mi
+
+          service:
+            type: ClusterIP
+
+          extraArgs:
+            enable-ssl-passthrough: true
+
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - podAffinityTerm:
+                    labelSelector:
+                      matchExpressions:
+                        - key: app.kubernetes.io/component
+                          operator: In
+                          values:
+                            - controller
+                        - key: app.kubernetes.io/instance
+                          operator: In
+                          values:
+                            - ingress-nginx
+                    topologyKey: kubernetes.io/hostname
+                  weight: 100

@@ -1,0 +1,128 @@
+{{- range $componentType, $components := .Values.components }}
+{{- range $component, $defconfig := $components.list }}
+{{- if eq ($defconfig.type | default "deployment") "cron" }}
+{{ $config := dict }}
+{{ $config := mustMergeOverwrite (deepCopy $.Values.globals) (deepCopy $components.globals) $defconfig }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}
+  labels:
+    {{- include "servc.labels" $ | nindent 4 }}
+    {{- with $config.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    type: cronjob
+    component: {{ $componentType }}
+    {{ $componentType }}: {{ $component }}
+spec:
+  schedule: {{ $config.schedule | default "5 * * * *" | quote }}
+  concurrencyPolicy: {{ $config.concurrencyPolicy | default "Forbid" }}
+  failedJobsHistoryLimit: {{ $config.historyFailed | default 1 }}
+  successfulJobsHistoryLimit: {{ $config.history | default 0 }}
+  jobTemplate:
+    metadata:
+      name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}
+      labels:
+        type: cronjob
+        component: {{ $componentType }}
+        {{ $componentType }}: {{ $component }}
+    spec:
+      template:
+        spec:
+          restartPolicy: {{ $config.restartPolicy | default "Never" }}
+          {{- with $config.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          {{- with $config.affinity }}
+          affinity:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          {{- with $config.tolerations }}
+          tolerations:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          {{- with $config.podSecurityContext }}
+          securityContext:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          {{- with $config.initContainers }}
+          initContainers:
+            {{- toYaml .  | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: app
+              image: {{ ($config.image).name }}:{{ ($config.image).prefix | default "" }}{{ ($config.image).tag | default "latest" }}{{ ($config.image).suffix | default "" }}
+              {{- with $config.imagePullPolicy }}
+              imagePullPolicy: {{ . }}
+              {{- end }}
+              {{- with $config.securityContext }}
+              securityContext:
+                {{- toYaml .  | nindent 16 }}
+              {{- end }}
+              {{- with $config.probes }}
+                {{- toYaml .  | nindent 14 }}
+              {{- end }}
+              {{- with $config.command }}
+              command:
+                {{- toYaml .  | nindent 16 }}
+              {{- end }}
+              {{- with $config.args }}
+              args:
+                {{- toYaml .  | nindent 16 }}
+              {{- end }}
+              {{- with $config.envFrom }}
+              envFrom:
+                {{- toYaml .  | nindent 16 }}
+              {{- end }}
+              {{- with $config.env }}
+              env:
+                {{- toYaml .  | nindent 16 }}
+              {{- end }}
+              {{- with $config.resources }}
+              resources:
+                {{- toYaml .  | nindent 16 }}
+              {{- end }}
+              {{- if or $config.volumeMounts $config.storage }}
+              volumeMounts:
+                {{- range $volume, $volumeConfig := $config.storage }}
+                {{- if $volumeConfig.enabled }}
+                - name: {{ $volume }}
+                  mountPath: {{ $volumeConfig.mountPath | default (print "/" $volume) }}
+                  {{- with $volumeConfig.subPath }}
+                  subPath: {{ . }}
+                  {{- end }}
+                  {{- with $volumeConfig.readOnly }}
+                  readOnly: {{ . }}
+                  {{- end }}
+                {{- end }}
+                {{- end }}
+                {{- with $config.volumeMounts }}
+                  {{- toYaml .  | nindent 16 }}
+                {{- end }}
+              {{- end }}
+            {{- with $config.sideCars }}
+              {{- toYaml .  | nindent 12 }}
+            {{- end }}
+          volumes:
+            {{- range $volume, $volumeConfig := $config.storage }}
+            {{- if and $volumeConfig.enabled (ne $volume "config") }}
+            - name: {{ $volume }}
+              persistentVolumeClaim:
+                claimName: {{ include "servc.fullname" $ }}-{{ $volume }}
+            {{- end }}
+            {{- end }}
+            {{- if and (not ((($config.storage).config).backup).enabled ) (($config.storage).config).enabled }}
+            - name: config
+              persistentVolumeClaim:
+                claimName: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-config
+            {{- end }}
+            {{- with $config.volumes | default ($components.globals).volumes | default $.Values.globals.volumes }}
+              {{- toYaml .  | nindent 12 }}
+            {{- end }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

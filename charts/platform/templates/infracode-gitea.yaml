@@ -1,0 +1,598 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: coder-oauth-secrets
+  namespace: servc-infra
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: coder-oauth-secrets
+  data:
+    - remoteRef:
+        key: vendor/gitea
+        property: oauth-clientid
+      secretKey: CODER_OAUTH2_GITHUB_CLIENT_ID
+    - remoteRef:
+        key: vendor/gitea
+        property: oauth-clientsecret
+      secretKey: CODER_OAUTH2_GITHUB_CLIENT_SECRET
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: gitea-runner-secrets
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: gitea-runner-secrets
+  data:
+    - remoteRef:
+        key: vendor/npm
+        property: read-username
+      secretKey: npm_read_user
+    - remoteRef:
+        key: vendor/npm
+        property: read-password
+      secretKey: npm_read_password
+    - remoteRef:
+        key: vendor/gitea
+        property: runner-token
+      secretKey: token
+    - remoteRef:
+        key: iac/gitea-rennovate
+        property: token
+      secretKey: renovate-token
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: rennovate-secrets
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: rennovate-secrets
+    template:
+      engineVersion: v2
+      data:
+        renovate-host-rules: >-
+          {{ `[{"hostType":"npm","matchHost":"npm.yusufali.ca","username":"{{ .npm_read_user }}","password":"{{ .npm_read_password }}"}]` }}
+  data:
+    - remoteRef:
+        key: vendor/npm
+        property: read-username
+      secretKey: npm_read_user
+    - remoteRef:
+        key: vendor/npm
+        property: read-password
+      secretKey: npm_read_password
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: gitea-admin-credentials
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: gitea-admin-credentials
+    template:
+      engineVersion: v2
+      data:
+        username: "{{ `{{ .rootUsername }}` }}"
+        password: "{{ `{{ .rootPassword }}` }}"
+  data:
+    - remoteRef:
+        key: vendor/gitea
+        property: root-username
+      secretKey: rootUsername
+    - remoteRef:
+        key: vendor/gitea
+        property: root-password
+      secretKey: rootPassword
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: gitea-postgres-secrets
+spec:
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: gitea-postgres-secrets
+  data:
+    - remoteRef:
+        key: iac/postgres-gitea
+        property: url
+      secretKey: url
+    - remoteRef:
+        key: iac/postgres-gitea
+        property: password
+      secretKey: password
+    - remoteRef:
+        key: iac/postgres-gitea
+        property: username
+      secretKey: username
+    - remoteRef:
+        key: iac/postgres-gitea
+        property: schema
+      secretKey: schema
+    - remoteRef:
+        key: iac/postgres-gitea
+        property: hostname
+      secretKey: hostname
+    - remoteRef:
+        key: iac/postgres-gitea
+        property: database
+      secretKey: database
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap-external-gitea
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: gitea
+    repoURL: https://dl.gitea.com/charts/
+    targetRevision: {{ .Values.versions.gitea }}
+    helm:
+      releaseName: gitea
+      values: |-
+        replicaCount: 1
+
+        strategy:
+          type: Recreate
+
+        image:
+          registry: dockerhub.{{ .Values.domains.external }}/gitea
+          tag: 1.27.3
+
+        imagePullSecrets:
+          - name: cluster-docker-secrets
+
+        service:
+          ssh:
+            port: 2222
+
+        ingress:
+          enabled: true
+          className: nginx
+          hosts:
+            - host: git.{{ .Values.domains.external }}
+              paths:
+                - path: /
+                  pathType: Prefix
+          annotations:
+            kubernetes.io/ingress.class: nginx
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+            nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+            external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
+            nginx.ingress.kubernetes.io/client-body-buffer-size: 20m
+            nginx.ingress.kubernetes.io/proxy-body-size: 20m
+          tls:
+            - hosts:
+                - "*.{{ .Values.domains.external }}"
+              secretName: wildcard-external
+
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 1500m
+            memory: 2Gi
+
+        deployment:
+          env: []
+
+        persistence:
+          enabled: true
+          storageClass: {{ .Values.storage.default }}
+
+        gitea:
+          admin:
+            existingSecret: gitea-admin-credentials
+
+          additionalConfigFromEnvs:
+            - name: GITEA__DATABASE__DB_TYPE
+              value: postgres
+            - name: GITEA__DATABASE__HOST
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-postgres-secrets
+                  key: hostname
+            - name: GITEA__DATABASE__NAME
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-postgres-secrets
+                  key: database
+            - name: GITEA__DATABASE__SCHEMA
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-postgres-secrets
+                  key: schema
+            - name: GITEA__DATABASE__USER
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-postgres-secrets
+                  key: username
+            - name: GITEA__DATABASE__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-postgres-secrets
+                  key: password
+
+            - name: GITEA__MAILER__SMTP_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: cluster-smtp-secrets
+                  key: SMTP_HOST
+            - name: GITEA__MAILER__SMTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: cluster-smtp-secrets
+                  key: SMTP_PORT
+            - name: GITEA__MAILER__USER
+              valueFrom:
+                secretKeyRef:
+                  name: cluster-smtp-secrets
+                  key: SMTP_USERNAME
+            - name: GITEA__MAILER__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: cluster-smtp-secrets
+                  key: SMTP_PASSWORD
+            - name: GITEA__MAILER__FROM
+              valueFrom:
+                secretKeyRef:
+                  name: cluster-smtp-secrets
+                  key: SMTP_FROM_EMAIL
+
+            - name: GITEA__OAUTH2_CLIENT__ENABLE_AUTO_REGISTRATION
+              value: "true"
+            - name: GITEA__OAUTH2_CLIENT__ACCOUNT_LINKING
+              value: auto
+            - name: GITEA__OAUTH2_CLIENT__OPENID_CONNECT_SCOPES
+              value: profile email groups
+            - name: GITEA__OAUTH2_CLIENT__USERNAME
+              value: preferred_username
+
+          config:
+            service:
+              DISABLE_REGISTRATION: true
+              DEFAULT_ORG_VISIBILITY: limited
+
+            server:
+              DOMAIN: git.{{ .Values.domains.external }}
+              ROOT_URL: https://git.{{ .Values.domains.external }}
+              SSH_DOMAIN: gitea-ssh.{{ .Release.Namespace }}.svc.cluster.local
+              MINIMUM_KEY_SIZE_CHECK: false
+              SSH_PORT: 2222
+              SSH_LISTEN_PORT: 2222
+            
+            repository:
+              DISABLED_REPO_UNITS: repo.wikirepo.packages,repo.ext_issues,repo.ext_wiki
+              DEFAULT_REPO_UNITS: repo.code,repo.pulls,repo.actions,repo.issues
+              DISABLE_STARS: true
+            
+            packages:
+              enabled: false
+
+            security:
+              ALLOWED_HOST_LIST: '*'
+            
+            migrations:
+              ALLOW_LOCALNETWORKS: true
+              ALLOWED_DOMAINS: '*'
+
+            mailer:
+              enabled: true
+              protocol: smtp+starttls
+
+            queue:
+              TYPE: redis
+              CONN_STR: redis://redis.{{ .Release.Namespace }}.svc.cluster.local:6379/0
+
+            session:
+              PROVIDER: redis
+              PROVIDER_CONFIG: redis://redis.{{ .Release.Namespace }}.svc.cluster.local:6379/0
+
+            cache:
+              ENABLED: true
+              ADAPTER: redis
+              HOST: redis://redis.{{ .Release.Namespace }}.svc.cluster.local:6379/0
+
+            ssh:
+              minimum_key_sizes:
+                RSA: 2048
+
+        valkey-cluster:
+          enabled: false
+
+        valkey:
+          enabled: false
+
+        postgresql-ha:
+          enabled: false
+
+        postgresql:
+          enabled: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitea-actions-dind-daemon
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+data:
+  daemon.json: |
+    {
+      "registry-mirrors": [
+        "https://dockerhub.{{ .Values.domains.external }}"
+      ],
+      "mtu": 1450
+    }
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap-external-gitea-actions
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: gitea-actions-runner
+      jsonPointers:
+        - /spec/replicas
+        - /spec/template/metadata/annotations/kubectl.kubernetes.io~1restartedAt
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      # RespectIgnoreDifferences=true prevents Argo CD from applying the
+      # Helm-rendered statefulset.replicas: 0 during sync; KEDA exclusively
+      # owns the replica count for gitea-actions-act-runner.
+      - RespectIgnoreDifferences=true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: actions
+    repoURL: https://dl.gitea.com/charts/
+    targetRevision: {{ .Values.gitea.actions.version }}
+    helm:
+      releaseName: gitea-actions
+      values: |-
+        global:
+          storageClass: {{ .Values.storage.fast }}
+          imagePullSecrets:
+            - cluster-docker-secrets
+
+        enabled: true
+        existingSecret: gitea-runner-secrets
+        existingSecretKey: token
+        giteaRootURL: https://git.{{ .Values.domains.external }}
+
+        statefulset:
+          replicas: 0
+          {{- with .Values.gitea.actions.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          extraVolumes:
+            - name: docker-secret
+              secret:
+                secretName: cluster-docker-secrets
+            - name: docker-daemon-config
+              configMap:
+                name: gitea-actions-dind-daemon
+
+          dind:
+            registry: dockerhub.{{ .Values.domains.external }}/library
+            # Docker 29's containerd snapshotter can fail while committing
+            # large layers on the action runners. Keep the overlay2 backend
+            # until the newer snapshotter path is proven stable here.
+            tag: 28.5.1-dind
+            extraVolumeMounts:
+              - name: docker-secret
+                mountPath: /root/.docker/config.json
+                subPath: .dockerconfigjson
+              - name: docker-daemon-config
+                mountPath: /etc/docker/daemon.json
+                subPath: daemon.json
+                readOnly: true
+
+          runner:
+            extraVolumeMounts:
+              - name: docker-secret
+                mountPath: /root/.docker/config.json
+                subPath: .dockerconfigjson
+
+            config: |
+              log:
+                level: debug
+              cache:
+                enabled: false
+              container:
+                # valid_volumes:
+                #   - /var/run/docker.sock
+                # options: -v /var/run/docker.sock:/var/run/docker.sock
+              runner:
+                labels:
+                  - "ubuntu-latest:docker://dockerhub.yusufali.ca/yusufali/runner"
+                  - "ubuntu-spark:docker://dockerhub.yusufali.ca/yusufali/runner-spark"
+
+        init:
+          image:
+            registry: dockerhub.{{ .Values.domains.external }}/library
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: gitea-db-auth
+spec:
+  secretTargetRef:
+    - parameter: connection
+      name: gitea-postgres-secrets
+      key: url
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: gitea-actions-runner
+spec:
+  scaleTargetRef:
+    name: gitea-actions-runner
+    kind: StatefulSet
+  pollingInterval: 10
+  cooldownPeriod: 300
+  minReplicaCount: 0
+  maxReplicaCount: {{ .Values.gitea.actions.maxRunners }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+            - type: Pods
+              value: 10
+              periodSeconds: 30
+
+  triggers:
+    - type: postgresql
+      metadata:
+        targetQueryValue: "1"
+        query: |
+          SELECT CASE WHEN COUNT(*) > 0 THEN 5 ELSE 0 END::int
+          FROM public.action_run_job
+          WHERE status != 4 and stopped = 0;
+      authenticationRef:
+        name: gitea-db-auth
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: renovate
+spec:
+  schedule: "0 * * * *"
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 0
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    metadata:
+      name: renovate
+    spec:
+      parallelism: 1
+      template:
+        metadata:
+          name: renovate
+        spec:
+          imagePullSecrets:
+            - name: cluster-docker-secrets
+          containers:
+            - name: app
+              image: dockerhub.{{ .Values.domains.external }}/renovate/renovate
+              env:
+                - name: RENOVATE_GIT_AUTHOR
+                  value: "Rennovate <rennovate@yusuf.local>"
+                - name: LOG_LEVEL
+                  value: debug
+                - name: RENOVATE_SEMANTIC_COMMITS
+                  value: "enabled"
+                - name: RENOVATE_SEMANTIC_COMMIT_TYPE
+                  value: fix
+                - name: RENOVATE_COMMIT_MESSAGE_LOWER_CASE
+                  value: "auto"
+                - name: RENOVATE_PACKAGE_RULES
+                  value: >-
+                    [{"matchDatasources":["pypi"],"registryUrls":["https://bandersnatch.yusufali.ca/simple","https://pypi.yusufali.ca/simple"]}]
+                - name: RENOVATE_AUTODISCOVER
+                  value: "true"
+                - name: RENOVATE_PLATFORM
+                  value: gitea
+                - name: RENOVATE_ENDPOINT
+                  value: "https://git.{{ .Values.domains.external }}/api/v1"
+                - name: RENOVATE_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: gitea-runner-secrets
+                      key: renovate-token
+                - name: RENOVATE_HOST_RULES
+                  valueFrom:
+                    secretKeyRef:
+                      name: rennovate-secrets
+                      key: renovate-host-rules
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: actions-templater
+spec:
+  schedule: "0 * * * *"
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 0
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    metadata:
+      name: actions-templater
+    spec:
+      parallelism: 1
+      template:
+        metadata:
+          name: actions-templater
+        spec:
+          imagePullSecrets:
+            - name: cluster-docker-secrets
+          containers:
+            - name: app
+              image: dockerhub.yusufali.ca/yusufali/actions-templater
+              imagePullPolicy: Always
+              env:
+                - name: GITEA_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: gitea-runner-secrets
+                      key: renovate-token
+                - name: PYTHON_VERSION
+                  value: {{ .Values.actionsVerions.python | quote }}
+                - name: TERRAFORM_VERSION
+                  value: {{ .Values.actionsVerions.terraform | quote }}
+                - name: VAULT_ACTION
+                  value: {{ .Values.actionsVerions.vault | quote }}
+                - name: HELM_VERSION
+                  value: {{ .Values.actionsVerions.helm | quote }}
+                - name: KUBELOGIN_VERSION
+                  value: {{ .Values.actionsVerions.kubelogin | quote }}
+                - name: KUBECTL_VERSION
+                  value: {{ .Values.actionsVerions.kubectl | quote }}
+
+          restartPolicy: Never

@@ -1,0 +1,305 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "enabledManagers": [
+    "custom.regex"
+  ],
+  "dependencyDashboard": true,
+  "automerge": false,
+  "prConcurrentLimit": 10,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Bootstrap nvidia",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  nvidia: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "gpu-operator",
+      "registryUrlTemplate": "https://helm.ngc.nvidia.com/nvidia",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap envoy",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  envoy: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "docker.io/envoyproxy/gateway-helm",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap crossplane",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  crossplane: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "crossplane",
+      "registryUrlTemplate": "https://charts.crossplane.io/stable",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap crossplaneOpenTofu",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  crossplaneOpenTofu: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "xpkg.upbound.io/upbound/provider-opentofu",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap crossplaneAnsible",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  crossplaneAnsible: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "xpkg.crossplane.io/crossplane-contrib/provider-ansible",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap argoupdater",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  argoupdater: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "argoproj-labs/argocd-image-updater"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap ingressnginx",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  ingressnginx: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "ingress-nginx",
+      "registryUrlTemplate": "https://kubernetes.github.io/ingress-nginx",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap externalsecrets",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  externalsecrets: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "external-secrets",
+      "registryUrlTemplate": "https://charts.external-secrets.io",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap nfsprovisioner",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  nfsprovisioner: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "nfs-subdir-external-provisioner",
+      "registryUrlTemplate": "https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap keda",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  keda: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "keda",
+      "registryUrlTemplate": "https://kedacore.github.io/charts",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap certmanager",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  certmanager: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "cert-manager",
+      "registryUrlTemplate": "https://charts.jetstack.io",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap externaldns",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  externaldns: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "external-dns",
+      "registryUrlTemplate": "https://kubernetes-sigs.github.io/external-dns",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap prometheus",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  prometheus: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "kube-prometheus-stack",
+      "registryUrlTemplate": "https://prometheus-community.github.io/helm-charts",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap reloader",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  reloader: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "reloader",
+      "registryUrlTemplate": "https://stakater.github.io/stakater-charts",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Mordor image.name/tag pairs",
+      "managerFilePatterns": [
+        "/^charts/mordor/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "\\bimage:\\s*\\n\\s+name: [\"\\x27]?(?<depName>[^\\s\"\\x27]+)[\"\\x27]?\\s*\\n\\s+tag: [\"\\x27]?(?<currentValue>(?:v?[0-9]|pg[0-9])[^\\s\"\\x27@]*)(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Mordor inline images in templates, init containers, and sidecars",
+      "managerFilePatterns": [
+        "/^charts/mordor/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "\\bimage: [\"\\x27]?(?<depName>[^\\s:\"\\x27]+):(?<currentValue>(?:v?[0-9]|pg[0-9])[^\\s\"\\x27@]*)(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Digest updates for latest tags: Mordor image.name/tag pairs",
+      "managerFilePatterns": [
+        "/^charts/mordor/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "\\bimage:\\s*\\n\\s+name: [\"\\x27]?(?<depName>[^\\s\"\\x27]+)[\"\\x27]?\\s*\\n\\s+tag: [\"\\x27]?(?<currentValue>latest)(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker",
+      "autoReplaceStringTemplate": "{{{replace \"latest(?:@sha256:[a-f0-9]+)?$\" \"\" replaceString}}}latest@{{{newDigest}}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Digest updates for latest tags: Mordor inline images in templates, init containers, and sidecars",
+      "managerFilePatterns": [
+        "/^charts/mordor/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "\\bimage: [\"\\x27]?(?<depName>[^\\s:\"\\x27]+):(?<currentValue>latest)(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker",
+      "autoReplaceStringTemplate": "{{{replace \"latest(?:@sha256:[a-f0-9]+)?$\" \"\" replaceString}}}latest@{{{newDigest}}}"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Look up mirror images on Docker Hub while retaining mirror references",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchDepNames": [
+        "/^dockerhub\\.yusufali\\.ca\\//"
+      ],
+      "overridePackageName": "{{{replace '^dockerhub\\.yusufali\\.ca/' 'docker.io/' depName}}}"
+    },
+    {
+      "description": "Argo Image Updater consumes release-X.Y Git refs, not vX.Y.Z tags",
+      "matchDepNames": [
+        "argoproj-labs/argocd-image-updater"
+      ],
+      "extractVersion": "^v?(?<version>\\d+\\.\\d+)\\.\\d+$",
+      "versioning": "loose"
+    },
+    {
+      "description": "Update every Sure container together and retain its hotfix release numbering",
+      "matchDepNames": [
+        "ghcr.io/we-promise/sure"
+      ],
+      "versioning": "semver",
+      "ignoreUnstable": false
+    },
+    {
+      "description": "Treat four-part OnlyOffice tags as versions",
+      "matchDepNames": [
+        "dockerhub.yusufali.ca/onlyoffice/documentserver"
+      ],
+      "versioning": "loose"
+    },
+    {
+      "description": "Track pgvector releases within the existing PostgreSQL major tag family",
+      "matchDepNames": [
+        "pgvector/pgvector"
+      ],
+      "versioning": "regex:^pg(?<major>\\d+)$"
+    },
+    {
+      "description": "Track new builds for mutable latest tags using digest PRs",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchCurrentValue": "latest",
+      "pinDigests": true
+    }
+  ]
+}

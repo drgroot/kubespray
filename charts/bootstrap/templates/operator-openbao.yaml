@@ -1,0 +1,47 @@
+{{- if .Values.openbaoOperator.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.openbaoOperator.namespace }}
+  labels:
+    tenant: approved
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap-external-openbao-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true
+  destination:
+    namespace: {{ .Values.openbaoOperator.namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: openbao-operator
+    repoURL: ghcr.io/kubebao/charts
+    targetRevision: {{ .Values.versions.openbaoOperator | quote }}
+    helm:
+      releaseName: openbao-operator
+      valuesObject:
+        platform: kubernetes
+        tenancy:
+          mode: multi
+        admissionPolicies:
+          enabled: true
+{{- end }}

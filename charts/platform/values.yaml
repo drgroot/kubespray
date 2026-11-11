@@ -1,0 +1,1579 @@
+project: boasdasdotstrap
+
+storage:
+  default: asdasd
+  nobackup: asdasd
+  fast: asdasd
+
+versions:
+  authelia: 0.11.20
+  gitea: 12.7.0
+  redis: 8
+  registry: 3.1
+  # Maintained MinIO fork; release notes:
+  # https://github.com/pgsty/silo/releases/tag/RELEASE.2026-09-16T00-00-00Z
+  minio: RELEASE.2026-09-16T00-00-00Z
+
+actionsVerions:
+  python: 3.13
+  terraform: 1.6.3
+  vault: v2
+  helm: 3.10.3
+  kubelogin: v0.0.18
+  kubectl: v1.24.6
+
+# The list owns the complete router forwarding table, including removals.
+router:
+  enabled: true
+  port: 80
+  useSSL: false
+  forwardingEnabled: true
+  # Synced from ClusterSecretStore external-infra, vendor/router (ip, username, password).
+  secretName: router-credentials
+  secretNamespace: argocd
+
+  dchp:
+    reservations:
+      - name: thorin
+        ip: 192.168.1.3
+        mac: 24:5E:BE:81:85:01
+      - name: pikvm
+        ip: 192.168.1.6
+        mac: 88:A2:9E:32:36:00
+      - name: kube0
+        ip: 192.168.1.10
+        mac: 74:56:3C:B8:E6:A6
+      - name: kube2
+        ip: 192.168.1.12
+        mac: E8:FF:1E:DF:5D:6D
+      - name: kube3
+        ip: 192.168.1.13
+        mac: B0:41:6F:17:4E:54
+      - name: kube4
+        ip: 192.168.1.14
+        mac: 78:55:36:00:4F:68
+      - name: kube5
+        ip: 192.168.1.15
+        mac: 30:9C:23:A0:16:A4
+      - name: camera1
+        ip: 192.168.1.20
+        mac: 80:BE:AF:5D:88:7C
+      - name: camera2
+        ip: 192.168.1.21
+        mac: 80:BE:AF:5D:88:B7
+      - name: camera3
+        ip: 192.168.1.22
+        mac: E8:A0:ED:F9:BA:7E
+      - name: pihole
+        ip: 192.168.1.50
+        mac: 02:42:C0:A8:01:32
+
+  portForwards:
+    - name: HTTPS
+      protocol: tcp
+      externalPort: 443
+      internalIP: 192.168.1.10
+      internalPort: 443
+    - name: HTTP
+      protocol: tcp
+      externalPort: 80
+      internalIP: 192.168.1.10
+      internalPort: 80
+    - name: SunshineTCP47984
+      protocol: tcp
+      externalPort: 47984
+      internalIP: 192.168.1.10
+      internalPort: 47984
+    - name: SunshineTCP47989
+      protocol: tcp
+      externalPort: 47989
+      internalIP: 192.168.1.10
+      internalPort: 47989
+    - name: SunshineTCP48010
+      protocol: tcp
+      externalPort: 48010
+      internalIP: 192.168.1.10
+      internalPort: 48010
+    - name: SunshineUDP47998
+      protocol: udp
+      externalPort: 47998
+      internalIP: 192.168.1.10
+      internalPort: 47998
+    - name: SunshineUDP47999
+      protocol: udp
+      externalPort: 47999
+      internalIP: 192.168.1.10
+      internalPort: 47999
+    - name: SunshineUDP48000
+      protocol: udp
+      externalPort: 48000
+      internalIP: 192.168.1.10
+      internalPort: 48000
+    - name: SteamRemotePlayTCP27036
+      protocol: tcp
+      externalPort: 27036
+      internalIP: 192.168.1.10
+      internalPort: 27036
+    - name: SteamRemotePlayTCP27037
+      protocol: tcp
+      externalPort: 27037
+      internalIP: 192.168.1.10
+      internalPort: 27037
+    - name: SteamRemotePlayUDP27031
+      protocol: udp
+      externalPort: 27031
+      internalIP: 192.168.1.10
+      internalPort: 27031
+    - name: SteamRemotePlayUDP27036
+      protocol: udp
+      externalPort: 27036
+      internalIP: 192.168.1.10
+      internalPort: 27036
+
+crossplane:
+  enabled: true
+
+  ansible:
+    enabled: true
+    repository: https://github.com/drgroot/kubespray.git
+    revision: main
+    inventory: inventory/sample/inventory.ini
+    secretName: ssh-password
+    secretNamespace: argocd
+
+  iac:
+    github-vault-url:
+      enabled: true
+      type: github
+      provider: reposecret
+      name: VAULT_URL
+      vars:
+        - key: path
+          value: external-infra/vendor/vault
+        - key: property
+          value: url
+        - key: repository
+          value: kubespray
+        - key: org
+          value: drgroot
+        - key: credentialpath
+          value: external-infra/vendor/github
+        - key: usernamekey
+          value: username
+        - key: tokenkey
+          value: token
+
+    github-vault-token:
+      enabled: true
+      type: github
+      provider: reposecret
+      name: VAULT_TOKEN
+      vars:
+        - key: path
+          value: external-infra/vendor/vault
+        - key: property
+          value: token
+        - key: repository
+          value: kubespray
+        - key: org
+          value: drgroot
+        - key: credentialpath
+          value: external-infra/vendor/github
+        - key: usernamekey
+          value: username
+        - key: tokenkey
+          value: token
+
+    github-comfyui-vid-vault-url:
+      enabled: true
+      type: github
+      provider: reposecret
+      name: VAULT_URL
+      vars:
+        - key: path
+          value: external-infra/vendor/vault
+        - key: property
+          value: url
+        - key: repository
+          value: comfyui-vid
+        - key: org
+          value: drgroot
+        - key: credentialpath
+          value: external-infra/vendor/github
+        - key: usernamekey
+          value: username
+        - key: tokenkey
+          value: token
+
+    github-comfyui-vid-vault-token:
+      enabled: true
+      type: github
+      provider: reposecret
+      name: VAULT_TOKEN
+      vars:
+        - key: path
+          value: external-infra/vendor/vault
+        - key: property
+          value: token
+        - key: repository
+          value: comfyui-vid
+        - key: org
+          value: drgroot
+        - key: credentialpath
+          value: external-infra/vendor/github
+        - key: usernamekey
+          value: username
+        - key: tokenkey
+          value: token
+
+    vault-user-servc:
+      enabled: true
+      type: vault
+      provider: user
+      name: vault-user-servc
+      vars:
+        - key: input
+          value: external-infra/vendor/vault
+        - key: output
+          value: external-infra/iac/vault-user-servc
+        - key: usernamekey
+          value: servc-username
+        - key: passwordkey
+          value: servc-password
+        - key: vault_addr
+          value: https://vault.{{ .Values.domains.external }}
+        - key: path
+          value: servc/*
+        - key: capabilities
+          value: create,read,update,delete,list,patch,sudo
+
+    vault-oidc:
+      enabled: true
+      type: vault
+      provider: oidc-config
+      name: vault-oidc
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: oidc_discovery_url
+          value: https://auth.{{ .Values.domains.external }}
+        - key: oidc_client_id
+          value: vault
+        - key: oidc_client_secret_path
+          value: external-infra/vendor/authelia-apps
+        - key: oidc_client_secret_key
+          value: client-secret-vault
+        - key: vault_url
+          value: https://vault.{{ .Values.domains.external }}
+
+    authelia-salihah:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-salihah
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: salihah
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: external-infra/data/authelia/salihah
+        - key: capabilities
+          value: read,update,patch
+
+    authelia-salihah-browse:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-salihah-browse
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: salihah
+        - key: path
+          value: external-infra/metadata/authelia
+        - key: capabilities
+          value: list
+
+    authelia-yusuf-browse:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-yusuf-browse
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: yusuf
+        - key: path
+          value: external-infra/metadata/authelia
+        - key: capabilities
+          value: list
+
+    authelia-yusuf:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-yusuf
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: yusuf
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: external-infra/data/authelia/yusuf
+        - key: capabilities
+          value: read,update,patch
+
+    authelia-yusuf-servc:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-yusuf-servc
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: yusuf
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: servc/*
+        - key: capabilities
+          value: create,read,update,list,patch
+
+    authelia-murtz-servc:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-murtz-servc
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: murtz
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: servc/*
+        - key: capabilities
+          value: create,read,update,list,patch
+
+    authelia-murtz:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-murtz
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: murtz
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: external-infra/data/authelia/murtz
+        - key: capabilities
+          value: read,update,patch
+
+    authelia-murtz-browse:
+      enabled: true
+      type: vault
+      provider: oidc
+      name: authelia-murtz-browse
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: name
+          value: murtz
+        - key: path
+          value: external-infra/metadata/authelia
+        - key: capabilities
+          value: list
+
+    s3-backups-b2:
+      enabled: true
+      type: s3
+      provider: b2
+      name: thorin-backups
+      vars:
+        - key: input
+          value: external-infra/vendor/blackblaze
+        - key: output
+          value: external-infra/iac/s3-backups-b2
+
+    s3-pvcbackups-k8s:
+      enabled: true
+      type: s3
+      provider: minio
+      name: pvc-backups
+      vars:
+        - key: input
+          value: external-infra/vendor/minio
+        - key: output
+          value: external-infra/iac/s3-pvcbackups-k8s
+
+    s3-thanos:
+      enabled: true
+      type: s3
+      provider: minio
+      name: thanos
+      vars:
+        - key: input
+          value: external-infra/vendor/minio
+        - key: output
+          value: external-infra/iac/s3-thanos
+
+    s3-backups-k8s:
+      enabled: true
+      type: s3
+      provider: minio
+      name: db-backups
+      vars:
+        - key: input
+          value: external-infra/vendor/minio
+        - key: output
+          value: external-infra/iac/s3-db-backups
+
+    postgres-gitea:
+      enabled: true
+      type: postgres
+      provider: db
+      name: gitea
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: gitea
+        - key: output
+          value: external-infra/iac/postgres-gitea
+
+    postgres-coder:
+      enabled: true
+      type: postgres
+      provider: db
+      name: coder
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: coder
+        - key: output
+          value: external-infra/iac/postgres-coder
+
+    postgres-grafana:
+      enabled: true
+      type: postgres
+      provider: db
+      name: grafana
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: authelia
+        - key: output
+          value: external-infra/iac/postgres-grafana
+
+    postgres-authelia:
+      enabled: true
+      type: postgres
+      provider: db
+      name: authelia
+      vars:
+        - key: input
+          value: external-infra/iac/postgres
+        - key: credentialpath
+          value: external-infra/vendor/postgres
+        - key: passwordkey
+          value: authelia
+        - key: output
+          value: external-infra/iac/postgres-authelia
+
+    gitea-argocd:
+      enabled: true
+      type: gitea
+      provider: user
+      name: argocd
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: provider_usernamekey
+          value: root-username
+        - key: provider_passwordkey
+          value: root-password
+        - key: usernamekey
+          value: argo-username
+        - key: passwordkey
+          value: argo-password
+
+    gitea-rennovate:
+      enabled: true
+      type: gitea
+      provider: user
+      name: rennovate
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: provider_usernamekey
+          value: root-username
+        - key: provider_passwordkey
+          value: root-password
+        - key: usernamekey
+          value: rennovate-username
+        - key: passwordkey
+          value: rennovate-password
+
+    gitea-rennovate-token:
+      enabled: true
+      type: gitea
+      provider: token
+      name: rennovate
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: usernamekey
+          value: rennovate-username
+        - key: passwordkey
+          value: rennovate-password
+        - key: output
+          value: external-infra/iac/gitea-rennovate
+
+    gitea-servc-vault-addr:
+      enabled: true
+      type: gitea
+      provider: orgsecret
+      name: VAULT_ADDR
+      vars:
+        - key: path
+          value: external-infra/iac/vault-user-servc
+        - key: property
+          value: vault-addr
+        - key: org
+          value: serv-c
+        - key: gitea_url
+          value: https://git.yusufali.ca
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: usernamekey
+          value: root-username
+        - key: passwordkey
+          value: root-password
+
+    gitea-servc-vault-username:
+      enabled: true
+      type: gitea
+      provider: orgsecret
+      name: VAULT_USERNAME
+      vars:
+        - key: path
+          value: external-infra/iac/vault-user-servc
+        - key: property
+          value: username
+        - key: org
+          value: serv-c
+        - key: gitea_url
+          value: https://git.yusufali.ca
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: usernamekey
+          value: root-username
+        - key: passwordkey
+          value: root-password
+
+    gitea-servc-vault-password:
+      enabled: true
+      type: gitea
+      provider: orgsecret
+      name: VAULT_PASSWORD
+      vars:
+        - key: path
+          value: external-infra/iac/vault-user-servc
+        - key: property
+          value: password
+        - key: org
+          value: serv-c
+        - key: gitea_url
+          value: https://git.yusufali.ca
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: usernamekey
+          value: root-username
+        - key: passwordkey
+          value: root-password
+
+    gitea-chintan:
+      enabled: true
+      type: gitea
+      provider: user
+      name: chintan
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: provider_usernamekey
+          value: root-username
+        - key: provider_passwordkey
+          value: root-password
+        - key: usernamekey
+          value: chintan-username
+        - key: passwordkey
+          value: chintan-password
+
+    gitea-chintan-token:
+      enabled: true
+      type: gitea
+      provider: token
+      name: chintan
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: external-infra/vendor/gitea
+        - key: usernamekey
+          value: chintan-username
+        - key: passwordkey
+          value: chintan-password
+        - key: output
+          value: external-infra/iac/gitea
+
+domains:
+  internal: asd
+  external: asd
+
+authelia:
+  enabled: true
+  database:
+    remoteKey: iac/postgres-authelia
+
+  secrets:
+    remoteKey: vendor/selfhosted-app-tokens
+
+  users:
+    - name: yusuf
+      remoteKey: authelia/yusuf
+    - name: salihah
+      remoteKey: authelia/salihah
+    - name: murtz
+      remoteKey: authelia/murtz
+
+  clients:
+    client_remote_key: vendor/authelia-apps
+    claims_policies:
+      vault:
+        id_token:
+          - preferred_username
+      servc-mcp:
+        access_token:
+          - email
+          - email_verified
+    hmac:
+      remoteKey: vendor/authelia-apps
+      property: hmac-secret
+    jwks-private:
+      remoteKey: vendor/authelia-apps
+      property: jwks-private
+    jwks-public:
+      remoteKey: vendor/authelia-apps
+      property: jwks-public
+
+    list:
+      sure:
+        client_id: sure
+        client_name: Sure
+        client_secret_property: client-secret-sure
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: true
+          pkce_challenge_method: S256
+          redirect_uris:
+            - https://sure.yusufali.ca/auth/openid_connect/callback
+          scopes:
+            - openid
+            - profile
+            - email
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_basic
+
+      postiz:
+        client_id: postiz
+        client_name: Postiz
+        client_secret_property: client-secret-postiz
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: false
+          redirect_uris:
+            - https://postiz.yusufali.ca/settings
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_post
+
+      affine:
+        client_id: affine
+        client_name: AFFiNE
+        client_secret_property: client-secret-affine
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: true
+          pkce_challenge_method: S256
+          redirect_uris:
+            - https://miro.yusufali.ca/oauth/callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+            - offline_access
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_post
+
+      affine-mcp:
+        client_id: affine-mcp
+        client_name: AFFiNE MCP
+        client_secret_property: client-secret-affine
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: true
+          pkce_challenge_method: S256
+          redirect_uris:
+            - https://chatgpt.com/connector_platform_oauth_redirect
+            - https://claude.ai/api/mcp/auth_callback
+          audience:
+            - https://miro-mcp.yusufali.ca/mcp
+          requested_audience_mode: implicit
+          scopes:
+            - openid
+            - profile
+            - email
+            - offline_access
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+            - refresh_token
+          access_token_signed_response_alg: RS256
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_post
+
+      servc-nonprod:
+        client_id: servc-nonprod
+        client_name: Servc Nonprod MCP
+        client_secret_property: client-secret-servc
+        oidc:
+          claims_policy: servc-mcp
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: true
+          pkce_challenge_method: S256
+          redirect_uris:
+            - https://chatgpt.com/connector_platform_oauth_redirect
+          audience:
+            - https://nonprod-api.servc.io/mcp/onprem
+            - https://nonprod-mcp.modlin.ai/mcp/onprem
+            - https://mcp.modlin.ai/mcp/gptplugin
+          requested_audience_mode: implicit
+          scopes:
+            - openid
+            - profile
+            - email
+            - offline_access
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+            - refresh_token
+          access_token_signed_response_alg: RS256
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_post
+
+      grafana:
+        client_id: grafana
+        client_name: Grafana
+        client_secret_property: client-secret-grafana
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: true
+          pkce_challenge_method: S256
+          redirect_uris:
+            - https://grafana.yusufali.ca/login/generic_oauth
+            - https://grafana-us.servc.io/login/generic_oauth
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_basic
+
+      argocd:
+        client_id: argocd
+        client_name: Argo CD
+        client_secret_property: client-secret-argocd
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: false
+          redirect_uris:
+            - https://argocd.yusufali.ca/auth/callback
+            - https://argocd-us.servc.io/auth/callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_basic
+
+      gitea:
+        client_id: gitea
+        client_name: Gitea
+        client_secret_property: client-secret-gitea
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: false
+          redirect_uris:
+            - https://git.yusufali.ca/user/oauth2/gitea/callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_post
+
+      immich:
+        client_id: immich
+        client_name: immich
+        client_secret_property: client-secret-immich
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: true
+          pkce_challenge_method: S256
+          redirect_uris:
+            - https://photos.yusufali.ca/auth/login
+            - https://photos.yusufali.ca/user-settings
+            - app.immich:///oauth-callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_basic
+
+      filebrowse:
+        client_id: filebrowse
+        client_name: FileBrowser
+        client_secret_property: client-secret-filebrowse
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: false
+          redirect_uris:
+            - https://drive.yusufali.ca/api/auth/oidc/callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_post
+
+      bitwarden:
+        client_id: bitwarden
+        client_name: Vaultwarden
+        client_secret_property: client-secret-bitwarden
+        oidc:
+          public: false
+          authorization_policy: one_factor
+          consent_mode: implicit
+          require_pkce: true
+          pkce_challenge_method: S256
+          redirect_uris:
+            - https://bitwarden.yusufali.ca/identity/connect/oidc-signin
+          scopes:
+            - openid
+            - offline_access
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+            - refresh_token
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_basic
+
+      vault:
+        client_id: vault
+        client_name: Vault
+        client_secret_property: client-secret-vault
+        oidc:
+          claims_policy: vault
+          public: false
+          authorization_policy: two_factor
+          consent_mode: implicit
+          require_pkce: false
+          redirect_uris:
+            - https://vault.yusufali.ca/ui/vault/auth/oidc/oidc/callback
+            - http://localhost:8250/oidc/callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_basic
+
+redis:
+  image:
+    registry: ""
+    repository: redis
+
+  resources:
+    cpu: 50m
+    memory: 256Mi
+
+pypi:
+  image:
+    registry: "dockerhub.{{ .Values.domains.external }}/"
+    repository: pypiserver/pypiserver
+    tag: latest
+
+  resources:
+    cpu: 250m
+    memory: 64Mi
+
+npm:
+  image:
+    registry: "dockerhub.{{ .Values.domains.external }}/"
+    repository: verdaccio/verdaccio
+    tag: 6.1.6
+
+  resources:
+    cpu: 1500m
+    memory: 800Mi
+
+registry:
+  image:
+    repository: library/registry
+
+  resources:
+    memory: 1Gi
+
+minio:
+  image:
+    registry: "dockerhub.{{ .Values.domains.external }}/"
+    repository: pgsty/silo
+    digest: sha256:635197cb9f36d01bee221d34d1c7d7960f6a95c48b0b6c01d99cd13bdae51a46
+
+  storage:
+    size: 20Gi
+
+  resources:
+    cpu: 250m
+    memory: 512Mi
+
+bandersnatch:
+  image:
+    registry: "dockerhub.{{ .Values.domains.external }}/"
+    repository: pypa/bandersnatch
+    tag: 3.14
+
+  resources:
+    cpu: 100m
+    memory: 64Mi
+
+  packages:
+    - a2wsgi
+    - absl-py
+    - aenum
+    - agent-detector
+    - aiodns
+    - aiohappyeyeballs
+    - aiohttp
+    - aiohttp-retry
+    - aiosignal
+    - alembic
+    - altair
+    - annotated-doc
+    - annotated-types
+    - anyio
+    - argcomplete
+    - arro3-core
+    - arviz
+    - ast-serialize
+    - asttokens
+    - astunparse
+    - attrs
+    - audioop-lts
+    - authlib
+    - Authlib
+    - babel
+    - backoff
+    - backports-zstd
+    - bcrypt
+    - berserk
+    - bidict
+    - blinker
+    - borb
+    - boto3
+    - botocore
+    - brotli
+    - build
+    - cachetools
+    - capi-param-builder-python
+    - certifi
+    - cffi
+    - chardet
+    - charset_normalizer
+    - chess
+    - chess-com
+    - civitai-comfy-nodes
+    - click
+    - cloudpickle
+    - colorama
+    - comfy-script
+    - comfyui-ib-customnodes
+    - comfyui-tooling-nodes
+    - comm
+    - contourpy
+    - coverage
+    - cryptography
+    - curlify
+    - cycler
+    - decorator
+    - delta-spark
+    - deltalake
+    - deprecated
+    - detect-installer
+    - diff-cover
+    - discord-py
+    - distro
+    - dm-tree
+    - dnspython
+    - docutils
+    - duckdb
+    - durationpy
+    - dynaconf
+    - email-validator
+    - et-xmlfile
+    - executing
+    - facebook-business
+    - fastapi
+    - fastapi-cli
+    - fastapi-cloud-cli
+    - fastar
+    - flask
+    - flatbuffers
+    - fonttools
+    - frozenlist
+    - fsspec
+    - gast
+    - google-ads
+    - google-analytics-admin
+    - google-analytics-data
+    - google-api-core
+    - google-auth
+    - google-auth-oauthlib
+    - google-meridian
+    - google_pasta
+    - googleapis-common-protos
+    - grpcio
+    - grpcio-status
+    - grpcio-tools
+    - gunicorn
+    - h11
+    - h5netcdf
+    - h5py
+    - httpcore
+    - httpcore2
+    - httptools
+    - httpx
+    - httpx2
+    - id
+    - idna
+    - immutabledict
+    - importlib-metadata
+    - iniconfig
+    - inquirerpy
+    - invoke
+    - ipython
+    - ipython-pygments-lexers
+    - ipywidgets
+    - itsdangerous
+    - jaraco-classes
+    - jaraco-context
+    - jaraco-functools
+    - jax
+    - jaxlib
+    - jedi
+    - jeepney
+    - jinja2
+    - jiter
+    - jmespath
+    - joblib
+    - joserfc
+    - jsonpatch
+    - jsonpointer
+    - jsonschema
+    - jsonschema-specifications
+    - jupyterlab-widgets
+    - keras
+    - keyring
+    - kiwisolver
+    - kubernetes
+    - kubernetes-stubs-elephant-fork
+    - langchain
+    - langchain-core
+    - langchain-mcp-adapters
+    - langchain-openai
+    - langchain-protocol
+    - langgraph
+    - langgraph-checkpoint
+    - langgraph-prebuilt
+    - langgraph-sdk
+    - langsmith
+    - libclang
+    - librt
+    - mailjet-rest
+    - mako
+    - markdown-it-py
+    - markupsafe
+    - matplotlib
+    - matplotlib-inline
+    - mcp
+    - mcp-types
+    - mdurl
+    - ml_dtypes
+    - mmh3
+    - more-itertools
+    - multidict
+    - mypy
+    - mypy_extensions
+    - mysql-connector-python
+    - namex
+    - narwhals
+    - natsort
+    - ndjson
+    - nest-asyncio2
+    - networkx
+    - nh3
+    - numpy
+    - oauthlib
+    - openai
+    - openpyxl
+    - opentelemetry-api
+    - opentelemetry-exporter-http-transport
+    - opentelemetry-exporter-otlp-common
+    - opentelemetry-exporter-otlp-proto-common
+    - opentelemetry-exporter-otlp-proto-http
+    - opentelemetry-proto
+    - opentelemetry-sdk
+    - opentelemetry-semantic-conventions
+    - opt_einsum
+    - optree
+    - orjson
+    - ormsgpack
+    - overrides
+    - packaging
+    - pandas
+    - pandas-stubs
+    - paramiko
+    - parso
+    - pathspec
+    - patsy
+    - pexpect
+    - pfzy
+    - pika
+    - pillow
+    - platformdirs
+    - pluggy
+    - polars
+    - polars-runtime-32
+    - prettytable
+    - prompt-toolkit
+    - propcache
+    - proto-plus
+    - protobuf
+    - psutil
+    - psycopg2-binary
+    - ptyprocess
+    - pure-eval
+    - py-cpuinfo
+    - py4j
+    - pyarr
+    - pyarrow
+    - pyarrow-stubs
+    - pyasn1
+    - pyasn1-modules
+    - pycares
+    - pycountry
+    - pycparser
+    - pycryptodome
+    - pydantic
+    - pydantic-core
+    - pydantic-extra-types
+    - pydantic-settings
+    - pygments
+    - pyiceberg
+    - pyiceberg-core
+    - pyjwt
+    - pynacl
+    - pyparsing
+    - pyproject_hooks
+    - pyroaring
+    - pyspark
+    - pytest
+    - python-dateutil
+    - python-dotenv
+    - python-multipart
+    - pytz
+    - pyyaml
+    - questionary
+    - readme-renderer
+    - redis
+    - referencing
+    - regex
+    - requests
+    - requests-oauthlib
+    - requests-toolbelt
+    - rfc3986
+    - rich
+    - rich-toolkit
+    - rignore
+    - rpds-py
+    - runpod
+    - runpod-flash
+    - s3transfer
+    - scipy
+    - secretstorage
+    - sentry-sdk
+    - servc
+    - setuptools
+    - shellingham
+    - shopifyapp
+    - simplejson
+    - six
+    - sniffio
+    - sqlalchemy
+    - sqlfluff
+    - sqlglot
+    - sqlglotc
+    - sqlglotrs
+    - sse-starlette
+    - stack-data
+    - starlette
+    - statsmodels
+    - stockfish
+    - strictyaml
+    - stripe
+    - tblib
+    - tenacity
+    - tensorflow
+    - termcolor
+    - tf-keras
+    - tfp-nightly
+    - tiktoken
+    - tomli
+    - tomlkit
+    - tqdm
+    - tqdm-loggable
+    - traitlets
+    - truststore
+    - twine
+    - typer
+    - types-authlib
+    - types-cffi
+    - types-grpcio
+    - types-protobuf
+    - types-pyopenssl
+    - types-python-dateutil
+    - types-pyyaml
+    - types-redis
+    - types-requests
+    - types-setuptools
+    - types-simplejson
+    - typing-extensions
+    - typing-inspection
+    - tzdata
+    - urllib3
+    - uuid-utils
+    - uvicorn
+    - uvloop
+    - vastai
+    - watchdog
+    - watchfiles
+    - wcwidth
+    - websocket-client
+    - websockets
+    - werkzeug
+    - wheel
+    - widgetsnbextension
+    - wrapt
+    - xarray
+    - xarray-einstats
+    - xdg
+    - xxhash
+    - yarl
+    - zipp
+    - zstandard
+
+gitea:
+  actions:
+    version: 0.1.2
+    maxRunners: 5
+
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1"
+      limits:
+        memory: "4Gi"
+        cpu: "2"
+
+secretSync:
+  - name: authelia-oidc-clients
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/authelia-apps
+      properties:
+        - client-secret-argocd
+        - client-secret-grafana
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/authelia
+      properties:
+        client-secret-argocd: client-secret-argocd
+        client-secret-grafana: client-secret-grafana
+
+  - name: gitea-username
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/gitea
+      properties:
+        - chintan-username
+        - chintan-password
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/gitea
+      properties:
+        chintan-username: username
+        chintan-password: password
+
+  - name: gitea
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: iac/gitea
+      properties:
+        - token
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/gitea
+      properties:
+        token: token
+
+  - name: docker
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/docker
+      properties:
+        - private-host
+        - private-username
+        - private-password
+        - host-mirror
+        - mirror-username
+        - mirror-password
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/docker
+      properties:
+        private-host: host
+        private-username: username
+        private-password: password
+        host-mirror: host-mirror
+        mirror-username: mirror-username
+        mirror-password: mirror-password
+
+  - name: npm
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/npm
+      properties:
+        - password
+        - username
+        - read-username
+        - read-password
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/npm
+      properties:
+        password: npm_write_pass
+        username: npm_write_user
+        read-username: npm_read_user
+        read-password: npm_read_pass
+
+  - name: pip
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: vendor/pip
+      properties:
+        - host
+        - password
+        - username
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/pip
+      properties:
+        host: url
+        password: token
+        username: username
+
+  - name: coder-postgres
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: iac/postgres-coder
+      properties:
+        - url
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: nonprod/coder-postgres-secret
+      properties:
+        url: onprem-url
+
+  - name: vault
+    input:
+      kind: ClusterSecretStore
+      name: external-infra
+      path: iac/vault-user-servc
+      properties:
+        - username
+        - password
+        - token
+        - vault-addr
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/vault
+      properties:
+        username: username
+        password: password
+        vault-addr: vault-addr
+        token: vault-token

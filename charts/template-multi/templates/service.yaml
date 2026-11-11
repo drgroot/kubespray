@@ -1,0 +1,84 @@
+{{- range $componentType, $components := .Values.components }}
+{{- range $component, $config := $components.list }}
+{{ $config := mustMergeOverwrite (deepCopy $.Values.globals) (deepCopy $components.globals) $config }}
+{{- $containerPorts := $config.ports -}}
+{{- $servicePorts := ($config.service | default dict).ports  -}}
+{{- $ports := $containerPorts | default $servicePorts -}}
+{{- if or (len $ports) ((($config.storage).config).backup).enabled -}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-svc
+  labels:
+    {{- include "servc.labels" $ | nindent 4 }}
+    {{- with $config.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    type: service
+    component: {{ $componentType }}
+    {{ $componentType }}: {{ $component }}
+spec:
+  selector:
+    type: deployment
+    component: {{ $componentType }}
+    {{ $componentType }}: {{ $component }}
+  ports:
+    {{- range $port := $ports }}
+    - port: {{ $port.port }}
+      targetPort: {{ $port.port }}
+      protocol: {{ $port.protocol | default "TCP" }}
+      name: {{ $port.name | default (print ($port.protocol | default "TCP") "-" $port.port) |lower }}
+    {{- end }}
+    {{- if ((($config.storage).config).backup).enabled }}
+    - port: {{ ((($config.storage).config).backup).port | default 19999 }}
+      name: "tcp-backup"
+      protocol: TCP
+    {{- end }}
+---
+{{- if ($config.ingress).enabled -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-ingress
+  labels:
+    {{- include "servc.labels" $ | nindent 4 }}
+    {{- with $config.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    type: ingress
+    component: {{ $componentType }}
+    {{ $componentType }}: {{ $component }}
+  annotations:
+    {{- with ($config.ingress | default dict).annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    type: ingress
+spec:
+  ingressClassName: {{ ($config.ingress).className }}
+  rules:
+    {{- if ($config.ingress).host }}
+    - host: {{ ($config.ingress).host }}
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-svc
+              port:
+                number: {{ ($config.ingress).port | default (first $ports).port }}
+    {{- end }}
+    {{- with ($config.ingress).rules }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with ($config.ingress).tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+---
+{{- end -}}
+{{- end -}}
+{{- end }}
+{{- end }}

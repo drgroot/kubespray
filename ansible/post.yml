@@ -1,0 +1,48 @@
+---
+- name: IP tables save
+  hosts: all
+  tasks:
+    - name: Require the SSH public key
+      ansible.builtin.assert:
+        that:
+          - lookup('ansible.builtin.env', 'ID_RSA_PUB') | trim | length > 0
+        fail_msg: ID_RSA_PUB must be set to the SSH public key
+
+    - name: Look up the SSH user's home directory
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ ansible_user }}"
+
+    - name: Ensure the SSH user's key directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_facts.getent_passwd[ansible_user][4] }}/.ssh"
+        state: directory
+        owner: "{{ ansible_user }}"
+        mode: "0700"
+
+    - name: Authorize the GitHub SSH public key
+      ansible.builtin.lineinfile:
+        path: "{{ ansible_facts.getent_passwd[ansible_user][4] }}/.ssh/authorized_keys"
+        line: "{{ lookup('ansible.builtin.env', 'ID_RSA_PUB') | trim }}"
+        create: true
+        owner: "{{ ansible_user }}"
+        mode: "0600"
+
+    - name: prune images
+      ansible.builtin.cron:
+        name: "prune old images"
+        special_time: daily
+        job: "/usr/local/bin/crictl rmi --prune"
+        user: root
+    - name: reboot task
+      ansible.builtin.cron:
+        name: "roboot when required"
+        special_time: hourly
+        job: "if [ -f /var/run/reboot-required ]; then /usr/sbin/shutdown -r now; fi"
+        user: root
+    - name: swapoff task
+      ansible.builtin.cron:
+        name: "disable swap at reboot"
+        special_time: reboot
+        job: "swapoff -a"
+        user: root

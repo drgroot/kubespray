@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Gopher64
+Comment=Nintendo 64 emulator
+Exec=/usr/local/bin/gopher64 %f
+TryExec=/usr/local/bin/gopher64
+Icon=applications-games
+Terminal=false
+Categories=Game;Emulator;

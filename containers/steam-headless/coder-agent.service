@@ -1,0 +1,19 @@
+[Unit]
+Description=Coder workspace agent
+After=network.target
+ConditionPathExists=/run/steam-headless/coder-agent/bootstrap
+
+[Service]
+Type=simple
+User=steamheadless
+WorkingDirectory=/home/steamheadless
+EnvironmentFile=-/run/steam-headless/environment
+Environment=HOME=/home/steamheadless USER=steamheadless
+ExecStart=/usr/local/bin/start-coder-agent
+Restart=always
+RestartSec=5
+KillMode=control-group
+TimeoutStopSec=20
+
+[Install]
+WantedBy=steam-headless.target

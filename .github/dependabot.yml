@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: terraform
+    # Include every current and future Terraform module.
+    directories:
+      - "/terraform/**"
+      - /charts/coder-template
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: helm
+    # Renovate handles Mordor images and bootstrap custom version fields.
+    directories:
+      - /charts/bootstrap
+      - /charts/media/chart
+      - /charts/platform
+      - /charts/postgres
+      - /charts/template-multi
+      - /charts/template-single
+    schedule:
+      interval: weekly

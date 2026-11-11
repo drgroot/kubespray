@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+driver="${1:-/usr/local/bin/nvidia-driver}"
+
+# Fail the build if NVIDIA changes these hooks rather than silently publishing
+# an image that cannot load or safely unload the DRM module.
+test "$(grep -c -- '--no-drm' "$driver")" -eq 1
+test "$(grep -c '^    modprobe nvidia-modeset$' "$driver")" -eq 1
+test "$(grep -c '^    echo "Unloading NVIDIA driver kernel modules\.\.\."$' "$driver")" -eq 1
+
+sed -i \
+    -e '/^[[:space:]]*--no-drm[[:space:]]*\\$/d' \
+    -e '/^    modprobe nvidia-modeset$/a\    modprobe nvidia-drm modeset=1 fbdev=0' \
+    -e '/^    echo "Unloading NVIDIA driver kernel modules\.\.\."$/a\
+    if [ -d /sys/module/nvidia_drm ]; then\
+        if ! rmmod nvidia-drm; then\
+            echo "NVIDIA DRM is still in use; waiting for GPU workloads to stop" >&2\
+            return 1\
+        fi\
+    fi' "$driver"
+
+! grep -q -- '--no-drm' "$driver"
+grep -q '^    modprobe nvidia-drm modeset=1 fbdev=0$' "$driver"
+bash -n "$driver"

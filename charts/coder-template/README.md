@@ -1,0 +1,174 @@
+---
+display_name: Steam
+description: Steam Headless with PCSX2, Dolphin, and Mupen64Plus on the on-premise NVIDIA GPU.
+---
+
+# Steam
+
+This Coder template creates the Pod `media/steamheadless` using
+`dockerhub.yusufali.ca/yusufali/steam-headless:latest`, always pulled through the
+on-premise Docker mirror. Workspace parameters select independent CPU and memory requests and limits,
+and the home and Steam library iSCSI volumes; defaults are 4 cores, 8 GiB,
+Steam home LUN 3, and Steam games LUN 5 on Thorin.
+The `cpu` and `memory` parameters set requests; `cpu_limit` and `memory_limit`
+set limits. CPU values are cores and memory values are GiB. Defaults are 4 cores
+and 8 GiB for both requests and limits. Set any value to `0` to omit that entry;
+setting both values for a resource to `0` omits both its request and limit.
+There are no fixed maximums. Validation rejects a request exceeding its nonzero
+limit; a limit of `0` allows any nonnegative request. These omissions apply
+to the submitted Pod configuration: [Kubernetes defaults an omitted request to
+its limit](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+when a limit is set and no admission-time default request applies. Namespace
+policies may also supply defaults for omitted entries.
+
+The Pod requests one
+`nvidia.com/gpu` allocation through the `nvidia` runtime class. With the cluster's
+current time-slicing configuration, that allocation is one GPU share.
+
+The image starts as root to initialize systemd, the desktop, and GPU services.
+Its `coder-agent.service` runs the Coder agent and terminal sessions as
+`steamheadless` (UID/GID 1000), with `/home/steamheadless` as the home directory.
+The template preserves the image's startup command and supplies
+`CODER_AGENT_INIT_SCRIPT` and `CODER_AGENT_TOKEN` for that service.
+
+## Storage
+
+Home and appliance state use the existing 1024 GiB Steam iSCSI LUN directly,
+formatted as ext4. The `iscsi` workspace parameter uses `portal;target IQN;LUN`
+format and defaults to:
+
+```text
+192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;3
+```
+
+The target identifies LUN 3 as `steam_zp` and reports 1,099,511,627,776 bytes
+(1024 GiB). LUN 4 is the common development home and is not the Steam volume.
+The Steam LUN's `home` subdirectory mounts at `/home/steamheadless`, and its
+root-owned `state` subdirectory mounts at `/var/lib/steam-headless` so appliance
+identity, authentication, and TLS state survive restarts. Stopping or deleting
+a workspace removes its Pod without deleting the external LUN. All workspaces
+using the default refer to the same home and state; run only one at a time.
+The template no longer creates an NFS home PVC.
+
+Games mount read/write at `/mnt/games` from the `games` subdirectory of the
+chart-managed `media-games` PVC (100 GiB, ReadWriteMany) on `thorin-nobackup`, declared in
+`charts/media/values.yaml`. An init container creates the directories with the
+required ownership. This template never creates or deletes the shared games PVC.
+Steam's optional shared library lives at `/mnt/games/GameLibrary/Steam`; emulator ROMs can
+also be stored under `/mnt/games`.
+
+The default Steam library mounts a separate ext4 iSCSI volume directly at
+`/home/steamheadless/.local/share/Steam/steamapps` (`~/.local/share/Steam/steamapps`
+in workspace terminals). Set `steamapps_mount_path` to change the mount location;
+use an absolute container path, since `~` is not expanded. Changing the mount path
+does not change Steam's library settings; select the new library location in Steam
+if needed. The `steamapps_iscsi` parameter defaults to:
+
+```text
+192.168.1.3:3260;iqn.2026-01.com.middleearth:thorin;5
+```
+
+LUN 5 identifies as `steam_ga` and reports 5,497,558,138,880 bytes (5 TiB).
+The init container sets the volume root's ownership to UID/GID 1000. Kubernetes
+mounts it as ext4 and may initialize an unformatted LUN on first use. The external
+library LUN survives workspace stops and deletion; use it from one workspace at a
+time, like the home LUN.
+
+When updating an existing workspace, the mount covers any `steamapps` files
+already stored on the home LUN. Those files remain on the home LUN; this template
+does not migrate them. Stop Steam and copy any games you want to retain to the
+new LUN before using the new mount, or reinstall them after updating the template
+and restarting the workspace.
+
+Sync the media chart before starting a workspace so the games claim exists.
+For workspaces previously using `media-media`, copy that claim's `games`
+directory into the new claim's `games` directory before restarting the workspace.
+
+## Cluster requirements
+
+Coder's existing `coder-workspace-perms` role grants `servc-infra/coder`
+permissions to manage Pods and read PVCs in `media`. Kubernetes nodes running
+the Pod must have an iSCSI initiator installed and reach Thorin on TCP 3260.
+The media chart owns the Service and routes, so Coder needs no additional RBAC.
+Sync platform (gateway listeners)
+and the media chart (Service and routes) before starting a workspace.
+The namespace must already contain `media-games` and `cluster-docker-secrets`.
+The custom image must have been published by the container build workflow.
+
+The Pod uses its own network namespace, private writable `/dev/input` and
+`/run/udev` directories, and the host's `/dev/uinput` for virtual controllers.
+Its input daemon populates its own device nodes and udev database before the
+desktop starts. The privileged container runs the desktop and systemd; `/run`,
+`/run/udev`, and `/dev/shm` use memory-backed volumes. The NVIDIA runtime
+provides GPU devices and driver libraries.
+
+Open the owner-only **Steam** app in Coder to reach the HTTPS UI on port 8483
+and complete initial setup, which enables Sunshine. Use the same app for
+administration and Moonlight pairing. Sunshine's administration port 47990 is
+kept inside the Pod.
+
+## Sunshine streaming through Gateway API
+
+The platform chart adds listeners to `system-envoy/gateway`. The media chart
+owns the `media/steam-sunshine` ClusterIP Service and attaches TCPRoutes and
+UDPRoutes to those listeners. Its Service selector matches the fixed
+`steamheadless` label on the Pod. The listeners accept routes only from
+`media`. No ReferenceGrant is needed because each route and its backend Service
+are in the same namespace.
+
+| Protocol | Ports | Purpose |
+| --- | --- | --- |
+| TCP | 47984, 47989, 48010 | GameStream HTTPS/HTTP, pairing, RTSP |
+| UDP | 47998, 47999, 48000 | Video, control, audio |
+
+Add an Envoy gateway node IP manually in Moonlight, such as `192.168.1.10`.
+The gateway runs on the nodes and forwards these ports to the Steam Pod; the
+browser UI stays behind Coder. Automatic LAN discovery does not traverse the
+gateway. Streaming uses Moonlight; browser WebRTC streaming is not exposed by
+these Sunshine routes.
+
+The fixed gateway address and ports serve **one active Steam workspace**.
+The fixed Pod name `steamheadless` reserves that endpoint for one workspace.
+Stop the active workspace before starting a different Steam workspace.
+Stopping deletes only the Pod while retaining the iSCSI home/state, Steam library, and shared games.
+The chart-managed Service and routes remain, with no backend until the next
+Steam Pod becomes ready.
+
+Port mapping follows the [Sunshine networking documentation](https://docs.lizardbyte.dev/projects/sunshine/v0.22.2/about/advanced_usage.html#port).
+
+## Steam Remote Play through Gateway API
+
+The media chart also owns the `media/steam-remote-play` Service, selecting the
+same Steam Pod, with TCPRoutes and UDPRoutes to dedicated gateway listeners.
+The gateway exposes TCP 27036 and 27037, and UDP 27031 and 27036, following
+[Steam's Remote Play documentation](https://help.steampowered.com/en/faqs/view/0689-74B8-92AC-10F2).
+Enable Remote Play in Steam's settings and connect through the gateway node IP,
+such as `192.168.1.10`. LAN broadcast discovery does not traverse these routes;
+use manual host pairing in Steam Link when discovery does not find the host.
+These ports share the same single active workspace restriction as Sunshine.
+
+## Validation and publication
+
+`.github/workflows/coder-template.yml` formats, validates, and runs Terraform
+plan tests. Same-repository PRs upload an inactive template version. Pushes to
+`main` and manual runs on `main` upload a version before promoting it. The
+template's display name is **Steam**, with CLI name `steam`.
+
+The workflow authenticates to Vault using the repository secrets
+`VAULT_ADDRESS`, `VAULT_USERNAME`, and `VAULT_PASSWORD`, then reads `url` and
+`token` from `servc/data/iac/coder-onpremise`. No additional repository secrets
+or template variables are required.
+
+Run the local checks from this directory:
+
+```sh
+terraform fmt -check
+terraform init -backend=false
+terraform validate
+terraform test
+```
+
+The Pod follows the GPU, games, input-device, and shared-memory requirements in
+the [upstream Kubernetes example](https://github.com/Steam-Headless/docker-steam-headless/blob/master/docs/k8s-files/statefulset.yaml),
+with the home path, persistent appliance state, systemd startup, and UI port
+adapted for the Fedora-based custom image.

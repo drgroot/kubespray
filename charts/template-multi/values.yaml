@@ -1,0 +1,82 @@
+nameOverride: ''
+fullnameOverride: ''
+
+pvcPrefix: ''
+storage: {}
+  # media:
+  #   enabled: true
+  #   storageClass: default
+  #   size: 5Gi
+  #   mountPath: /media
+  # downloads:
+  #   enabled: true
+  #   storageClass: default
+  #   size: 5Gi
+  #   mountPath: /downloads
+
+globals:
+  imagePullSecrets: []
+  labels: {}
+  affinity: {}
+  strategy: {}
+  securityContext: {}
+  probes: {}
+  env: []
+  storage: {}
+  volumes: []
+  volumeMounts: []
+  initContainers: []
+  sideCars: []
+  ports: []
+  service:
+    ports: []
+  ingress:
+    enabled: false
+    annotations: {}
+    className: 'nginx'
+    # host: 'google.com'
+    # port: 0
+    rules: []
+    tls: []
+  keda:
+    enabled: false
+    # minReplicaCount: 0
+    # maxReplicaCount: 2
+    # fallback: # optional
+    #   failureThreshold: 3
+    #   replicas: 3
+    # queueName: my-queue
+    # mode: QueueLength # optional. Or MessageRate
+    # value: 1 # 
+    # activationValue: 1 # optional
+    # rabbitmqSecretName: my-rabbitmq-secret
+    # secretKey: BUS_URL # optional
+
+components:
+  downloaders:
+    globals: {}
+      # strategy:
+      #   type: Recreate
+      # service:
+      #   ports:
+      #     - port: 3000
+      # storage:
+      #   downloads:
+      #     enabled: true
+      #     mountPath: /downloads
+      #     readOnly: true
+      #   config:
+      #     enabled: true
+      #     storageClass: ""
+      #     backup: 
+      #       restoreImage: busybox
+      #       enabled: false
+      #       port: 19999
+      #       storageClass: ""
+      #       image: curlimages/curl
+      #       env: []
+      #     mountPath: /config
+    list: {}
+      # deluge:
+      #   image:
+      #     name: linuxserver/deluge

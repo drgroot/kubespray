@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.project }}-affine-mcp
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  sources:
+    - path: charts/template-single
+      repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      helm:
+        values: |
+          fullnameOverride: affine-mcp
+        valueFiles:
+          - $values/charts/mordor/affine-mcp.values.yaml
+    - repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      ref: values
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: affine-mcp-credentials
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: affine-mcp-credentials
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: email
+      remoteRef:
+        key: vendor/affine-mcp
+        property: email
+    - secretKey: password
+      remoteRef:
+        key: vendor/affine-mcp
+        property: password

@@ -1,0 +1,178 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.prometheus.namespace }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: system-prometheus
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true
+  destination:
+    namespace: {{ .Values.prometheus.namespace }}
+    server: https://kubernetes.default.svc
+  project: {{ .Values.project }}
+  source:
+    chart: kube-prometheus-stack
+    repoURL: https://prometheus-community.github.io/helm-charts
+    targetRevision: {{ .Values.versions.prometheus }}
+    helm:
+      releaseName: prometheus
+      values: |-
+        namespaceOverride: {{ .Values.prometheus.namespace }}
+        alertmanager:
+          enabled: false
+
+        {{- if .Values.prometheus.thanos.enabled }}
+        prometheus:
+          thanosService:
+            enabled: true
+          prometheusSpec:
+            retention: {{ .Values.prometheus.thanos.prometheus.retention | quote }}
+            disableCompaction: true
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: [ReadWriteOnce]
+                  {{- with .Values.prometheus.thanos.prometheus.storage.storageClassName }}
+                  storageClassName: {{ . | quote }}
+                  {{- end }}
+                  resources:
+                    requests:
+                      storage: {{ .Values.prometheus.thanos.prometheus.storage.size | quote }}
+            thanos:
+              image: {{ printf "%s:%s" .Values.prometheus.thanos.image.repository .Values.prometheus.thanos.image.tag | quote }}
+              objectStorageConfig:
+                existingSecret:
+                  name: thanos-objstore
+                  key: objstore.yaml
+        {{- end }}
+
+        grafana:
+          enabled: true
+
+          {{- if .Values.prometheus.thanos.enabled }}
+          sidecar:
+            datasources:
+              url: http://thanos-query.{{ .Values.prometheus.namespace }}.svc:9090
+          {{- end }}
+
+          envValueFrom:
+            GF_DATABASE_HOST:
+              secretKeyRef:
+                name: grafana-database
+                key: host
+            GF_DATABASE_NAME:
+              secretKeyRef:
+                name: grafana-database
+                key: database
+            GF_DATABASE_USER:
+              secretKeyRef:
+                name: grafana-database
+                key: username
+            GF_DATABASE_PASSWORD:
+              secretKeyRef:
+                name: grafana-database
+                key: password
+            GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+              secretKeyRef:
+                name: grafana-oidc
+                key: client-secret
+
+          grafana.ini:
+            database:
+              type: postgres
+              ssl_mode: disable
+            server:
+              root_url: https://grafana.{{ .Values.domains.external }}/
+            auth:
+              disable_login_form: true
+              oauth_auto_login: true
+            auth.basic:
+              enabled: false
+            auth.generic_oauth:
+              enabled: true
+              name: Authelia
+              allow_sign_up: true
+              client_id: grafana
+              scopes: openid profile email groups
+              auth_url: https://auth.yusufali.ca/api/oidc/authorization
+              token_url: https://auth.yusufali.ca/api/oidc/token
+              api_url: https://auth.yusufali.ca/api/oidc/userinfo
+              use_pkce: true
+              groups_attribute_path: groups
+              allowed_groups: media-admin
+
+          serviceMonitor:
+            namespace: {{ .Values.prometheus.namespace }}
+
+          persistence:
+            enabled: false
+
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              nginx.ingress.kubernetes.io/ssl-redirect: "true"
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+              external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
+            hosts:
+              - grafana.{{ .Values.domains.external }}
+            tls:
+              - secretName: grafana-general-tls
+                hosts:
+                  - grafana.{{ .Values.domains.external }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: grafana-database
+  namespace: {{ .Values.prometheus.namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: grafana-database
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      engineVersion: v2
+      mergePolicy: Merge
+      data:
+        host: '{{ `{{ .hostname }}:{{ .port }}` }}'
+  dataFrom:
+    - extract:
+        key: iac/postgres-grafana
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: grafana-oidc
+  namespace: {{ .Values.prometheus.namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: grafana-oidc
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: client-secret
+      remoteRef:
+        key: vendor/authelia-apps
+        property: client-secret-grafana

@@ -1,0 +1,131 @@
+fullnameOverride: frigate
+
+image:
+  name: ghcr.io/blakeblackshear/frigate
+  tag: 0.18.2
+imagePullSecrets:
+  - name: cluster-docker-secrets
+
+env:
+  - name: FRIGATE_RTSP_PASSWORD
+    value: password
+
+ports:
+  - name: web
+    containerPort: 5000
+  - name: rtsp
+    containerPort: 8554
+  - name: webrtc-tcp
+    containerPort: 8555
+    protocol: TCP
+  - name: webrtc-udp
+    containerPort: 8555
+    protocol: UDP
+
+service:
+  ports:
+    - port: 5000
+      targetPort: web
+      protocol: TCP
+      name: web
+    - port: 8554
+      targetPort: rtsp
+      protocol: TCP
+      name: rtsp
+    - port: 8555
+      targetPort: webrtc-tcp
+      protocol: TCP
+      name: webrtc-tcp
+    - port: 8555
+      targetPort: webrtc-udp
+      protocol: UDP
+      name: webrtc-udp
+
+pvc:
+  enabled: true
+  name: config
+  storageClass: thorin-default
+  backup:
+    enabled: true
+    env:
+      - name: DATABASES
+        value: /config/frigate.db
+      - name: FILES
+        value: /config/config.yaml
+
+volumeMounts:
+  - name: storage
+    mountPath: /media/frigate
+  - name: dshm
+    mountPath: /dev/shm
+  - name: tmpfs
+    mountPath: /tmp
+  - name: coral-pcie
+    mountPath: /dev/bus/usb
+
+volumes:
+  - name: coral-pcie
+    hostPath:
+      path: /dev/bus/usb
+  - name: storage
+    persistentVolumeClaim:
+      claimName: frigate-media
+  - name: dshm
+    emptyDir:
+      medium: Memory
+      sizeLimit: 512Mi
+  - name: tmpfs
+    emptyDir:
+      medium: Memory
+      sizeLimit: 1Gi
+
+probes:
+  livenessProbe:
+    httpGet:
+      path: /api/
+      port: 5000
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 5
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/auth-method: GET
+    nginx.ingress.kubernetes.io/auth-response-headers: Remote-User,Remote-Name,Remote-Groups,Remote-Email
+    nginx.ingress.kubernetes.io/auth-signin: https://auth.yusufali.ca?rm=$request_method
+    nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+  tls:
+    - hosts:
+        - "*.yusufali.ca"
+      secretName: wildcard-tls
+  hosts:
+    - host: nvr.yusufali.ca
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 2Gi
+  limits:
+    cpu: 500m
+    memory: 2Gi
+
+securityContext:
+  privileged: true
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+              - kube3

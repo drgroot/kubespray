@@ -1,0 +1,80 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.project }}-syncthing
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  destination:
+    namespace: {{ .Release.Namespace }}
+    server: "https://kubernetes.default.svc"
+  project: {{ .Values.project }}
+  sources:
+    - path: charts/template-single
+      repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      helm:
+        values: |
+          fullnameOverride: syncthing
+
+          {{- with .Values.storage }}
+          storageclasses:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.domains }}
+          domains:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        valueFiles:
+          - $values/charts/mordor/syncthing.values.yaml
+    - repoURL: https://github.com/drgroot/kubespray.git
+      targetRevision: HEAD
+      ref: values
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: syncthing-tcptransfer
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: syncthing-tcptransfer
+  rules:
+    - backendRefs:
+        - name: syncthing
+          port: 22000
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: UDPRoute
+metadata:
+  name: syncthing-quic
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: syncthing-quic
+  rules:
+    - backendRefs:
+        - name: syncthing
+          port: 22000
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: UDPRoute
+metadata:
+  name: syncthing-discovery
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: syncthing-discovery
+  rules:
+    - backendRefs:
+        - name: syncthing
+          port: 21027
