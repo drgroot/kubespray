@@ -1,0 +1,71 @@
+---
+- name: Validate Kubernetes upgrade versions before changing nodes
+  hosts: kube_control_plane
+  gather_facts: false
+  any_errors_fatal: true
+  roles:
+    - kubespray_defaults
+  tasks:
+    - name: Read the running API server version
+      ansible.builtin.command:
+        argv:
+          - "{{ bin_dir }}/kubectl"
+          - --kubeconfig
+          - "{{ kube_config_dir }}/admin.conf"
+          - get
+          - --raw=/version
+      register: upgrade_api_version
+      changed_when: false
+      run_once: true
+
+    - name: Read existing kubelet versions
+      ansible.builtin.command:
+        argv:
+          - "{{ bin_dir }}/kubectl"
+          - --kubeconfig
+          - "{{ kube_config_dir }}/admin.conf"
+          - get
+          - nodes
+          - -o
+          - json
+      register: upgrade_nodes
+      changed_when: false
+      run_once: true
+
+    - name: Validate the requested target version
+      ansible.builtin.assert:
+        that:
+          - kube_version is match('^[0-9]+\.[0-9]+\.[0-9]+$')
+          - kube_version in kubelet_checksums['amd64']
+        fail_msg: "Choose a Kubernetes version supported by this Kubespray release, using major.minor.patch."
+      run_once: true
+
+    - name: Require a supported control plane upgrade step
+      vars:
+        running_version: "{{ (upgrade_api_version.stdout | from_json).gitVersion | regex_replace('^v', '') }}"
+      ansible.builtin.assert:
+        that:
+          - kube_version is version(running_version, '>=')
+          - kube_version.split('.')[0] == running_version.split('.')[0]
+          - kube_version.split('.')[1] | int <= (running_version.split('.')[1] | int) + 1
+        fail_msg: >-
+          Cannot upgrade the API server from {{ running_version }} to {{ kube_version }}.
+          Kubernetes minor versions must be upgraded one at a time.
+          Run Upgrade with the kube_version input set to the next supported minor first,
+          then rerun for the final target. If a previous run already updated kubelets
+          beyond the API server version, recover the control plane separately before
+          rerunning a full cluster upgrade; do not downgrade those kubelets.
+      run_once: true
+
+    - name: Refuse to downgrade already upgraded kubelets
+      ansible.builtin.assert:
+        that:
+          - kube_version is version(item.status.nodeInfo.kubeletVersion | regex_replace('^v', ''), '>=')
+        fail_msg: >-
+          Node {{ item.metadata.name }} already runs {{ item.status.nodeInfo.kubeletVersion }},
+          newer than target {{ kube_version }}. A full Kubespray run would downgrade it.
+          Recover the control plane separately through each missing minor version first.
+      loop: "{{ (upgrade_nodes.stdout | from_json)['items'] }}"
+      loop_control:
+        label: "{{ item.metadata.name }}"
+      run_once: true
