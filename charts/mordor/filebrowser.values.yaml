@@ -1,6 +1,6 @@
 image:
   name: dockerhub.yusufali.ca/gtstef/filebrowser
-  tag: 1.5.8-stable
+  tag: 2.0.2-stable
 
 strategy:
   type: Recreate
