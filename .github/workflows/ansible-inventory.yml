@@ -5,12 +5,15 @@ on:
     branches:
       - main
     paths:
+      - .github/workflows/ansible-inventory.yml
       - inventory/sample/inventory.ini
       - 'ansible/**'
       - '!ansible/kubespray/**'
+  workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: ansible-inventory-revision
@@ -27,33 +30,31 @@ jobs:
           fetch-depth: 0
 
       - name: Pin AnsibleRun to the latest inventory revision
+        id: inventory
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          INVENTORY_REVISION=$(git log -1 --format=%H -- inventory/sample/inventory.ini ansible ':!ansible/kubespray')
+          test -n "$INVENTORY_REVISION"
 
-          for attempt in 1 2 3; do
-            git fetch origin main
-            git checkout -B ansible-inventory-revision origin/main
-            INVENTORY_REVISION=$(git log -1 --format=%H -- inventory/sample/inventory.ini ansible ':!ansible/kubespray')
-            test -n "$INVENTORY_REVISION"
+          sed -i "/^  ansible:$/,/^  [^ ]/s/^    revision: .*/    revision: \"$INVENTORY_REVISION\"/" charts/platform/values.yaml
+          grep -Fq "    revision: \"$INVENTORY_REVISION\"" charts/platform/values.yaml
+          echo "revision=$INVENTORY_REVISION" >> "$GITHUB_OUTPUT"
 
-            sed -i "/^  ansible:$/,/^  [^ ]/s/^    revision: .*/    revision: \"$INVENTORY_REVISION\"/" charts/platform/values.yaml
-            grep -Fq "    revision: \"$INVENTORY_REVISION\"" charts/platform/values.yaml
+      # Repository settings must allow GitHub Actions to create pull requests.
+      # GitHub may require approval before CI runs on a GITHUB_TOKEN-created PR.
+      - name: Open or update inventory revision pull request
+        uses: peter-evans/create-pull-request@v8.1.3
+        with:
+          token: ${{ github.token }}
+          base: main
+          branch: ansible-inventory-revision
+          delete-branch: true
+          add-paths: charts/platform/values.yaml
+          commit-message: "chore: pin Ansible inventory to ${{ steps.inventory.outputs.revision }}"
+          title: "chore: update Ansible inventory revision"
+          body: |
+            Pin Crossplane's AnsibleRun to the latest inventory and Ansible configuration revision:
+            `${{ steps.inventory.outputs.revision }}`.
 
-            if git diff --quiet -- charts/platform/values.yaml; then
-              echo 'AnsibleRun already uses the latest inventory revision.'
-              exit 0
-            fi
-
-            git add charts/platform/values.yaml
-            git commit -m "chore: pin Ansible inventory to $INVENTORY_REVISION"
-            if git push origin HEAD:main; then
-              exit 0
-            fi
-            echo "Main changed during attempt $attempt; retrying against its latest revision."
-          done
-
-          echo 'Failed to update the Ansible inventory revision.' >&2
-          exit 1
+            This update goes through the required pull request checks before it is merged into `main`.
