@@ -15,6 +15,7 @@ versions:
   externaldns: 1.21.1
   prometheus: 77.3.0
   reloader: 2.2.19
+  openbaoOperator: 0.6.1
 
 nvidia:
   enabled: true
@@ -57,6 +58,10 @@ nvidia:
 
 envoy:
   enabled: true
+
+openbaoOperator:
+  enabled: true
+  namespace: system-openbao
 
 crossplane:
   enabled: true
