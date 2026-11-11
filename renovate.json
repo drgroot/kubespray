@@ -13,6 +13,19 @@
   "customManagers": [
     {
       "customType": "regex",
+      "description": "Platform Argo CD release",
+      "managerFilePatterns": [
+        "/^charts/platform/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  argocd: [\"\\x27]?(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "argoproj/argo-cd",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
       "description": "Bootstrap nvidia",
       "managerFilePatterns": [
         "/^charts/bootstrap/values\\.yaml$/"

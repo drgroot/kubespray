@@ -1,0 +1,64 @@
+{{- if and .Values.crossplane.enabled .Values.crossplane.ansible.enabled }}
+apiVersion: ansible.crossplane.io/v1alpha1
+kind: AnsibleRun
+metadata:
+  name: {{ .Release.Namespace }}-argocd
+  annotations:
+    ansible.crossplane.io/runPolicy: ObserveAndDelete
+spec:
+  deletionPolicy: Orphan
+  providerConfigRef:
+    name: {{ .Release.Namespace }}-ansible
+  forProvider:
+    inventoryInline: |
+      localhost ansible_connection=local
+    vars:
+      repository: {{ .Values.crossplane.ansible.repository | quote }}
+      revision: {{ .Values.crossplane.ansible.revision | quote }}
+      inventory: {{ .Values.crossplane.ansible.inventory | quote }}
+      argocd_version: {{ .Values.versions.argocd | quote }}
+    playbookInline: |
+      - name: Install Argo CD from the repository
+        hosts: localhost
+        connection: local
+        gather_facts: false
+        tasks:
+          - name: Check out the configuration repository
+            ansible.builtin.git:
+              repo: "{{ `{{ repository }}` }}"
+              dest: "{{ `{{ playbook_dir }}` }}/repository"
+              version: "{{ `{{ revision }}` }}"
+              recursive: false
+
+          - name: Create an isolated Ansible environment
+            ansible.builtin.command:
+              argv:
+                - python3
+                - -m
+                - venv
+                - "{{ `{{ playbook_dir }}` }}/venv"
+              creates: "{{ `{{ playbook_dir }}` }}/venv/bin/python3"
+
+          - name: Install the repository's Ansible dependencies
+            ansible.builtin.pip:
+              requirements: "{{ `{{ playbook_dir }}` }}/repository/requirements.txt"
+              executable: "{{ `{{ playbook_dir }}` }}/venv/bin/pip"
+
+          - name: Run the pinned Argo CD playbook
+            ansible.builtin.command:
+              argv:
+                - "{{ `{{ playbook_dir }}` }}/venv/bin/ansible-playbook"
+                - --inventory
+                - "{{ `{{ inventory }}` }}"
+                - ansible/argocd.yml
+                - --extra-vars
+                - "@ansible/auth.yml"
+                - --extra-vars
+                - "{{ `{{ {'argocd_version': argocd_version} | to_json }}` }}"
+                - --become
+              chdir: "{{ `{{ playbook_dir }}` }}/repository"
+            environment:
+              SSH_PASSWORD: "{{ `{{ lookup('ansible.builtin.file', playbook_dir + '/ssh_password', rstrip=False) }}` }}"
+              ANSIBLE_HOST_KEY_CHECKING: "False"
+              ANSIBLE_STDOUT_CALLBACK: default
+{{- end }}
