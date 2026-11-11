@@ -15,10 +15,11 @@ versions:
   externaldns: 1.21.1
   prometheus: 77.3.0
   reloader: 2.2.19
+  openbaoOperator: 0.6.1
 
 nvidia:
   enabled: true
-  namespace: gpu-operator
+  namespace: system-nvidia
   driver:
     # Disable if NVIDIA drivers are already installed on the hosts.
     enabled: true
@@ -57,6 +58,10 @@ nvidia:
 
 envoy:
   enabled: true
+
+openbaoOperator:
+  enabled: true
+  namespace: system-openbao
 
 crossplane:
   enabled: true
@@ -202,7 +207,7 @@ tenants:
 # Bucket and scoped credentials are provisioned by platform.crossplane.iac.s3-thanos.
 # One compactor owns this bucket; retain recent detail and longer-term trends.
 prometheus:
-  namespace: monitoring
+  namespace: system-monitoring
   thanos:
     enabled: true
     image:

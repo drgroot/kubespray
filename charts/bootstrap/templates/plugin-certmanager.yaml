@@ -13,8 +13,9 @@ spec:
       selfHeal: true
     syncOptions:
       - ServerSideApply=true
+      - CreateNamespace=true
   destination:
-    namespace: kube-networking
+    namespace: system-networking
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
@@ -33,7 +34,7 @@ apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: cloudflare
-  namespace: kube-networking
+  namespace: system-networking
 spec:
   secretStoreRef:
     name: external-infra
@@ -62,9 +63,7 @@ apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: letsencrypt-prod
-  namespace: kube-networking
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
+  namespace: system-networking
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
@@ -83,7 +82,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cloudflare-dynamic-dns
-  namespace: kube-networking
+  namespace: system-networking
   labels:
     app: ddns
 spec:
@@ -140,8 +139,9 @@ spec:
       selfHeal: true
     syncOptions:
       - ServerSideApply=true
+      - CreateNamespace=true
   destination:
-    namespace: kube-networking
+    namespace: system-networking
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:

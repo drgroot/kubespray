@@ -16,7 +16,7 @@ spec:
       - CreateNamespace=true
       - ServerSideApply=true
   destination:
-    namespace: kube-externalsecrets
+    namespace: system-eso
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
@@ -36,7 +36,7 @@ kind: ClusterSecretStore
 metadata:
   name: external-infra
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   provider:
     vault:

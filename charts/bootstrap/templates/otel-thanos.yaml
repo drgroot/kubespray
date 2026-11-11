@@ -11,8 +11,6 @@ kind: ExternalSecret
 metadata:
   name: thanos-objstore
   namespace: {{ .Values.prometheus.namespace }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "-1"
 spec:
   refreshInterval: 1h
   secretStoreRef:

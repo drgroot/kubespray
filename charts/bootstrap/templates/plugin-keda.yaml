@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: bootstrap-external-reloader
+  name: bootstrap-external-keda
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -11,15 +11,15 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
       - ServerSideApply=true
+      - CreateNamespace=true
   destination:
-    namespace: kube-reloader
+    namespace: system-keda
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:
-    chart: reloader
-    repoURL: https://stakater.github.io/stakater-charts
-    targetRevision: {{ .Values.versions.reloader }}
+    chart: keda
+    repoURL: https://kedacore.github.io/charts
+    targetRevision: {{ .Values.versions.keda }}
     helm:
-      releaseName: reloader
+      releaseName: keda

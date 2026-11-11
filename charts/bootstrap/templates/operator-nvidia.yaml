@@ -6,7 +6,7 @@ metadata:
   labels:
     tenant: approved
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"
+    blank: annotation
 {{- if .Values.nvidia.timeSlicing.enabled }}
 {{- $replicas := .Values.nvidia.timeSlicing.replicas | float64 }}
 {{- if or (lt $replicas 1.0) (ne $replicas (floor $replicas)) }}
@@ -18,8 +18,6 @@ kind: ConfigMap
 metadata:
   name: nvidia-time-slicing
   namespace: {{ .Values.nvidia.namespace }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "-1"
 data:
   default: |-
     version: v1

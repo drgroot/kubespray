@@ -196,7 +196,7 @@ spec:
   triggers:
     - type: prometheus
       metadata:
-        serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring.svc:9090
+        serverAddress: http://prometheus-kube-prometheus-prometheus.system-monitoring.svc:9090
         metricName: registr_web_rps_per_pod
         threshold: "2"
         query: |
