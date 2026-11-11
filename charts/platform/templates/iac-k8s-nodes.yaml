@@ -62,7 +62,7 @@ spec:
               requirements: "{{ `{{ playbook_dir }}` }}/repository/requirements.txt"
               executable: "{{ `{{ playbook_dir }}` }}/venv/bin/pip"
 
-          - name: Run prerequisites, scale the cluster, and configure nodes
+          - name: Run prerequisites, scale the cluster, upgrade addons, and configure nodes
             ansible.builtin.command:
               argv:
                 - "{{ `{{ playbook_dir }}` }}/venv/bin/ansible-playbook"
@@ -71,6 +71,8 @@ spec:
                 - "{{ `{{ item.playbook }}` }}"
                 - --limit
                 - "{{ `{{ item.limit }}` }}"
+                - --tags
+                - "{{ `{{ item.tags | default('all') }}` }}"
                 - --extra-vars
                 - "@ansible/auth.yml"
                 - --become
@@ -87,6 +89,9 @@ spec:
                 limit: all
               - playbook: ansible/kubespray/scale.yml
                 limit: all
+              - playbook: ansible/kubespray/upgrade-cluster.yml
+                limit: all
+                tags: apps
               - playbook: ansible/post.yml
                 limit: all
             no_log: false

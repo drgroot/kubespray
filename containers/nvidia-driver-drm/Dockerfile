@@ -1,4 +1,4 @@
-ARG DRIVER_VERSION=580.126.09
+ARG DRIVER_VERSION=580.196.07
 FROM nvcr.io/nvidia/driver:${DRIVER_VERSION}-ubuntu24.04 AS driver
 
 # Keep the GPU Operator's driver install, upgrade, and unload lifecycle while
