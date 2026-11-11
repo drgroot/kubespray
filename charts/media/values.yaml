@@ -379,7 +379,7 @@ components:
           - name: LIBRARY_KIND
             value: folder
           - name: LIBRARY_PATH
-            value: /mnt/games/roms
+            value: /media/games/GameLibrary
         ingress:
           host: romarr.yusufali.ca
           annotations:
@@ -414,15 +414,15 @@ components:
               path: /api/health
               port: 6868
             periodSeconds: 30
-        storage:
-          games:
-            enabled: true
-            mountPath: /mnt/games
-          # Match the paths SABnzbd returns for completed downloads.
-          media:
-            enabled: true
+        # Use the same media PVC for the library and SABnzbd's download paths.
+        volumeMounts:
+          - name: media
             mountPath: /downloads
             subPath: sabnzbd
+        storage:
+          media:
+            enabled: true
+            mountPath: /media
           config:
             backup:
               env:
