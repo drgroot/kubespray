@@ -76,6 +76,14 @@ spec:
           dir = ""
           newzbin = ""
           priority = -100
+          [[romarr]]
+          name = romarr
+          order = 5
+          pp = 3
+          script = None
+          dir = romarr
+          newzbin = ""
+          priority = -100
   data:
     - secretKey: usenet_address
       remoteRef:
