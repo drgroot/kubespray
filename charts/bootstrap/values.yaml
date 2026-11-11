@@ -19,7 +19,7 @@ versions:
 
 nvidia:
   enabled: true
-  namespace: gpu-operator
+  namespace: system-nvidia
   driver:
     # Disable if NVIDIA drivers are already installed on the hosts.
     enabled: true
@@ -207,7 +207,7 @@ tenants:
 # Bucket and scoped credentials are provisioned by platform.crossplane.iac.s3-thanos.
 # One compactor owns this bucket; retain recent detail and longer-term trends.
 prometheus:
-  namespace: monitoring
+  namespace: system-monitoring
   thanos:
     enabled: true
     image:

@@ -14,7 +14,7 @@ spec:
       - ServerSideApply=true
       - CreateNamespace=true
   destination:
-    namespace: kube-keda
+    namespace: system-keda
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:

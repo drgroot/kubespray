@@ -14,7 +14,7 @@ spec:
       - CreateNamespace=true
       - ServerSideApply=true
   destination:
-    namespace: system-reloader
+    namespace: argocd
     server: https://kubernetes.default.svc
   project: {{ .Values.project }}
   source:

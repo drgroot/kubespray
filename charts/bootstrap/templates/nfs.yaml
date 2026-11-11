@@ -6,7 +6,7 @@ metadata:
   name: nfs-{{ $storageClass.name }}
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-3"
+    argocd.argoproj.io/sync-wave: "-5"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -45,8 +45,6 @@ kind: ExternalSecret
 metadata:
   name: nfs-{{ $storageClass.name }}-backup-rclone
   namespace: {{ $.Release.Namespace }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "-1"
 spec:
   refreshInterval: 1h
   secretStoreRef:
@@ -67,8 +65,6 @@ kind: CronJob
 metadata:
   name: nfs-{{ $storageClass.name }}-backup
   namespace: {{ $.Release.Namespace }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
 spec:
   schedule: {{ $storageClass.backup.schedule | quote }}
   concurrencyPolicy: Forbid
