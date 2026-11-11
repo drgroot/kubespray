@@ -1,0 +1,45 @@
+---
+- name: Install a pinned Argo CD release
+  hosts: kube_control_plane
+  gather_facts: false
+  become: true
+  vars:
+    argocd_kubectl: /usr/local/bin/kubectl
+    argocd_kubeconfig: /etc/kubernetes/admin.conf
+  tasks:
+    - name: Require an explicit release version
+      ansible.builtin.assert:
+        that:
+          - argocd_version is defined
+          - argocd_version is match('^v[0-9]+\.[0-9]+\.[0-9]+$')
+        fail_msg: Set argocd_version to a pinned release such as v3.6.1.
+      run_once: true
+
+    - name: Ensure the Argo CD namespace exists
+      ansible.builtin.command:
+        argv:
+          - "{{ argocd_kubectl }}"
+          - "--kubeconfig={{ argocd_kubeconfig }}"
+          - apply
+          - -f
+          - '-'
+        stdin: |
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: argocd
+      register: argocd_namespace_result
+      changed_when: "'created' in argocd_namespace_result.stdout or 'configured' in argocd_namespace_result.stdout"
+      run_once: true
+
+    - name: Apply the pinned Argo CD installation manifest
+      ansible.builtin.command:
+        argv:
+          - "{{ argocd_kubectl }}"
+          - "--kubeconfig={{ argocd_kubeconfig }}"
+          - apply
+          - --server-side
+          - --namespace=argocd
+          - -f
+          - "https://raw.githubusercontent.com/argoproj/argo-cd/{{ argocd_version }}/manifests/install.yaml"
+      run_once: true
