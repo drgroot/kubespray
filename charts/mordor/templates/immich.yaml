@@ -1,3 +1,23 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: immich-redis
+  namespace: {{ .Release.Namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: immich-redis
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: redishostname
+      remoteRef:
+        key: iac/redis
+        property: hostname
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

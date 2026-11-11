@@ -33,7 +33,7 @@ nvidia:
         modern:
           nodeSelector:
             kubernetes.io/hostname: kube0
-          repository: dockerhub.yusufali.ca/yusufali
+          repository: docker.io/yusufali
           image: nvidia-driver-drm
           imagePullPolicy: Always
           imagePullSecrets:

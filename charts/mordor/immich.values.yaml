@@ -39,7 +39,7 @@ globals:
     - name: REDIS_HOSTNAME
       valueFrom:
         secretKeyRef:
-          name: cluster-middleware-secrets 
+          name: immich-redis
           key: redishostname
     - name: IMMICH_MACHINE_LEARNING_URL
       value: http://immich-server-machine-learning-svc:3003
