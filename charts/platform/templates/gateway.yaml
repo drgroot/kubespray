@@ -212,7 +212,7 @@ spec:
   rules:
     - backendRefs:
         - name: ingress-nginx-controller
-          namespace: kube-networking
+          namespace: system-networking
           port: 443
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
@@ -227,14 +227,14 @@ spec:
   rules:
     - backendRefs:
         - name: ingress-nginx-controller
-          namespace: kube-networking
+          namespace: system-networking
           port: 80
 ---
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
   name: ingress
-  namespace: kube-networking
+  namespace: system-networking
 spec:
   from:
     - group: gateway.networking.k8s.io
