@@ -45,8 +45,6 @@ apiVersion: external-secrets.io/v1
 kind: ClusterSecretStore
 metadata:
   name: servc
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
 spec:
   provider:
     vault:
@@ -63,9 +61,7 @@ spec:
 apiVersion: external-secrets.io/v1
 kind: ClusterSecretStore
 metadata:
-  name: onprem
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
+  name: vault
 spec:
   provider:
     vault:

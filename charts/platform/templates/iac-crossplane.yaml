@@ -5,7 +5,14 @@ apiVersion: opentofu.m.upbound.io/v1beta1
 kind: ClusterProviderConfig
 metadata:
   name: opentofu-provider-config
-spec: {}
+spec:
+  credentials:
+    - filename: openbao-ca.crt
+      source: Secret
+      secretRef:
+        namespace: {{ .Release.Namespace }}
+        name: {{ $backendSecretName }}-openbao
+        key: ca.crt
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -40,8 +47,65 @@ spec:
         key: vendor/vault
         property: token
 ---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $backendSecretName }}-openbao
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault
+  target:
+    name: {{ $backendSecretName }}-openbao
+    template:
+      engineVersion: v2
+      mergePolicy: Merge
+      data:
+        TF_BACKEND_BUCKET: tfstate
+        AWS_DEFAULT_REGION: {{ "{{ .AWS_REGION }}" | quote }}
+  data:
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef:
+        key: dynamic/minio-root
+        property: access-key
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: dynamic/minio-root
+        property: secret-key
+    - secretKey: AWS_ENDPOINT_URL_S3
+      remoteRef:
+        key: dynamic/minio-root
+        property: url
+    - secretKey: AWS_REGION
+      remoteRef:
+        key: dynamic/minio-root
+        property: region
+    - secretKey: VAULT_ADDR
+      remoteRef:
+        key: vault-onpremise
+        property: url
+    - secretKey: TERRAFORM_VAULT_USERNAME
+      remoteRef:
+        key: vault-onpremise
+        property: username
+    - secretKey: TERRAFORM_VAULT_PASSWORD
+      remoteRef:
+        key: vault-onpremise
+        property: password
+    # The ProviderConfig writes this key into each module directory.
+    - secretKey: ca.crt
+      remoteRef:
+        key: vault-onpremise
+        property: ca-cert
+---
 {{- $envVars := list "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_ENDPOINT_URL_S3" "TF_BACKEND_BUCKET" "AWS_REGION" "AWS_DEFAULT_REGION" "VAULT_ADDR" "VAULT_TOKEN" -}}
 {{- range $name, $config := .Values.crossplane.iac }}
+{{- $workspaceBackendSecretName := $backendSecretName }}
+{{- $workspaceEnvVars := $envVars }}
+{{- if eq ($config.vault | default "") "openbao" }}
+{{- $workspaceBackendSecretName = printf "%s-openbao" $backendSecretName }}
+{{- $workspaceEnvVars = concat (without $envVars "VAULT_TOKEN") (list "TERRAFORM_VAULT_USERNAME" "TERRAFORM_VAULT_PASSWORD") }}
+{{- end }}
 ---
 {{- if $config.enabled }}
 apiVersion: opentofu.m.upbound.io/v1beta1
@@ -65,10 +129,14 @@ spec:
     env:
       - name: VAULT_AUTH_METHOD
         value: userpass
-      {{- range $key := $envVars }}
+      {{- if eq ($config.vault | default "") "openbao" }}
+      - name: VAULT_CACERT
+        value: openbao-ca.crt
+      {{- end }}
+      {{- range $key := $workspaceEnvVars }}
       - name: {{ $key }}
         secretKeyRef:
-          name: {{ $backendSecretName }}
+          name: {{ $workspaceBackendSecretName }}
           key: {{ $key }}
       {{- end }}
     vars:

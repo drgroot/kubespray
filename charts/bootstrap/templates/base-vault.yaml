@@ -248,6 +248,19 @@ spec:
   selector:
     secret:
       name: {{ $name }}
+  template:
+    engineVersion: v2
+    data:
+      username: {{ "{{ .username }}" | quote }}
+      token: {{ "{{ .password }}" | quote }}
+      url: {{ printf "https://%s-public.%s.svc:8200" .Values.openbao.name .Values.openbao.namespace | quote }}
+    templateFrom:
+      - target: Data
+        secret:
+          name: {{ .Values.openbao.name }}-tls-server
+          items:
+            - key: ca.crt
+              templateAs: Values
   data:
     - match:
         secretKey: username
@@ -255,10 +268,20 @@ spec:
           remoteKey: dynamic/vault-root
           property: username
     - match:
-        secretKey: password
+        secretKey: token
         remoteRef:
           remoteKey: dynamic/vault-root
-          property: password
+          property: token
+    - match:
+        secretKey: ca.crt
+        remoteRef:
+          remoteKey: dynamic/vault-root
+          property: ca-cert
+    - match:
+        secretKey: url
+        remoteRef:
+          remoteKey: dynamic/vault-root
+          property: url
 {{- if .Values.crossplane.enabled }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1

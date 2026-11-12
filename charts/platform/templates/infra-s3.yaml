@@ -1,25 +1,112 @@
 ---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: minio-root-user
+spec:
+  length: 20
+  digits: 5
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: minio-root-password
+spec:
+  length: 32
+  digits: 5
+  symbols: 5
+  symbolCharacters: "-_."
+  allowRepeat: true
+---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: minio-credentials
 spec:
-  secretStoreRef:
-    name: external-infra
-    kind: ClusterSecretStore
+  refreshPolicy: CreatedOnce
   target:
     name: minio-credentials
+    creationPolicy: Orphan
+    immutable: true
     template:
       type: Opaque
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: minio-root-user
+      rewrite:
+        - regexp:
+            source: "^password$"
+            target: rootUser
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: minio-root-password
+      rewrite:
+        - regexp:
+            source: "^password$"
+            target: rootPassword
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: minio-credentials
+spec:
+  updatePolicy: Replace
+  deletionPolicy: None
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: external-infra
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: minio-credentials
   data:
-    - secretKey: rootUser
-      remoteRef:
-        key: vendor/minio
-        property: root-access-key
-    - secretKey: rootPassword
-      remoteRef:
-        key: vendor/minio
-        property: root-secret-key
+    - match:
+        secretKey: rootUser
+        remoteRef:
+          remoteKey: vendor/minio
+          property: root-access-key
+    - match:
+        secretKey: rootPassword
+        remoteRef:
+          remoteKey: vendor/minio
+          property: root-secret-key
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: minio-root
+spec:
+  updatePolicy: Replace
+  deletionPolicy: None
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: vault
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: minio-credentials
+  template:
+    engineVersion: v2
+    data:
+      access-key: {{ "{{ .rootUser }}" | quote }}
+      secret-key: {{ "{{ .rootPassword }}" | quote }}
+      url: {{ printf "http://minio.%s.svc.cluster.local:9000" .Release.Namespace | quote }}
+      region: us-east-1
+  data:
+    {{- range $key := list "access-key" "secret-key" "url" "region" }}
+    - match:
+        secretKey: {{ $key }}
+        remoteRef:
+          remoteKey: dynamic/minio-root
+          property: {{ $key }}
+    {{- end }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -37,6 +124,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: minio
+  annotations:
+    secret.reloader.stakater.com/reload: minio-credentials
   labels:
     app: minio
 spec:
