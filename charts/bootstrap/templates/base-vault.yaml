@@ -1,4 +1,5 @@
 {{- if and .Values.openbaoOperator.enabled .Values.openbao.enabled }}
+{{- if and .Values.openbao.createNamespace (ne .Values.openbao.namespace .Values.openbaoOperator.namespace) }}
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -11,6 +12,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-4"
 ---
+{{- end }}
 apiVersion: openbao.org/v1alpha1
 kind: OpenBaoTenant
 metadata:
