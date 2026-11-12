@@ -84,7 +84,7 @@ openbao:
     serviceAccountName: openbao-admin
     audience: openbao-admin
   ansible:
-    revision: main
+    revision: "a45afb19c1e20acd4a52230b9adfd47dcfb6fdac"
 
 crossplane:
   enabled: true
