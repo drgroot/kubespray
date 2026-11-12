@@ -8,6 +8,12 @@ mock_provider "vault" {
 }
 mock_provider "vault" {
   alias = "admin"
+  mock_data "vault_auth_backend" {
+    defaults = { accessor = "auth_userpass_test" }
+  }
+  mock_data "vault_generic_secret" {
+    defaults = { data_json = "{\"by_namespace\":[],\"total\":0}" }
+  }
   mock_resource "vault_token" {
     defaults = { client_token = "service-token" }
   }
@@ -47,5 +53,65 @@ run "fixed_servc_username" {
   assert {
     condition     = vault_generic_endpoint.userpass_user.path == "auth/userpass/users/servc" && jsondecode(vault_generic_secret.output.data_json).username == "servc"
     error_message = "When only a password is generated, provision and publish the explicit account name."
+  }
+}
+
+run "unlock_locked_servc" {
+  command = apply
+  variables {
+    name        = "servc"
+    usernamekey = null
+  }
+  override_data {
+    target = data.vault_generic_secret.locked_users
+    values = {
+      data_json = "{\"by_namespace\": [{\"namespace_id\": \"root\", \"mount_accessors\": [{\"mount_accessor\": \"auth_userpass_test\", \"alias_identifiers\": [\"servc\", \"another-user\"]}]}]}"
+    }
+  }
+  assert {
+    condition     = length(vault_generic_endpoint.unlock_user) == 1 && vault_generic_endpoint.unlock_user[0].path == "sys/locked-users/auth_userpass_test/unlock/servc" && vault_generic_endpoint.unlock_user[0].disable_read && vault_generic_endpoint.unlock_user[0].disable_delete
+    error_message = "Unlock only the configured user through the write-only unlock endpoint."
+  }
+}
+
+run "ignore_other_mount_lockout" {
+  command = apply
+  override_data {
+    target = data.vault_generic_secret.locked_users
+    values = {
+      data_json = "{\"by_namespace\": [{\"namespace_id\": \"root\", \"mount_accessors\": [{\"mount_accessor\": \"auth_ldap_test\", \"alias_identifiers\": [\"service\"]}]}]}"
+    }
+  }
+  assert {
+    condition     = length(vault_generic_endpoint.unlock_user) == 0
+    error_message = "A user locked on another auth mount must not trigger a userpass unlock."
+  }
+}
+
+run "ignore_another_user_lockout" {
+  command = apply
+  override_data {
+    target = data.vault_generic_secret.locked_users
+    values = {
+      data_json = "{\"by_namespace\":[{\"mount_accessors\":[{\"mount_accessor\":\"auth_userpass_test\",\"alias_identifiers\":[\"another-user\"]}]}]}"
+    }
+  }
+  assert {
+    condition     = length(vault_generic_endpoint.unlock_user) == 0
+    error_message = "Another user's lockout on the same mount must remain untouched."
+  }
+}
+
+run "empty_lockout_response" {
+  command = apply
+  override_data {
+    target = data.vault_generic_secret.locked_users
+    values = {
+      data_json = "{\"by_namespace\":null,\"total\":0}"
+    }
+  }
+  assert {
+    condition     = length(vault_generic_endpoint.unlock_user) == 0
+    error_message = "An empty lockout response must not create an unlock request."
   }
 }
