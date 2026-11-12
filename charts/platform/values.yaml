@@ -424,6 +424,32 @@ crossplane:
         - key: capabilities
           value: list
 
+    openbao-oidc-yusuf-onprem-browse-root:
+      enabled: true
+      type: openbao
+      provider: oidc
+      name: yusuf
+      vars:
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: onprem/metadata
+        - key: capabilities
+          value: list
+
+    openbao-oidc-yusuf-onprem-browse:
+      enabled: true
+      type: openbao
+      provider: oidc
+      name: yusuf
+      vars:
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: onprem/metadata/*
+        - key: capabilities
+          value: list
+
     openbao-oidc-yusuf:
       enabled: true
       type: openbao
