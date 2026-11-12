@@ -86,7 +86,7 @@ openbao:
   credentialSync:
     enabled: true
     image: python:3.13-alpine
-    # KV v2 location inside this OpenBao cluster.
+    # KV v2 location inside this OpenBao cluster; CA is published as PEM contents.
     mount: onprem
     path: dynamic/root-vault
     # Kubelet refreshes the projection; the publisher rereads it on each poll.

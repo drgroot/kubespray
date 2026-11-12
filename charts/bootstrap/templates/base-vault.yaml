@@ -42,7 +42,7 @@ metadata:
 spec:
   version: {{ .Values.versions.openbao | quote }}
   replicas: {{ .Values.openbao.replicas }}
-  # Static auto-unseal and HTTP require the Development profile.
+  # Static auto-unseal and operator-managed TLS require the Development profile.
   profile: Development
   controllerJWTMode: Target
   deletionPolicy: Retain
@@ -56,10 +56,11 @@ spec:
   service:
     type: ClusterIP
   tls:
-    enabled: false
-    # The operator schema requires these fields even when TLS is disabled.
+    enabled: true
     mode: OperatorManaged
     rotationPeriod: "720h"
+    extraSANs:
+      - {{ printf "%s-public.%s.svc" .Values.openbao.name .Values.openbao.namespace | quote }}
   network:
     trustedIngressPeers:
       - namespaceSelector:
@@ -132,7 +133,7 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
@@ -160,7 +161,7 @@ metadata:
   name: {{ $name }}
   namespace: {{ .Values.openbao.namespace }}
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-3"
 data:
   publish.py: |
     {{- include "bootstrap.openbaoCredentialSyncScript" . | nindent 4 }}
@@ -171,7 +172,7 @@ metadata:
   name: {{ $name }}
   namespace: {{ .Values.openbao.namespace }}
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   replicas: 1
   # Avoid two publishers racing with different pod-bound JWTs during rollout.
@@ -201,7 +202,7 @@ spec:
           command: [python, -u, /app/publish.py]
           env:
             - name: OPENBAO_ADDRESS
-              value: {{ printf "http://%s-public.%s.svc:8200" .Values.openbao.name .Values.openbao.namespace | quote }}
+              value: {{ printf "https://%s-public.%s.svc:8200" .Values.openbao.name .Values.openbao.namespace | quote }}
             - name: OPENBAO_AUDIENCE
               value: {{ .Values.openbao.admin.audience | quote }}
             - name: OPENBAO_MOUNT
@@ -252,6 +253,11 @@ spec:
                   audience: {{ .Values.openbao.admin.audience | quote }}
                   expirationSeconds: {{ .Values.openbao.credentialSync.tokenExpirationSeconds }}
                   path: token
+              - secret:
+                  name: {{ .Values.openbao.name }}-tls-server
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
         - name: temporary
           emptyDir:
             medium: Memory
@@ -267,11 +273,12 @@ import json
 import os
 from pathlib import Path
 import signal
+import ssl
 import sys
 import threading
 import time
 from urllib.error import HTTPError
-from urllib.parse import quote, urlsplit
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 
@@ -292,10 +299,12 @@ def jwt_expiry(jwt, audience):
 
 
 class OpenBao:
-    def __init__(self, address):
-        if urlsplit(address).scheme not in ("http", "https"):
-            raise ValueError("HTTP or HTTPS is required")
+    def __init__(self, address, ca):
+        if not address.startswith("https://"):
+            raise ValueError("HTTPS is required")
         self.address = address.rstrip("/")
+        # Rebuild trust from the current projection, including CA rotations.
+        self.context = ssl.create_default_context(cadata=ca)
 
     def request(self, method, path, data=None, token=None):
         headers = {"Content-Type": "application/json"}
@@ -303,7 +312,7 @@ class OpenBao:
             headers["X-Vault-Token"] = token
         body = None if data is None else json.dumps(data).encode()
         request = Request(self.address + "/v1/" + path, body, headers, method=method)
-        with urlopen(request, timeout=10) as response:
+        with urlopen(request, context=self.context, timeout=10) as response:
             body = response.read()
             return json.loads(body) if body else {}
 
@@ -329,6 +338,7 @@ class Publisher:
     def sync(self):
         # Reopen each time: projected volumes change via symlink swaps.
         jwt = (self.identity_dir / "token").read_text().strip()
+        ca = (self.identity_dir / "ca.crt").read_text()
         expires = jwt_expiry(jwt, self.audience)
         if expires - self.clock() <= self.minimum_validity:
             raise ValueError("waiting for a fresh projected JWT")
@@ -336,11 +346,13 @@ class Publisher:
             "jwt": jwt,
             "audience": self.audience,
             "openbao-address": self.address,
+            # PEM contents for consumers to write to their own local CA file.
+            "openbao-ca-file": ca,
         }
         if payload == self.last_payload and self.clock() - self.last_success < self.reconcile:
             return False
 
-        client = self.client_factory(self.address)
+        client = self.client_factory(self.address, ca)
         login = client.request("POST", "auth/jwt-operator/login", {
             "role": "openbao-admin", "jwt": jwt,
         })
