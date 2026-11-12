@@ -137,7 +137,7 @@ crossplane:
   ansible:
     enabled: true
     repository: https://github.com/drgroot/kubespray.git
-    revision: "53b77b999dd71cc8cf48af75be978bb3fc28f350"
+    revision: "dbe3dddd49458b47528700745009502accd80b1a"
     inventory: inventory/sample/inventory.ini
     secretName: ssh-password
     secretNamespace: argocd
