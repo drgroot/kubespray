@@ -1,0 +1,380 @@
+{{- if and .Values.openbaoOperator.enabled .Values.openbao.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.openbao.namespace }}
+  labels:
+    tenant: approved
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+---
+apiVersion: openbao.org/v1alpha1
+kind: OpenBaoTenant
+metadata:
+  name: {{ .Values.openbao.name }}
+  namespace: {{ .Values.openbao.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  targetNamespace: {{ .Values.openbao.namespace }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.openbao.admin.serviceAccountName }}
+  namespace: {{ .Values.openbao.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+automountServiceAccountToken: false
+---
+apiVersion: openbao.org/v1alpha1
+kind: OpenBaoCluster
+metadata:
+  name: {{ .Values.openbao.name }}
+  namespace: {{ .Values.openbao.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  version: {{ .Values.versions.openbao | quote }}
+  replicas: {{ .Values.openbao.replicas }}
+  # Static auto-unseal and HTTP require the Development profile.
+  profile: Development
+  controllerJWTMode: Target
+  deletionPolicy: Retain
+  storage:
+    size: {{ .Values.openbao.storage.size | quote }}
+    storageClassName: {{ .Values.openbao.storage.storageClassName | quote }}
+  resources:
+    {{- toYaml .Values.openbao.resources | nindent 4 }}
+  configuration:
+    ui: true
+  service:
+    type: ClusterIP
+  tls:
+    enabled: false
+    # The operator schema requires these fields even when TLS is disabled.
+    mode: OperatorManaged
+    rotationPeriod: "720h"
+  {{- if .Values.openbao.credentialSync.enabled }}
+  network:
+    ingressRules:
+      - from:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: {{ .Values.openbao.name }}-credential-sync
+        ports:
+          - protocol: TCP
+            port: 8200
+  {{- end }}
+  unseal:
+    type: static
+  selfInit:
+    enabled: true
+    oidc:
+      enabled: true
+    # Bootstrap access before self-init revokes the initial root token.
+    requests:
+      - name: enable-kv
+        operation: update
+        path: sys/mounts/secret
+        secretEngine:
+          type: kv
+          options:
+            version: "2"
+      - name: enable-onprem-kv
+        operation: update
+        path: sys/mounts/onprem
+        secretEngine:
+          type: kv
+          options:
+            version: "2"
+      - name: create-admin-policy
+        operation: update
+        path: sys/policies/acl/openbao-admin
+        policy:
+          policy: |
+            path "*" {
+              capabilities = ["create", "read", "update", "delete", "list", "patch", "sudo"]
+            }
+      - name: create-admin-role
+        operation: update
+        path: auth/jwt-operator/role/openbao-admin
+        data:
+          role_type: jwt
+          user_claim: sub
+          bound_audiences:
+            - {{ .Values.openbao.admin.audience | quote }}
+          bound_subject: {{ printf "system:serviceaccount:%s:%s" .Values.openbao.namespace .Values.openbao.admin.serviceAccountName | quote }}
+          token_policies:
+            - openbao-admin
+          token_ttl: 15m
+          token_max_ttl: 1h
+{{- if .Values.openbao.credentialSync.enabled }}
+---
+{{- $name := printf "%s-credential-sync" .Values.openbao.name }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Values.openbao.namespace }}
+data:
+  publish.py: |
+    {{- include "bootstrap.openbaoCredentialSyncScript" . | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Values.openbao.namespace }}
+spec:
+  replicas: 1
+  # Avoid two publishers racing with different pod-bound JWTs during rollout.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $name }}
+      annotations:
+        checksum/script: {{ include "bootstrap.openbaoCredentialSyncScript" . | sha256sum }}
+    spec:
+      serviceAccountName: {{ .Values.openbao.admin.serviceAccountName }}
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: publisher
+          image: {{ .Values.openbao.credentialSync.image | quote }}
+          command: [python, -u, /app/publish.py]
+          env:
+            - name: OPENBAO_ADDRESS
+              value: {{ printf "http://%s-public.%s.svc:8200" .Values.openbao.name .Values.openbao.namespace | quote }}
+            - name: OPENBAO_AUDIENCE
+              value: {{ .Values.openbao.admin.audience | quote }}
+            - name: OPENBAO_MOUNT
+              value: {{ .Values.openbao.credentialSync.mount | quote }}
+            - name: OPENBAO_PATH
+              value: {{ .Values.openbao.credentialSync.path | quote }}
+            - name: POLL_SECONDS
+              value: {{ .Values.openbao.credentialSync.pollSeconds | quote }}
+            - name: RECONCILE_SECONDS
+              value: {{ .Values.openbao.credentialSync.reconcileSeconds | quote }}
+            - name: MINIMUM_VALIDITY_SECONDS
+              value: {{ .Values.openbao.credentialSync.minimumValiditySeconds | quote }}
+          readinessProbe:
+            exec:
+              command: [python, /app/publish.py, --healthcheck]
+            periodSeconds: 30
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: script
+              mountPath: /app
+              readOnly: true
+            # Mount directories, without subPath, so kubelet rotation is visible.
+            - name: identity
+              mountPath: /var/run/openbao
+              readOnly: true
+            - name: temporary
+              mountPath: /tmp
+      volumes:
+        - name: script
+          configMap:
+            name: {{ $name }}
+        - name: identity
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: {{ .Values.openbao.admin.audience | quote }}
+                  expirationSeconds: {{ .Values.openbao.credentialSync.tokenExpirationSeconds }}
+                  path: token
+        - name: temporary
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Mi
+{{- end }}
+{{- end }}
+
+{{- define "bootstrap.openbaoCredentialSyncScript" -}}
+"""Publish rotating projected credentials without persisting them outside OpenBao."""
+
+import base64
+import json
+import os
+from pathlib import Path
+import signal
+import sys
+import threading
+import time
+from urllib.error import HTTPError
+from urllib.parse import quote, urlsplit
+from urllib.request import Request, urlopen
+
+
+READY_FILE = Path("/tmp/publisher-ready.json")
+
+
+def jwt_expiry(jwt, audience):
+    # OpenBao verifies the signature at login; this check prevents publishing an
+    # expired token or a projection with the wrong audience.
+    encoded = jwt.split(".")[1]
+    claims = json.loads(base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)))
+    audiences = claims.get("aud", [])
+    if isinstance(audiences, str):
+        audiences = [audiences]
+    if audience not in audiences:
+        raise ValueError("unexpected JWT audience")
+    return float(claims["exp"])
+
+
+class OpenBao:
+    def __init__(self, address):
+        if urlsplit(address).scheme not in ("http", "https"):
+            raise ValueError("HTTP or HTTPS is required")
+        self.address = address.rstrip("/")
+
+    def request(self, method, path, data=None, token=None):
+        headers = {"Content-Type": "application/json"}
+        if token:
+            headers["X-Vault-Token"] = token
+        body = None if data is None else json.dumps(data).encode()
+        request = Request(self.address + "/v1/" + path, body, headers, method=method)
+        with urlopen(request, timeout=10) as response:
+            body = response.read()
+            return json.loads(body) if body else {}
+
+
+class Publisher:
+    def __init__(self, address, audience, mount, path, poll=30, reconcile=300,
+                 minimum_validity=300, identity_dir="/var/run/openbao",
+                 ready_file=READY_FILE, client_factory=OpenBao, clock=time.time):
+        self.address = address
+        self.audience = audience
+        self.endpoint = quote(mount, safe="") + "/data/" + quote(path, safe="/")
+        self.metadata_endpoint = quote(mount, safe="") + "/metadata/" + quote(path, safe="/")
+        self.poll = poll
+        self.reconcile = reconcile
+        self.minimum_validity = minimum_validity
+        self.identity_dir = Path(identity_dir)
+        self.ready_file = Path(ready_file)
+        self.client_factory = client_factory
+        self.clock = clock
+        self.last_payload = None
+        self.last_success = 0
+
+    def sync(self):
+        # Reopen each time: projected volumes change via symlink swaps.
+        jwt = (self.identity_dir / "token").read_text().strip()
+        expires = jwt_expiry(jwt, self.audience)
+        if expires - self.clock() <= self.minimum_validity:
+            raise ValueError("waiting for a fresh projected JWT")
+        payload = {
+            "jwt": jwt,
+            "audience": self.audience,
+            "openbao-address": self.address,
+        }
+        if payload == self.last_payload and self.clock() - self.last_success < self.reconcile:
+            return False
+
+        client = self.client_factory(self.address)
+        login = client.request("POST", "auth/jwt-operator/login", {
+            "role": "openbao-admin", "jwt": jwt,
+        })
+        token = login["auth"]["client_token"]
+        try:
+            try:
+                current = client.request("GET", self.endpoint, token=token)["data"]
+                version = current["metadata"]["version"]
+                stored = current["data"]
+            except HTTPError as error:
+                if error.code != 404:
+                    raise
+                # A soft-deleted KV v2 entry still has a nonzero CAS version.
+                try:
+                    metadata = client.request("GET", self.metadata_endpoint, token=token)
+                    version = metadata["data"]["current_version"]
+                except HTTPError as metadata_error:
+                    if metadata_error.code != 404:
+                        raise
+                    version = 0
+                stored = None
+            if stored != payload:
+                if expires - self.clock() <= self.minimum_validity:
+                    raise ValueError("JWT became too old during synchronization")
+                # A failed CAS is retried from a fresh read on the next poll.
+                client.request("POST", self.endpoint, {
+                    "options": {"cas": version}, "data": payload,
+                }, token=token)
+            self.last_success = self.clock()
+            self.last_payload = payload
+            temporary = self.ready_file.with_suffix(".tmp")
+            temporary.write_text(json.dumps({"synced": self.last_success, "expires": expires}))
+            temporary.replace(self.ready_file)
+            return True
+        finally:
+            # Only the Kubernetes JWT is exported. Dispose of the temporary
+            # OpenBao login token; if revocation fails, its TTL still bounds it.
+            try:
+                client.request("POST", "auth/token/revoke-self", {}, token=token)
+            except Exception:
+                print("Temporary OpenBao token revocation failed; TTL still applies", flush=True)
+
+
+def main():
+    poll = int(os.environ.get("POLL_SECONDS", "30"))
+    reconcile = int(os.environ.get("RECONCILE_SECONDS", "300"))
+    minimum = int(os.environ.get("MINIMUM_VALIDITY_SECONDS", "300"))
+    if "--healthcheck" in sys.argv:
+        try:
+            state = json.loads(READY_FILE.read_text())
+            now = time.time()
+            healthy = (now - state["synced"] < reconcile + 2 * poll
+                       and state["expires"] - now > minimum)
+        except (OSError, ValueError, KeyError):
+            healthy = False
+        return 0 if healthy else 1
+
+    publisher = Publisher(
+        os.environ["OPENBAO_ADDRESS"], os.environ["OPENBAO_AUDIENCE"],
+        os.environ["OPENBAO_MOUNT"], os.environ["OPENBAO_PATH"],
+        poll=poll, reconcile=reconcile, minimum_validity=minimum,
+    )
+    stopped = threading.Event()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(sig, lambda *_: stopped.set())
+    while not stopped.is_set():
+        try:
+            if publisher.sync():
+                print("OpenBao credential record synchronized", flush=True)
+        except Exception as error:
+            # Never print response bodies, JWTs, login tokens, or credentials.
+            detail = f"HTTP {error.code}" if isinstance(error, HTTPError) else type(error).__name__
+            print(f"Credential synchronization pending ({detail}); retrying", flush=True)
+        stopped.wait(poll)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+{{ end -}}

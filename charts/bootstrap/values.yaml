@@ -16,6 +16,7 @@ versions:
   prometheus: 77.3.0
   reloader: 2.2.20
   openbaoOperator: 0.6.1
+  openbao: "2.6.2"
 
 nvidia:
   enabled: true
@@ -62,6 +63,36 @@ envoy:
 openbaoOperator:
   enabled: true
   namespace: system-openbao
+
+openbao:
+  enabled: true
+  name: openbao
+  namespace: system-vault
+  replicas: 1
+  storage:
+    size: 1Gi
+    storageClassName: thorin-default
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  admin:
+    serviceAccountName: openbao-admin
+    audience: openbao-admin
+  credentialSync:
+    enabled: true
+    image: python:3.13-alpine
+    # KV v2 location inside this OpenBao cluster.
+    mount: onprem
+    path: dynamic/root-vault
+    # Kubelet refreshes the projection; the publisher rereads it on each poll.
+    tokenExpirationSeconds: 3600
+    pollSeconds: 30
+    reconcileSeconds: 300
+    minimumValiditySeconds: 300
 
 crossplane:
   enabled: true
