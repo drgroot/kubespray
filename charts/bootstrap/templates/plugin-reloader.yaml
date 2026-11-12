@@ -23,3 +23,6 @@ spec:
     targetRevision: {{ .Values.versions.reloader }}
     helm:
       releaseName: reloader
+      values: |
+        reloader:
+          reloadOnCreate: true

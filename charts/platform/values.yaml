@@ -143,6 +143,18 @@ crossplane:
     secretNamespace: argocd
 
   iac:
+    vault-servc-engine:
+      enabled: true
+      type: secretengine
+      provider: openbao
+      vault: openbao
+      name: servc
+      vars:
+        - key: input
+          value: onprem/dynamic/vault-root
+        - key: output
+          value: none
+
     github-vault-url:
       enabled: true
       type: github

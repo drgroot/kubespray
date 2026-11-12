@@ -33,6 +33,43 @@ spec:
           apiVersion: generators.external-secrets.io/v1alpha1
           kind: Password
           name: {{ $name }}
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Values.openbao.namespace }}
+spec:
+  updatePolicy: Replace
+  deletionPolicy: None
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: {{ .Values.openbao.name }}
+      kind: SecretStore
+  selector:
+    secret:
+      name: {{ $name }}
+  template:
+    engineVersion: v2
+    data:
+      username: {{ "{{ .username }}" | quote }}
+      password: {{ "{{ .password }}" | quote }}
+      url: {{ printf "https://%s-public.%s.svc:8200" .Values.openbao.name .Values.openbao.namespace | quote }}
+    templateFrom:
+      - target: Data
+        secret:
+          name: {{ .Values.openbao.name }}-tls-server
+          items:
+            - key: ca.crt
+              templateAs: Values
+  data:
+    {{- range $key := list "url" "ca-cert" "username" "password" }}
+    - match:
+        secretKey: {{ if eq $key "ca-cert" }}ca.crt{{ else }}{{ $key }}{{ end }}
+        remoteRef:
+          remoteKey: vault-onpremise
+          property: {{ $key }}
+    {{- end }}
 {{- if .Values.crossplane.enabled }}
 ---
 apiVersion: ansible.crossplane.io/v1alpha1
