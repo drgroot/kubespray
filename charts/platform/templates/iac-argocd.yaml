@@ -28,7 +28,7 @@ spec:
               repo: "{{ `{{ repository }}` }}"
               dest: "{{ `{{ playbook_dir }}` }}/repository"
               version: "{{ `{{ revision }}` }}"
-              recursive: false
+              recursive: true
 
           - name: Create an isolated Ansible environment
             ansible.builtin.command:
