@@ -40,6 +40,11 @@ kind: ProviderConfig
 metadata:
   name: {{ .Values.openbao.namespace }}-{{ .Values.openbao.name }}-onpremise
 spec:
+  vars:
+    - key: ANSIBLE_STDOUT_CALLBACK
+      value: crossplane_json
+    - key: ANSIBLE_CALLBACK_PLUGINS
+      value: /opt/ansible/callback_plugins
   credentials:
     {{- range $key := list "username" "password" }}
     - filename: {{ $key }}
@@ -82,6 +87,15 @@ spec:
         vars:
           ansible_python_interpreter: "{{ `{{ ansible_playbook_python }}` }}"
         tasks:
+          # ansible-runner persists CLI --check in env/cmdline. Remove the
+          # cached argument after startup so the subsequent apply can write.
+          - name: Clear persisted runner check-mode arguments
+            ansible.builtin.file:
+              path: "{{ `{{ playbook_dir }}` }}/env/cmdline"
+              state: absent
+            check_mode: false
+            changed_when: false
+
           - name: Check out the configuration repository
             ansible.builtin.git:
               repo: https://github.com/drgroot/kubespray.git
