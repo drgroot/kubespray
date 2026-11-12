@@ -160,6 +160,24 @@ crossplane:
           value: no,no
         - key: output
           value: none
+    
+    postgres-app-creds:
+      enabled: true
+      type: valuegen
+      provider: openbao
+      vault: openbao
+      name: postgresapp
+      vars:
+        - key: input
+          value: onprem/dynamic/postgres-app-creds
+        - key: properties
+          value: affine,authelia,bitwarden,coder,gitea,grafana,immich,postiz,postiz-temporal,sure
+        - key: value-types
+          value: password,password,password,password,password,password,password,password,password,password
+        - key: specialchars
+          value: no,no,no,no,no,no,no,no,no,no
+        - key: output
+          value: none
 
     vault-servc-engine:
       enabled: true
@@ -448,106 +466,102 @@ crossplane:
     s3-backups-b2:
       enabled: true
       type: s3
+      vault: openbao
       provider: b2
       name: thorin-backups
       vars:
         - key: input
-          value: external-infra/vendor/blackblaze
+          value: onprem/vendor/blackblaze
         - key: output
-          value: external-infra/iac/s3-backups-b2
-
-    s3-pvcbackups-k8s:
-      enabled: true
-      type: s3
-      provider: minio
-      name: pvc-backups
-      vars:
-        - key: input
-          value: external-infra/vendor/minio
-        - key: output
-          value: external-infra/iac/s3-pvcbackups-k8s
+          value: onprem/dynamic/s3-thorin-backups
 
     s3-thanos:
       enabled: true
       type: s3
+      vault: openbao
       provider: minio
       name: thanos
       vars:
         - key: input
-          value: external-infra/vendor/minio
+          value: onprem/dynamic/minio-root
         - key: output
-          value: external-infra/iac/s3-thanos
+          value: onprem/dynamic/s3-thanos
 
     s3-backups-k8s:
       enabled: true
       type: s3
+      vault: openbao
       provider: minio
       name: db-backups
       vars:
         - key: input
-          value: external-infra/vendor/minio
+          value: onprem/dynamic/minio-root
         - key: output
-          value: external-infra/iac/s3-db-backups
+          value: onprem/dynamic/s3-db-backups
 
     postgres-gitea:
       enabled: true
       type: postgres
       provider: db
+      vault: openbao
       name: gitea
       vars:
         - key: input
-          value: external-infra/iac/postgres
+          value: onprem/dynamic/postgres
         - key: credentialpath
-          value: external-infra/vendor/postgres
+          value: onprem/dynamic/postgres-app-creds
         - key: passwordkey
           value: gitea
         - key: output
-          value: external-infra/iac/postgres-gitea
+          value: onprem/dynamic/postgres-app-gitea
 
     postgres-coder:
       enabled: true
       type: postgres
       provider: db
+      vault: openbao
       name: coder
       vars:
         - key: input
-          value: external-infra/iac/postgres
+          value: onprem/dynamic/postgres
         - key: credentialpath
-          value: external-infra/vendor/postgres
+          value: onprem/dynamic/postgres-app-creds
         - key: passwordkey
           value: coder
         - key: output
-          value: external-infra/iac/postgres-coder
+          value: onprem/dynamic/postgres-app-coder
 
     postgres-grafana:
       enabled: true
       type: postgres
       provider: db
+      vault: openbao
       name: grafana
       vars:
         - key: input
-          value: external-infra/iac/postgres
+          value: onprem/dynamic/postgres
         - key: credentialpath
-          value: external-infra/vendor/postgres
+          value: onprem/dynamic/postgres-app-creds
         - key: passwordkey
-          value: authelia
+          value: grafana
         - key: output
-          value: external-infra/iac/postgres-grafana
+          value: onprem/dynamic/postgres-app-grafana
 
     postgres-authelia:
       enabled: true
       type: postgres
       provider: db
+      vault: openbao
       name: authelia
       vars:
         - key: input
-          value: external-infra/iac/postgres
+          value: onprem/dynamic/postgres
         - key: credentialpath
-          value: external-infra/vendor/postgres
+          value: onprem/dynamic/postgres-app-creds
         - key: passwordkey
           value: authelia
         - key: output
-          value: external-infra/iac/postgres-authelia
+          value: onprem/dynamic/postgres-app-authelia
 
     gitea-argocd:
       enabled: true
@@ -710,7 +724,7 @@ domains:
 authelia:
   enabled: true
   database:
-    remoteKey: iac/postgres-authelia
+    remoteKey: dynamic/postgres-app-authelia
 
   secrets:
     remoteKey: vendor/selfhosted-app-tokens
@@ -1578,8 +1592,8 @@ secretSync:
   - name: coder-postgres
     input:
       kind: ClusterSecretStore
-      name: external-infra
-      path: iac/postgres-coder
+      name: vault
+      path: dynamic/postgres-app-coder
       properties:
         - url
     output:

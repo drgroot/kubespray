@@ -19,9 +19,9 @@ crossplane:
       name: postiz
       vars:
         - key: input
-          value: external-infra/vendor/cloudflare
+          value: onprem/vendor/cloudflare
         - key: output
-          value: external-infra/iac/s3-postiz
+          value: onprem/dynamic/s3-postiz
 
     s3-affine:
       enabled: true
@@ -30,9 +30,9 @@ crossplane:
       name: affine
       vars:
         - key: input
-          value: external-infra/vendor/minio
+          value: onprem/dynamic/minio-root
         - key: output
-          value: external-infra/iac/s3-affine
+          value: onprem/dynamic/s3-affine
 
     s3-sure:
       enabled: true
@@ -41,9 +41,9 @@ crossplane:
       name: sure
       vars:
         - key: input
-          value: external-infra/vendor/minio
+          value: onprem/dynamic/minio-root
         - key: output
-          value: external-infra/iac/s3-sure
+          value: onprem/dynamic/s3-sure
 
     postgres-sure:
       enabled: true
@@ -52,13 +52,13 @@ crossplane:
       name: sure
       vars:
         - key: input
-          value: external-infra/iac/postgres
+          value: onprem/dynamic/postgres
         - key: credentialpath
-          value: external-infra/vendor/postgres
+          value: onprem/dynamic/postgres-app-creds
         - key: passwordkey
           value: sure
         - key: output
-          value: external-infra/iac/postgres-sure
+          value: onprem/dynamic/postgres-app-sure
 
     postgres-bitwarden:
       enabled: true
@@ -67,13 +67,14 @@ crossplane:
       name: bitwarden
       vars:
         - key: input
-          value: external-infra/iac/postgres
+          value: onprem/dynamic/postgres
         - key: credentialpath
-          value: external-infra/vendor/postgres
+          value: onprem/dynamic/postgres-app-creds
         - key: passwordkey
           value: bitwarden
         - key: output
-          value: external-infra/iac/postgres-bitwarden
+          value: onprem/dynamic/postgres-app-bitwarden
+
     postgres-postiz:
       enabled: true
       type: postgres
@@ -81,13 +82,13 @@ crossplane:
       name: postiz
       vars:
         - key: input
-          value: external-infra/iac/postgres
+          value: onprem/dynamic/postgres
         - key: credentialpath
-          value: external-infra/vendor/postgres
+          value: onprem/dynamic/postgres-app-creds
         - key: passwordkey
           value: postiz
         - key: output
-          value: external-infra/iac/postgres-postiz
+          value: onprem/dynamic/postgres-app-postiz
     postgres-postiz-temporal:
       enabled: true
       type: postgres
@@ -95,10 +96,10 @@ crossplane:
       name: postiz-temporal
       vars:
         - key: input
-          value: external-infra/iac/postgres
+          value: onprem/dynamic/postgres
         - key: credentialpath
-          value: external-infra/vendor/postgres
+          value: onprem/dynamic/postgres-app-creds
         - key: passwordkey
           value: postiz-temporal
         - key: output
-          value: external-infra/iac/postgres-postiz-temporal
+          value: onprem/dynamic/postgres-app-postiz-temporal

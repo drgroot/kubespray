@@ -142,7 +142,7 @@ metadata:
 spec:
   refreshInterval: 1h
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: grafana-database
@@ -155,7 +155,7 @@ spec:
         host: '{{ `{{ .hostname }}:{{ .port }}` }}'
   dataFrom:
     - extract:
-        key: iac/postgres-grafana
+        key: dynamic/postgres-app-grafana
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret

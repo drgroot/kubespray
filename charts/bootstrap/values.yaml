@@ -143,11 +143,11 @@ storageClasses:
       image: dockerhub.yusufali.ca/rclone/rclone:latest
       schedule: "0 0 * * *"
       secretStore:
-        name: external-infra
+        name: vault
         type: ClusterSecretStore
       rclone:
         remoteRef:
-          key: iac/s3-backups-b2
+          key: dynamic/s3-thorin-backups
           property: rclone
       ignoreFolders:
         - media/media-downloaders-narr-search-trigger-config
@@ -243,10 +243,10 @@ prometheus:
         storageClassName: thorin-fast
     s3:
       secretStore:
-        name: external-infra
+        name: vault
         kind: ClusterSecretStore
       remoteRef:
-        key: iac/s3-thanos
+        key: dynamic/s3-thanos
       properties:
         bucket: bucket
         endpoint: blob-url

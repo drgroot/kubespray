@@ -98,16 +98,16 @@ spec:
         backup:
           image: dockerhub.yusufali.ca/rclone/rclone:latest@sha256:2687085f718d3c628f7fdfb77c52a1d344332aed543110bb88088f2c70d43eb5
           secretStore:
-            name: external-infra
+            name: vault
             type: ClusterSecretStore
           rclone:
             remoteRef:
-              key: iac/s3-db-backups
+              key: dynamic/s3-db-backups
               property: rclone
 
         secrets:
           secretStore:
-            name: external-infra
+            name: vault
             type: ClusterSecretStore
           username:
             remoteRef:
@@ -115,7 +115,29 @@ spec:
               property: root-username
           password:
             remoteRef:
-              key: vendor/postgres
+              key: dynamic/postgres-app-creds
               property: immich
           pushsecret:
-            enabled: false
+            enabled: true
+            secretStore:
+              name: vault
+              type: ClusterSecretStore
+            remoteKey: dynamic/postgres-server-immich
+
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: immich-postgres-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault
+    kind: ClusterSecretStore
+  target:
+    name: immich-postgres-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  dataFrom:
+    - extract:
+        key: dynamic/postgres-server-immich

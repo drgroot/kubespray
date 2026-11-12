@@ -2,7 +2,16 @@ variable "output" {
   type = string
 }
 
-resource "vault_generic_secret" "warehouse_secrets" {
+# Forget the output on the previous Vault server without reading or deleting it.
+# Keep the bucket and storage-provider credentials in their existing state.
+removed {
+  from = vault_generic_secret.warehouse_secrets
+  lifecycle {
+    destroy = false
+  }
+}
+
+resource "vault_generic_secret" "connection" {
   path = var.output
 
   depends_on = [
@@ -18,7 +27,7 @@ resource "vault_generic_secret" "warehouse_secrets" {
     secretkey      = minio_iam_user.datalake.secret
     read_accesskey = minio_iam_user.read.id
     read_secretkey = minio_iam_user.read.secret
-    rclone = <<-EOT
+    rclone         = <<-EOT
       [s3]
       type = alias
       remote = s3-main:${minio_s3_bucket.datalake.bucket}

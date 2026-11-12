@@ -117,7 +117,7 @@ metadata:
 spec:
   refreshInterval: 1h
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: bitwarden-postgres-secrets
@@ -125,7 +125,7 @@ spec:
     deletionPolicy: Retain
   data:
     - remoteRef:
-        key: iac/postgres-bitwarden
+        key: dynamic/postgres-app-bitwarden
         property: password
         conversionStrategy: Default
         decodingStrategy: None
@@ -133,7 +133,7 @@ spec:
         nullBytePolicy: Ignore
       secretKey: password
     - remoteRef:
-        key: iac/postgres-bitwarden
+        key: dynamic/postgres-app-bitwarden
         property: username
         conversionStrategy: Default
         decodingStrategy: None
@@ -141,7 +141,7 @@ spec:
         nullBytePolicy: Ignore
       secretKey: username
     - remoteRef:
-        key: iac/postgres-bitwarden
+        key: dynamic/postgres-app-bitwarden
         property: schema
         conversionStrategy: Default
         decodingStrategy: None
@@ -149,7 +149,7 @@ spec:
         nullBytePolicy: Ignore
       secretKey: schema
     - remoteRef:
-        key: iac/postgres-bitwarden
+        key: dynamic/postgres-app-bitwarden
         property: hostname
         conversionStrategy: Default
         decodingStrategy: None
@@ -157,7 +157,7 @@ spec:
         nullBytePolicy: Ignore
       secretKey: hostname
     - remoteRef:
-        key: iac/postgres-bitwarden
+        key: dynamic/postgres-app-bitwarden
         property: url
         conversionStrategy: Default
         decodingStrategy: None
@@ -165,7 +165,7 @@ spec:
         nullBytePolicy: Ignore
       secretKey: url
     - remoteRef:
-        key: iac/postgres-bitwarden
+        key: dynamic/postgres-app-bitwarden
         property: database
         conversionStrategy: Default
         decodingStrategy: None

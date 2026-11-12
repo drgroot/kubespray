@@ -408,22 +408,8 @@ spec:
     creationPolicy: Owner
     deletionPolicy: Retain
   data:
-    - secretKey: DATABASE_URL
-      remoteRef: {key: iac/postgres-postiz, property: url}
     - secretKey: JWT_SECRET
       remoteRef: {key: vendor/selfhosted-app-tokens, property: postiz-jwt-key}
-    - secretKey: CLOUDFLARE_ACCOUNT_ID
-      remoteRef: {key: iac/s3-postiz, property: accountid}
-    - secretKey: CLOUDFLARE_ACCESS_KEY
-      remoteRef: {key: iac/s3-postiz, property: accesskey}
-    - secretKey: CLOUDFLARE_SECRET_ACCESS_KEY
-      remoteRef: {key: iac/s3-postiz, property: secretkey}
-    - secretKey: CLOUDFLARE_BUCKETNAME
-      remoteRef: {key: iac/s3-postiz, property: bucket}
-    - secretKey: CLOUDFLARE_BUCKET_URL
-      remoteRef: {key: iac/s3-postiz, property: blob-url}
-    - secretKey: CLOUDFLARE_REGION
-      remoteRef: {key: iac/s3-postiz, property: region}
     - secretKey: POSTIZ_OAUTH_CLIENT_SECRET
       remoteRef:
         key: vendor/authelia-apps
@@ -452,11 +438,28 @@ spec:
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
+  name: postiz-postgres-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault
+    kind: ClusterSecretStore
+  target:
+    name: postiz-postgres-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: DATABASE_URL
+      remoteRef: {key: dynamic/postgres-app-postiz, property: url}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
   name: postiz-temporal-postgres
 spec:
   refreshInterval: 1h
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: postiz-temporal-postgres
@@ -464,13 +467,13 @@ spec:
     deletionPolicy: Retain
   data:
     - secretKey: POSTGRES_USER
-      remoteRef: {key: iac/postgres-postiz-temporal, property: username}
+      remoteRef: {key: dynamic/postgres-app-postiz-temporal, property: username}
     - secretKey: POSTGRES_PWD
-      remoteRef: {key: iac/postgres-postiz-temporal, property: password}
+      remoteRef: {key: dynamic/postgres-app-postiz-temporal, property: password}
     - secretKey: POSTGRES_SEEDS
-      remoteRef: {key: iac/postgres-postiz-temporal, property: hostname}
+      remoteRef: {key: dynamic/postgres-app-postiz-temporal, property: hostname}
     - secretKey: DBNAME
-      remoteRef: {key: iac/postgres-postiz-temporal, property: database}
+      remoteRef: {key: dynamic/postgres-app-postiz-temporal, property: database}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -657,3 +660,31 @@ spec:
     - name: grpc
       port: 7233
       targetPort: grpc
+
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: postiz-s3-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault
+    kind: ClusterSecretStore
+  target:
+    name: postiz-s3-secrets
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: CLOUDFLARE_ACCOUNT_ID
+      remoteRef: {key: dynamic/s3-postiz, property: accountid}
+    - secretKey: CLOUDFLARE_ACCESS_KEY
+      remoteRef: {key: dynamic/s3-postiz, property: accesskey}
+    - secretKey: CLOUDFLARE_SECRET_ACCESS_KEY
+      remoteRef: {key: dynamic/s3-postiz, property: secretkey}
+    - secretKey: CLOUDFLARE_BUCKETNAME
+      remoteRef: {key: dynamic/s3-postiz, property: bucket}
+    - secretKey: CLOUDFLARE_BUCKET_URL
+      remoteRef: {key: dynamic/s3-postiz, property: blob-url}
+    - secretKey: CLOUDFLARE_REGION
+      remoteRef: {key: dynamic/s3-postiz, property: region}
