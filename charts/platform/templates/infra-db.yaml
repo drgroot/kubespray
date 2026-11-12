@@ -51,7 +51,7 @@ spec:
 
         secrets:
           secretStore:
-            name: external-infra
+            name: vault
             type: ClusterSecretStore
           username:
             remoteRef:
@@ -64,9 +64,9 @@ spec:
           pushsecret:
             enabled: true
             secretStore:
-              name: external-infra
+              name: vault
               type: ClusterSecretStore
-            remoteKey: iac/postgres
+            remoteKey: dynamic/postgres
 
         backup:
           image: dockerhub.yusufali.ca/rclone/rclone:latest

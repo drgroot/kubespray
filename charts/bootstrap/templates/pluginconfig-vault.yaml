@@ -67,7 +67,7 @@ spec:
     - match:
         secretKey: {{ if eq $key "ca-cert" }}ca.crt{{ else }}{{ $key }}{{ end }}
         remoteRef:
-          remoteKey: vault-onpremise
+          remoteKey: dynamic/vault-onpremise
           property: {{ $key }}
     {{- end }}
 {{- if .Values.crossplane.enabled }}

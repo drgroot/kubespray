@@ -143,6 +143,24 @@ crossplane:
     secretNamespace: argocd
 
   iac:
+    postgres-root-creds:
+      enabled: true
+      type: valuegen
+      provider: openbao
+      vault: openbao
+      name: postgres
+      vars:
+        - key: input
+          value: onprem/vendor/postgres
+        - key: properties
+          value: root-username,root-password
+        - key: value-types
+          value: username,password
+        - key: specialchars
+          value: no,no
+        - key: output
+          value: none
+
     vault-servc-engine:
       enabled: true
       type: secretengine
