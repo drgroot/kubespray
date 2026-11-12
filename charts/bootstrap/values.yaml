@@ -67,8 +67,8 @@ openbaoOperator:
 openbao:
   enabled: true
   name: openbao
-  namespace: system-openbau
-  createNamespace: true
+  namespace: system-openbao
+  createNamespace: false
   replicas: 1
   storage:
     size: 1Gi
