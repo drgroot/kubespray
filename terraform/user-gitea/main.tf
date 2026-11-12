@@ -15,9 +15,10 @@ locals {
 }
 
 resource "gitea_user" "user" {
-  username             = local.gitea_username
-  login_name           = local.gitea_username
-  password             = data.vault_generic_secret.user_credentials.data[var.passwordkey]
-  email                = "${local.gitea_username}@local.invalid"
-  must_change_password = false
+  username              = local.gitea_username
+  login_name            = local.gitea_username
+  password              = data.vault_generic_secret.user_credentials.data[var.passwordkey]
+  email                 = "${local.gitea_username}@local.invalid"
+  must_change_password  = false
+  force_password_change = true
 }
