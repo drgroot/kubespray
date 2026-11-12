@@ -58,8 +58,16 @@ spec:
     # The operator schema requires these fields even when TLS is disabled.
     mode: OperatorManaged
     rotationPeriod: "720h"
-  {{- if .Values.openbao.credentialSync.enabled }}
   network:
+    trustedIngressPeers:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: system-networking
+        podSelector:
+          matchLabels:
+            app.kubernetes.io/name: ingress-nginx
+            app.kubernetes.io/component: controller
+    {{- if .Values.openbao.credentialSync.enabled }}
     ingressRules:
       - from:
           - podSelector:
@@ -112,6 +120,35 @@ spec:
             - openbao-admin
           token_ttl: 15m
           token_max_ttl: 1h
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.openbao.name }}-external
+  namespace: {{ .Values.openbao.namespace }}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: openbao.{{ .Values.domains.external }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.openbao.name }}-public
+                port:
+                  number: 8200
+  tls:
+    - hosts:
+        - openbao.{{ .Values.domains.external }}
+      secretName: openbao-external-tls
 {{- if .Values.openbao.credentialSync.enabled }}
 ---
 {{- $name := printf "%s-credential-sync" .Values.openbao.name }}
@@ -120,6 +157,8 @@ kind: ConfigMap
 metadata:
   name: {{ $name }}
   namespace: {{ .Values.openbao.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 data:
   publish.py: |
     {{- include "bootstrap.openbaoCredentialSyncScript" . | nindent 4 }}
@@ -129,6 +168,8 @@ kind: Deployment
 metadata:
   name: {{ $name }}
   namespace: {{ .Values.openbao.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   replicas: 1
   # Avoid two publishers racing with different pod-bound JWTs during rollout.
