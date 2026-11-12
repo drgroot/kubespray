@@ -13,7 +13,7 @@ versions:
   keda: 2.21.0
   certmanager: v1.21.3
   externaldns: 1.21.1
-  prometheus: 77.3.0
+  prometheus: 93.2.2
   reloader: 2.2.20
   openbaoOperator: 0.6.1
   openbao: "2.6.2"
