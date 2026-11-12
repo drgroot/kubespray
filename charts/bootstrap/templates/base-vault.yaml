@@ -62,6 +62,11 @@ spec:
     extraSANs:
       - {{ printf "%s-public.%s.svc" .Values.openbao.name .Values.openbao.namespace | quote }}
   network:
+    apiServerEndpointIPs:
+      - 192.168.1.10
+    dnsEndpointIPs:   
+    # cat /etc/resolv.conf from inside pod, k8s dns
+      - 169.254.25.10
     trustedIngressPeers:
       - namespaceSelector:
           matchLabels:
