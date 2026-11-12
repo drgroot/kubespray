@@ -70,6 +70,8 @@ openbao:
   namespace: system-vault
   createNamespace: true
   replicas: 1
+  oidcEgressCIDRs:
+    - 192.168.1.10/32
   storage:
     size: 1Gi
     storageClassName: thorin-default
