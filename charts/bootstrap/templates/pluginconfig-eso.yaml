@@ -1,0 +1,88 @@
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: external-infra
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  provider:
+    vault:
+      server: http://vault.{{ .Release.Namespace }}.svc.cluster.local:8200
+      path: external-infra
+      version: "v2"
+      auth:
+        userPass:
+          path: "userpass"
+          username: {{ .Values.vault.username }}
+          secretRef:
+            name: {{ .Values.vault.secretName }}
+            key: {{ .Values.vault.key }}
+            namespace: {{ .Release.Namespace }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ .Values.vault.servc.secretName }}
+  namespace: {{ .Values.vault.servc.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: external-infra
+    kind: ClusterSecretStore
+  target:
+    name: {{ .Values.vault.servc.secretName }}
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: token
+      remoteRef:
+        key: {{ .Values.vault.servc.remoteKey }}
+        property: {{ .Values.vault.servc.tokenProperty }}
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: servc
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  provider:
+    vault:
+      server: http://vault.{{ .Release.Namespace }}.svc.cluster.local:8200
+      path: servc
+      version: "v2"
+      auth:
+        tokenSecretRef:
+          name: {{ .Values.vault.servc.secretName }}
+          key: token
+          namespace: {{ .Values.vault.servc.namespace }}
+{{- if and .Values.openbaoOperator.enabled .Values.openbao.enabled }}
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: onprem
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  provider:
+    vault:
+      server: {{ printf "https://%s-public.%s.svc:8200" .Values.openbao.name .Values.openbao.namespace | quote }}
+      path: onprem
+      version: v2
+      caProvider:
+        type: Secret
+        namespace: {{ .Values.openbao.namespace }}
+        name: {{ .Values.openbao.name }}-tls-server
+        key: ca.crt
+      auth:
+        userPass:
+          path: userpass
+          username: onpremise
+          secretRef:
+            namespace: {{ .Values.openbao.namespace }}
+            name: {{ .Values.openbao.name }}-onpremise-credentials
+            key: password
+{{- end }}

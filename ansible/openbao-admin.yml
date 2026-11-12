@@ -1,0 +1,211 @@
+---
+- name: Reconcile the OpenBao admin login token
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    openbao_credentials_dir: "{{ playbook_dir }}"
+    openbao_username: "{{ lookup('ansible.builtin.file', openbao_credentials_dir + '/username', rstrip=False) }}"
+    openbao_password: "{{ lookup('ansible.builtin.file', openbao_credentials_dir + '/password', rstrip=False) }}"
+    openbao_ca_path: "{{ openbao_credentials_dir }}/openbao-ca.crt"
+    kubernetes_api: https://kubernetes.default.svc
+    kubernetes_identity_dir: /var/run/secrets/kubernetes.io/serviceaccount
+    openbao_token_period: 86400
+    openbao_token_renew_before: 43200
+    openbao_state_path: onprem/data/dynamic/vault-root-token-state
+    openbao_managed_by: "{{ openbao_namespace }}/{{ openbao_service_account }}/admin-token"
+  tasks:
+    - name: Validate credentials for a custom token ID
+      ansible.builtin.assert:
+        that:
+          - openbao_username | length > 0
+          - openbao_password | length >= 32
+          - "'.' not in openbao_password"
+          - openbao_password is match('^[!-~]+$')
+        fail_msg: Custom token passwords require at least 32 printable ASCII characters without dots.
+      no_log: true
+
+    - name: Calculate the credential hash
+      ansible.builtin.set_fact:
+        openbao_credentials_sha: "{{ [openbao_username, openbao_password] | to_json | hash('sha256') }}"
+      no_log: true
+
+    - name: Request a short-lived JWT for the OpenBao admin service account
+      ansible.builtin.uri:
+        url: "{{ kubernetes_api }}/api/v1/namespaces/{{ openbao_namespace }}/serviceaccounts/{{ openbao_service_account }}/token"
+        method: POST
+        ca_path: "{{ kubernetes_identity_dir }}/ca.crt"
+        headers:
+          Authorization: "Bearer {{ lookup('ansible.builtin.file', kubernetes_identity_dir + '/token') }}"
+        body_format: json
+        body:
+          apiVersion: authentication.k8s.io/v1
+          kind: TokenRequest
+          spec:
+            audiences: ["{{ openbao_audience }}"]
+            expirationSeconds: 600
+        status_code: 201
+      register: openbao_jwt
+      check_mode: false
+      changed_when: false
+      no_log: true
+
+    - name: Authenticate to OpenBao with the service account
+      ansible.builtin.uri:
+        url: "{{ openbao_address }}/v1/auth/jwt-operator/login"
+        method: POST
+        ca_path: "{{ openbao_ca_path }}"
+        body_format: json
+        body:
+          role: openbao-admin
+          jwt: "{{ openbao_jwt.json.status.token }}"
+      register: openbao_login
+      check_mode: false
+      changed_when: false
+      no_log: true
+
+    - name: Check and reconcile the managed token
+      module_defaults:
+        ansible.builtin.uri:
+          ca_path: "{{ openbao_ca_path }}"
+          headers:
+            X-Vault-Token: "{{ openbao_login.json.auth.client_token }}"
+          body_format: json
+      no_log: true
+      block:
+        - name: Read the last applied credential hash and token accessor
+          ansible.builtin.uri:
+            url: "{{ openbao_address }}/v1/{{ openbao_state_path }}"
+            status_code: [200, 404]
+          register: openbao_state
+          check_mode: false
+          changed_when: false
+
+        - name: Look up the desired token
+          ansible.builtin.uri:
+            url: "{{ openbao_address }}/v1/auth/token/lookup"
+            method: POST
+            body:
+              token: "{{ openbao_password }}"
+            status_code: [200, 403]
+          register: openbao_lookup
+          check_mode: false
+          changed_when: false
+
+        - name: Distinguish a missing token from an authorization failure
+          ansible.builtin.assert:
+            that:
+              - openbao_lookup.status == 200 or openbao_lookup.json.errors == ['bad token']
+
+        - name: Extract the observed state
+          ansible.builtin.set_fact:
+            openbao_previous: "{{ openbao_state.json.data.data if openbao_state.status == 200 else {} }}"
+            openbao_current: "{{ openbao_lookup.json.data if openbao_lookup.status == 200 else {} }}"
+
+        - name: Refuse to replace an unrelated token
+          ansible.builtin.assert:
+            that:
+              - openbao_current | length == 0 or (openbao_current.meta | default({}, true)).get('managed_by', '') == openbao_managed_by
+            fail_msg: The requested token ID is already used by an unmanaged token.
+
+        - name: Determine whether the token needs replacement or renewal
+          ansible.builtin.set_fact:
+            openbao_replace: >-
+              {{ openbao_current | length == 0 or
+                 (openbao_current.meta | default({}, true)).get('credentials_sha256', '') != openbao_credentials_sha or
+                 openbao_current.policies | default([]) | sort != ['default', 'openbao-admin'] or
+                 not (openbao_current.orphan | default(false)) or
+                 not (openbao_current.renewable | default(false)) or
+                 openbao_current.period | default(0) | int != openbao_token_period | int }}
+            openbao_renew: "{{ openbao_current.ttl | default(0) | int < openbao_token_renew_before | int }}"
+
+        - name: Determine whether the saved credential state needs updating
+          ansible.builtin.set_fact:
+            openbao_save: >-
+              {{ openbao_replace or
+                 openbao_previous.get('credentials_sha256', '') != openbao_credentials_sha or
+                 openbao_previous.get('accessor', '') != openbao_current.get('accessor', '') }}
+
+        - name: Report pending credential changes to the Ansible provider
+          ansible.builtin.debug:
+            msg: The admin token or its saved credential hash needs reconciliation.
+          changed_when: openbao_replace or openbao_renew or openbao_save
+          when: ansible_check_mode
+
+        - name: Apply credential changes
+          when: not ansible_check_mode
+          block:
+            - name: Revoke a managed token whose username or settings changed
+              ansible.builtin.uri:
+                url: "{{ openbao_address }}/v1/auth/token/revoke-accessor"
+                method: POST
+                body:
+                  accessor: "{{ openbao_current.accessor }}"
+                status_code: 204
+              changed_when: true
+              when: openbao_replace and openbao_current | length > 0
+
+            - name: Create an orphan admin token with the password as its value
+              ansible.builtin.uri:
+                url: "{{ openbao_address }}/v1/auth/token/create-orphan"
+                method: POST
+                body:
+                  id: "{{ openbao_password }}"
+                  display_name: "{{ openbao_username }}"
+                  policies: [openbao-admin]
+                  period: "{{ openbao_token_period | int }}s"
+                  renewable: true
+                  meta:
+                    managed_by: "{{ openbao_managed_by }}"
+                    username: "{{ openbao_username }}"
+                    credentials_sha256: "{{ openbao_credentials_sha }}"
+              register: openbao_created
+              changed_when: true
+              when: openbao_replace
+
+            - name: Renew the existing periodic token before expiry
+              ansible.builtin.uri:
+                url: "{{ openbao_address }}/v1/auth/token/renew"
+                method: POST
+                body:
+                  token: "{{ openbao_password }}"
+              changed_when: true
+              when: not openbao_replace and openbao_renew
+
+            - name: Record the active token accessor
+              ansible.builtin.set_fact:
+                openbao_active_accessor: "{{ openbao_created.json.auth.accessor if openbao_replace else openbao_current.accessor }}"
+
+            - name: Revoke the previous password's token on rotation
+              ansible.builtin.uri:
+                url: "{{ openbao_address }}/v1/auth/token/revoke-accessor"
+                method: POST
+                body:
+                  accessor: "{{ openbao_previous.accessor }}"
+                status_code: [204, 400]
+              changed_when: true
+              when:
+                - openbao_previous.get('accessor', '') | length > 0
+                - openbao_previous.accessor != openbao_active_accessor
+                - openbao_previous.accessor != openbao_current.get('accessor', '')
+
+            - name: Save the applied credential hash and accessor without the password
+              ansible.builtin.uri:
+                url: "{{ openbao_address }}/v1/{{ openbao_state_path }}"
+                method: POST
+                body:
+                  data:
+                    credentials_sha256: "{{ openbao_credentials_sha }}"
+                    accessor: "{{ openbao_active_accessor }}"
+              changed_when: true
+              when: openbao_save
+
+      always:
+        - name: Revoke the temporary service account login token
+          ansible.builtin.uri:
+            url: "{{ openbao_address }}/v1/auth/token/revoke-self"
+            method: POST
+            status_code: 204
+          check_mode: false
+          changed_when: false

@@ -110,4 +110,28 @@ metadata:
     argocd.argoproj.io/sync-wave: "-4"
 spec:
   package: xpkg.crossplane.io/crossplane-contrib/provider-ansible:{{ .Values.versions.crossplaneAnsible }}
+  runtimeConfigRef:
+    name: provider-ansible-runtime
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: provider-ansible-runtime
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+spec:
+  serviceAccountTemplate:
+    metadata:
+      name: provider-ansible
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: provider-ansible
+        spec:
+          automountServiceAccountToken: true
+          containers:
+            - name: package-runtime
 {{- end }}

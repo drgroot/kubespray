@@ -1,0 +1,106 @@
+{{- if and .Values.openbaoOperator.enabled .Values.openbao.enabled }}
+{{- $name := printf "%s-onpremise-credentials" .Values.openbao.name }}
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Values.openbao.namespace }}
+spec:
+  length: 32
+  digits: 5
+  symbols: 5
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Values.openbao.namespace }}
+spec:
+  refreshPolicy: CreatedOnce
+  target:
+    name: {{ $name }}
+    creationPolicy: Orphan
+    immutable: true
+    template:
+      type: Opaque
+      data:
+        username: onpremise
+        password: {{ "{{ .password }}" | quote }}
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: {{ $name }}
+{{- if .Values.crossplane.enabled }}
+---
+apiVersion: ansible.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: {{ .Values.openbao.namespace }}-{{ .Values.openbao.name }}-onpremise
+spec:
+  credentials:
+    {{- range $key := list "username" "password" }}
+    - filename: {{ $key }}
+      source: Secret
+      secretRef:
+        namespace: {{ $.Values.openbao.namespace | quote }}
+        name: {{ $name }}
+        key: {{ $key }}
+    {{- end }}
+    - filename: openbao-ca.crt
+      source: Secret
+      secretRef:
+        namespace: {{ .Values.openbao.namespace | quote }}
+        name: {{ .Values.openbao.name }}-tls-server
+        key: ca.crt
+---
+apiVersion: ansible.crossplane.io/v1alpha1
+kind: AnsibleRun
+metadata:
+  name: {{ .Values.openbao.namespace }}-{{ .Values.openbao.name }}-onpremise
+  annotations:
+    ansible.crossplane.io/runPolicy: CheckWhenObserve
+spec:
+  deletionPolicy: Orphan
+  providerConfigRef:
+    name: {{ .Values.openbao.namespace }}-{{ .Values.openbao.name }}-onpremise
+  forProvider:
+    inventoryInline: |
+      localhost ansible_connection=local
+    vars:
+      openbao_address: {{ printf "https://%s-public.%s.svc:8200" .Values.openbao.name .Values.openbao.namespace | quote }}
+      openbao_namespace: {{ .Values.openbao.namespace | quote }}
+      openbao_service_account: {{ .Values.openbao.admin.serviceAccountName | quote }}
+      openbao_audience: {{ .Values.openbao.admin.audience | quote }}
+    playbookInline: |
+      - name: Run OpenBao onpremise configuration from the repository
+        hosts: localhost
+        connection: local
+        gather_facts: false
+        vars:
+          ansible_python_interpreter: "{{ `{{ ansible_playbook_python }}` }}"
+        tasks:
+          - name: Check out the configuration repository
+            ansible.builtin.git:
+              repo: https://github.com/drgroot/kubespray.git
+              dest: "{{ `{{ playbook_dir }}` }}/repository"
+              version: {{ .Values.openbao.ansible.revision | quote }}
+              recursive: false
+            check_mode: false
+            changed_when: false
+
+          - name: Reconcile the OpenBao onpremise user
+            ansible.builtin.command:
+              argv: "{{ `{{ ['ansible-playbook', '--inventory', 'localhost,', 'ansible/openbao-onpremise.yml', '--extra-vars', {'openbao_address': openbao_address, 'openbao_namespace': openbao_namespace, 'openbao_service_account': openbao_service_account, 'openbao_audience': openbao_audience, 'openbao_credentials_dir': playbook_dir} | to_json] + (['--check'] if ansible_check_mode else []) }}` }}"
+              chdir: "{{ `{{ playbook_dir }}` }}/repository"
+            environment:
+              ANSIBLE_STDOUT_CALLBACK: default
+              ANSIBLE_NOCOLOR: "1"
+            register: openbao_run
+            check_mode: false
+            changed_when: "{{ `openbao_run.stdout is search('changed=[1-9][0-9]*')` }}"
+            no_log: true
+{{- end }}
+{{- end }}

@@ -1,0 +1,193 @@
+---
+- name: Reconcile the OpenBao onpremise user
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    openbao_credentials_dir: "{{ playbook_dir }}"
+    openbao_username: "{{ lookup('ansible.builtin.file', openbao_credentials_dir + '/username', rstrip=False) }}"
+    openbao_password: "{{ lookup('ansible.builtin.file', openbao_credentials_dir + '/password', rstrip=False) }}"
+    openbao_ca_path: "{{ openbao_credentials_dir }}/openbao-ca.crt"
+    kubernetes_api: https://kubernetes.default.svc
+    kubernetes_identity_dir: /var/run/secrets/kubernetes.io/serviceaccount
+    # Keep provisioning state outside the mount managed by this user.
+    openbao_state_path: secret/data/bootstrap/onpremise-user-state
+    openbao_onpremise_policy: |
+      path "onprem" {
+        capabilities = ["create", "read", "update", "delete", "list", "patch", "sudo"]
+      }
+      path "onprem/*" {
+        capabilities = ["create", "read", "update", "delete", "list", "patch", "sudo"]
+      }
+  tasks:
+    - name: Validate the generated user credentials
+      ansible.builtin.assert:
+        that:
+          - openbao_username == 'onpremise'
+          - openbao_password | length >= 32
+      no_log: true
+
+    - name: Calculate the credential hash
+      ansible.builtin.set_fact:
+        openbao_credentials_sha: "{{ [openbao_username, openbao_password] | to_json | hash('sha256') }}"
+      no_log: true
+
+    - name: Request a short-lived JWT for the OpenBao admin service account
+      ansible.builtin.uri:
+        url: "{{ kubernetes_api }}/api/v1/namespaces/{{ openbao_namespace }}/serviceaccounts/{{ openbao_service_account }}/token"
+        method: POST
+        ca_path: "{{ kubernetes_identity_dir }}/ca.crt"
+        headers:
+          Authorization: "Bearer {{ lookup('ansible.builtin.file', kubernetes_identity_dir + '/token') }}"
+        body_format: json
+        body:
+          apiVersion: authentication.k8s.io/v1
+          kind: TokenRequest
+          spec:
+            audiences: ["{{ openbao_audience }}"]
+            expirationSeconds: 600
+        status_code: 201
+      register: openbao_jwt
+      check_mode: false
+      changed_when: false
+      no_log: true
+
+    - name: Authenticate to OpenBao with the admin service account
+      ansible.builtin.uri:
+        url: "{{ openbao_address }}/v1/auth/jwt-operator/login"
+        method: POST
+        ca_path: "{{ openbao_ca_path }}"
+        body_format: json
+        body:
+          role: openbao-admin
+          jwt: "{{ openbao_jwt.json.status.token }}"
+      register: openbao_login
+      check_mode: false
+      changed_when: false
+      no_log: true
+
+    - name: Check and reconcile the onpremise user
+      module_defaults:
+        ansible.builtin.uri:
+          ca_path: "{{ openbao_ca_path }}"
+          headers:
+            X-Vault-Token: "{{ openbao_login.json.auth.client_token }}"
+          body_format: json
+      no_log: true
+      block:
+        - name: Inspect enabled authentication methods
+          ansible.builtin.uri:
+            url: "{{ openbao_address }}/v1/sys/auth"
+          register: openbao_auth
+          check_mode: false
+          changed_when: false
+
+        - name: Require a userpass backend at the userpass path
+          ansible.builtin.assert:
+            that:
+              - openbao_auth.json.data.get('userpass/', {}).get('type', 'userpass') == 'userpass'
+
+        - name: Read the onpremise policy
+          ansible.builtin.uri:
+            url: "{{ openbao_address }}/v1/sys/policies/acl/onpremise"
+            status_code: [200, 404]
+          register: openbao_policy
+          check_mode: false
+          changed_when: false
+
+        - name: Read the onpremise user
+          ansible.builtin.uri:
+            url: "{{ openbao_address }}/v1/auth/userpass/users/onpremise"
+            status_code: [200, 404]
+          register: openbao_user
+          check_mode: false
+          changed_when: false
+          when: "'userpass/' in openbao_auth.json.data"
+
+        - name: Read the last applied credential hash
+          ansible.builtin.uri:
+            url: "{{ openbao_address }}/v1/{{ openbao_state_path }}"
+            status_code: [200, 404]
+          register: openbao_state
+          check_mode: false
+          changed_when: false
+
+        - name: Extract the current user and credential state
+          ansible.builtin.set_fact:
+            openbao_current_user: "{{ openbao_user.json.data if openbao_user.status | default(404) == 200 else {} }}"
+            openbao_previous: "{{ openbao_state.json.data.data if openbao_state.status == 200 else {} }}"
+
+        - name: Determine which changes are needed
+          ansible.builtin.set_fact:
+            openbao_enable_auth: "{{ 'userpass/' not in openbao_auth.json.data }}"
+            openbao_update_policy: "{{ openbao_policy.status != 200 or openbao_policy.json.data.policy | trim != openbao_onpremise_policy | trim }}"
+            openbao_update_user: >-
+              {{ openbao_current_user | length == 0 or
+                 openbao_previous.get('credentials_sha256', '') != openbao_credentials_sha or
+                 openbao_current_user.token_policies | default([]) | sort != ['onpremise'] or
+                 openbao_current_user.token_ttl | default(0) | int != 3600 or
+                 openbao_current_user.token_max_ttl | default(0) | int != 86400 or
+                 openbao_current_user.token_no_default_policy | default(false) }}
+
+        - name: Report pending changes to the Ansible provider
+          ansible.builtin.debug:
+            msg: The onpremise user, password, or mount policy needs reconciliation.
+          changed_when: openbao_enable_auth or openbao_update_policy or openbao_update_user
+          when: ansible_check_mode
+
+        - name: Apply the onpremise user configuration
+          when: not ansible_check_mode
+          block:
+            - name: Enable username and password login
+              ansible.builtin.uri:
+                url: "{{ openbao_address }}/v1/sys/auth/userpass"
+                method: POST
+                body:
+                  type: userpass
+                status_code: 204
+              changed_when: true
+              when: openbao_enable_auth
+
+            - name: Grant all capabilities on the onprem mount
+              ansible.builtin.uri:
+                url: "{{ openbao_address }}/v1/sys/policies/acl/onpremise"
+                method: PUT
+                body:
+                  policy: "{{ openbao_onpremise_policy }}"
+                status_code: 204
+              changed_when: true
+              when: openbao_update_policy
+
+            - name: Create or update the onpremise user's password and policy
+              ansible.builtin.uri:
+                url: "{{ openbao_address }}/v1/auth/userpass/users/onpremise"
+                method: POST
+                body:
+                  password: "{{ openbao_password }}"
+                  token_policies: [onpremise]
+                  token_ttl: 3600
+                  token_max_ttl: 86400
+                  token_no_default_policy: false
+                status_code: 204
+              changed_when: true
+              when: openbao_update_user
+
+            - name: Save the applied credential hash without the password
+              ansible.builtin.uri:
+                url: "{{ openbao_address }}/v1/{{ openbao_state_path }}"
+                method: POST
+                body:
+                  data:
+                    credentials_sha256: "{{ openbao_credentials_sha }}"
+              changed_when: true
+              when: openbao_update_user
+
+      always:
+        - name: Revoke the temporary admin service account login token
+          ansible.builtin.uri:
+            url: "{{ openbao_address }}/v1/auth/token/revoke-self"
+            method: POST
+            status_code: 204
+          check_mode: false
+          changed_when: false
