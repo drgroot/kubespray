@@ -2,7 +2,16 @@ variable "output" {
   type = string
 }
 
-resource "vault_generic_secret" "uploads" {
+# Forget the output on the previous Vault server without reading or deleting it.
+# Keep the bucket and storage-provider credentials in their existing state.
+removed {
+  from = vault_generic_secret.uploads
+  lifecycle {
+    destroy = false
+  }
+}
+
+resource "vault_generic_secret" "connection" {
   path = var.output
 
   data_json = jsonencode({

@@ -21,6 +21,10 @@ envFrom:
   - secretRef:
       name: postiz-secrets
   - secretRef:
+      name: postiz-postgres-secrets
+  - secretRef:
+      name: postiz-s3-secrets
+  - secretRef:
       name: cluster-smtp-secrets
 
 env:
@@ -115,7 +119,7 @@ resources:
     memory: 4Gi
 
 deploymentAnnotations:
-  secret.reloader.stakater.com/reload: postiz-secrets
+  secret.reloader.stakater.com/reload: postiz-secrets,postiz-s3-secrets,postiz-postgres-secrets
 
 ingress:
   enabled: true

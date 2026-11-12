@@ -64,9 +64,9 @@ backup:
   image: rclone/rclone:latest
   schedule: "0 0 * * *"
   secretStore:
-    name: external-infra
+    name: vault
     type: ClusterSecretStore
   rclone:
     remoteRef:
-      key: iac/s3-backups
+      key: dynamic/s3-db-backups
       property: rclone

@@ -19,22 +19,22 @@ globals:
     - name: DB_PASSWORD
       valueFrom:
         secretKeyRef:
-          name: immich-db-credentials
+          name: immich-postgres-secrets
           key: password
     - name: DB_HOSTNAME
       valueFrom:
         secretKeyRef:
-          name: immich-db-credentials
+          name: immich-postgres-secrets
           key: hostname
     - name: DB_USERNAME
       valueFrom:
         secretKeyRef:
-          name: immich-db-credentials
+          name: immich-postgres-secrets
           key: username
     - name: DB_DATABASE_NAME
       valueFrom:
         secretKeyRef:
-          name: immich-db-credentials
+          name: immich-postgres-secrets
           key: database
     - name: REDIS_HOSTNAME
       valueFrom:

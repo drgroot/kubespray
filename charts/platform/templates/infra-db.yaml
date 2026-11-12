@@ -71,9 +71,9 @@ spec:
         backup:
           image: dockerhub.yusufali.ca/rclone/rclone:latest
           secretStore:
-            name: external-infra
+            name: vault
             type: ClusterSecretStore
           rclone:
             remoteRef:
-              key: iac/s3-db-backups
+              key: dynamic/s3-db-backups
               property: rclone

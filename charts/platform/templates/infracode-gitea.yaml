@@ -104,33 +104,33 @@ metadata:
   name: gitea-postgres-secrets
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: gitea-postgres-secrets
   data:
     - remoteRef:
-        key: iac/postgres-gitea
+        key: dynamic/postgres-app-gitea
         property: url
       secretKey: url
     - remoteRef:
-        key: iac/postgres-gitea
+        key: dynamic/postgres-app-gitea
         property: password
       secretKey: password
     - remoteRef:
-        key: iac/postgres-gitea
+        key: dynamic/postgres-app-gitea
         property: username
       secretKey: username
     - remoteRef:
-        key: iac/postgres-gitea
+        key: dynamic/postgres-app-gitea
         property: schema
       secretKey: schema
     - remoteRef:
-        key: iac/postgres-gitea
+        key: dynamic/postgres-app-gitea
         property: hostname
       secretKey: hostname
     - remoteRef:
-        key: iac/postgres-gitea
+        key: dynamic/postgres-app-gitea
         property: database
       secretKey: database
 ---

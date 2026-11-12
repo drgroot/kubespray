@@ -2,7 +2,16 @@ variable "output" {
   type = string
 }
 
-resource "vault_generic_secret" "warehouse_secrets" {
+# Forget the output on the previous Vault server without reading or deleting it.
+# Keep the bucket and storage-provider credentials in their existing state.
+removed {
+  from = vault_generic_secret.warehouse_secrets
+  lifecycle {
+    destroy = false
+  }
+}
+
+resource "vault_generic_secret" "connection" {
   path = var.output
 
   data_json = jsonencode({
@@ -13,7 +22,7 @@ resource "vault_generic_secret" "warehouse_secrets" {
     secretkey      = b2_application_key.read_write.application_key
     read_accesskey = b2_application_key.read.application_key_id
     read_secretkey = b2_application_key.read.application_key
-    rclone = <<-EOT
+    rclone         = <<-EOT
       [s3]
       type = alias
       remote = s3-main:${b2_bucket.datalake.bucket_name}

@@ -6,7 +6,7 @@ metadata:
   name: authelia-database
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: authelia-database
