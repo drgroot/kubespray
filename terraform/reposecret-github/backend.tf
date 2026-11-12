@@ -19,4 +19,7 @@ terraform {
   }
 }
 
-provider "vault" {}
+provider "vault" {
+  skip_child_token = true
+  auth_login_userpass {}
+}

@@ -3,31 +3,41 @@ kind: PushSecret
 metadata:
   name: redis-credentials
 spec:
+  updatePolicy: Replace
+  deletionPolicy: None
+  refreshInterval: 1h
   secretStoreRefs:
-    - name: external-infra
+    - name: vault
       kind: ClusterSecretStore
   selector:
     secret:
       name: platform-fake-secret
   template:
+    engineVersion: v2
     data:
+      port: "6379"
       hostname: redis.{{ .Release.Namespace }}.svc.cluster.local
       url: "redis://redis.{{ .Release.Namespace }}.svc.cluster.local:6379"
   data:
     - match:
+        secretKey: port
+        remoteRef:
+          remoteKey: dynamic/redis
+          property: port
+    - match:
         secretKey: hostname
         remoteRef:
-          remoteKey: iac/redis
+          remoteKey: dynamic/redis
           property: hostname
     - match:
         secretKey: url
         remoteRef:
-          remoteKey: iac/redis
+          remoteKey: dynamic/redis
           property: url
     - match:
         secretKey: url
         remoteRef:
-          remoteKey: iac/redis
+          remoteKey: dynamic/redis
           property: CACHE_URL
 ---
 apiVersion: apps/v1

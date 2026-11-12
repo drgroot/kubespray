@@ -3,7 +3,7 @@ variable "name" {
 }
 
 locals {
-  gitea_username = data.vault_generic_secret.credentials.data[var.usernamekey]
+  gitea_username = var.name
 }
 
 resource "gitea_token" "user" {

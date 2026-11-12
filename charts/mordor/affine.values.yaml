@@ -6,7 +6,7 @@ imagePullSecrets:
   - name: cluster-docker-secrets
 
 deploymentAnnotations:
-  secret.reloader.stakater.com/reload: affine-config,affine-postgres-secrets,cluster-smtp-secrets
+  secret.reloader.stakater.com/reload: redis-credentials,affine-config,affine-postgres-secrets,cluster-smtp-secrets
 
 service:
   ports:
@@ -27,9 +27,15 @@ env:
         name: affine-postgres-secrets
         key: url
   - name: REDIS_SERVER_HOST
-    value: redis.kube-platform.svc.cluster.local
+    valueFrom:
+      secretKeyRef:
+        name: redis-credentials
+        key: hostname
   - name: REDIS_SERVER_PORT
-    value: "6379"
+    valueFrom:
+      secretKeyRef:
+        name: redis-credentials
+        key: port
   - name: DEPLOYMENT_TYPE
     value: selfhosted
   - name: AFFINE_INDEXER_ENABLED
@@ -117,9 +123,15 @@ initContainers:
             name: affine-postgres-secrets
             key: url
       - name: REDIS_SERVER_HOST
-        value: redis.kube-platform.svc.cluster.local
+        valueFrom:
+          secretKeyRef:
+            name: redis-credentials
+            key: hostname
       - name: REDIS_SERVER_PORT
-        value: "6379"
+        valueFrom:
+          secretKeyRef:
+            name: redis-credentials
+            key: port
       - name: DEPLOYMENT_TYPE
         value: selfhosted
       - name: AFFINE_INDEXER_ENABLED

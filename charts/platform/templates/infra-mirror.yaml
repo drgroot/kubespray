@@ -1,26 +1,87 @@
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: docker-mirror-username
+spec:
+  length: 20
+  digits: 5
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: docker-mirror-password
+spec:
+  length: 48
+  digits: 8
+  symbols: 0
+  allowRepeat: true
+---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: registry-htpasswd
+  name: docker-mirror-credentials
 spec:
-  secretStoreRef:
-    name: external-infra
-    kind: ClusterSecretStore
+  refreshPolicy: CreatedOnce
   target:
-    name: registry-htpasswd
+    name: docker-mirror-credentials
+    creationPolicy: Orphan
+    immutable: true
     template:
+      engineVersion: v2
+      mergePolicy: Merge
       type: Opaque
       data:
-        htpasswd: '{{ `{{ htpasswd .USERNAME .PASSWORD "bcrypt" }}` }}'
+        htpasswd: '{{ `{{ htpasswd .username .password "bcrypt" }}` }}'
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: docker-mirror-username
+      rewrite:
+        - regexp:
+            source: "^password$"
+            target: username
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: docker-mirror-password
+      rewrite:
+        - regexp:
+            source: "^password$"
+            target: password
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: docker-mirror-credentials
+spec:
+  updatePolicy: Replace
+  deletionPolicy: None
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: vault
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: docker-mirror-credentials
+  template:
+    engineVersion: v2
+    data:
+      username: {{ "{{ .username }}" | quote }}
+      password: {{ "{{ .password }}" | quote }}
+      hostname: {{ printf "dockerhub.%s" .Values.domains.external | quote }}
   data:
-    - remoteRef:
-        key: vendor/docker
-        property: mirror-username
-      secretKey: USERNAME
-    - remoteRef:
-        key: vendor/docker
-        property: mirror-password
-      secretKey: PASSWORD
+    {{- range $property := list "username" "password" "hostname" }}
+    - match:
+        secretKey: {{ $property }}
+        remoteRef:
+          remoteKey: dynamic/docker-mirror
+          property: {{ $property }}
+    {{- end }}
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -28,7 +89,7 @@ metadata:
   name: docker-pull-auth
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: docker-pull-auth
@@ -43,6 +104,10 @@ spec:
         key: vendor/docker
         property: public-password
       secretKey: PASSWORD
+    - remoteRef:
+        key: vendor/docker
+        property: http-secret
+      secretKey: HTTP_SECRET
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -60,6 +125,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: docker-pull
+  annotations:
+    secret.reloader.stakater.com/reload: docker-mirror-credentials,docker-pull-auth
 spec:
   replicas: 1
   selector:
@@ -79,8 +146,8 @@ spec:
             - name: REGISTRY_HTTP_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: registry-htpasswd
-                  key: htpasswd
+                  name: docker-pull-auth
+                  key: HTTP_SECRET
             - name: REGISTRY_AUTH
               value: htpasswd
             - name: REGISTRY_AUTH_HTPASSWD_REALM
@@ -136,7 +203,7 @@ spec:
         - name: htpasswd
           secret:
             defaultMode: 420
-            secretName: registry-htpasswd
+            secretName: docker-mirror-credentials
 ---
 apiVersion: v1
 kind: Service

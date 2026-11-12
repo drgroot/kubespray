@@ -37,7 +37,7 @@ metadata:
   namespace: system-networking
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: cloudflare

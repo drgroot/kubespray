@@ -7,7 +7,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: argocd-oidc
@@ -19,7 +19,7 @@ spec:
   data:
     - secretKey: client-secret
       remoteRef:
-        key: vendor/authelia-apps
+        key: dynamic/authelia-client-creds
         property: client-secret-argocd
 ---
 apiVersion: v1

@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.router.secretNamespace }}
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: {{ .Values.router.secretName }}

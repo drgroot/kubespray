@@ -4,7 +4,7 @@ variable "gitea_url" {
 }
 
 variable "credentialpath" {
-  description = "Vault KV path containing the Gitea username and password used to manage the organization secret."
+  description = "OpenBao logical KV path containing the Gitea username and password used to manage the organization secret."
   type        = string
 }
 

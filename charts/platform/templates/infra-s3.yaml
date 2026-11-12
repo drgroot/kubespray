@@ -51,18 +51,17 @@ spec:
         - regexp:
             source: "^password$"
             target: rootPassword
-{{- range $destination := list (dict "name" "minio-credentials" "store" "external-infra" "path" "vendor/minio") (dict "name" "minio-root" "store" "vault" "path" "dynamic/minio-root") }}
 ---
 apiVersion: external-secrets.io/v1alpha1
 kind: PushSecret
 metadata:
-  name: {{ $destination.name }}
+  name: minio-root
 spec:
   updatePolicy: Replace
   deletionPolicy: None
   refreshInterval: 1h
   secretStoreRefs:
-    - name: {{ $destination.store }}
+    - name: vault
       kind: ClusterSecretStore
   selector:
     secret:
@@ -80,10 +79,9 @@ spec:
     - match:
         secretKey: {{ $key }}
         remoteRef:
-          remoteKey: {{ $destination.path }}
+          remoteKey: dynamic/minio-root
           property: {{ $key }}
     {{- end }}
-{{- end }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

@@ -170,12 +170,8 @@ spec:
           }
   data:
     - secretKey: clientSecret
-      sourceRef:
-        storeRef:
-          name: external-infra
-          kind: ClusterSecretStore
       remoteRef:
-        key: vendor/authelia-apps
+        key: dynamic/authelia-client-creds
         property: client-secret-affine
     - secretKey: accesskey
       remoteRef:

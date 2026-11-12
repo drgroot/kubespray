@@ -1,24 +1,68 @@
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
+  name: pypi-credentials
+spec:
+  secretStoreRef:
+    name: vault
+    kind: ClusterSecretStore
+  target:
+    name: pypi-credentials
+    template:
+      engineVersion: v2
+      mergePolicy: Merge
+      type: Opaque
+      data:
+        host: {{ printf "pypi.%s" .Values.domains.external | quote }}
+  dataFrom:
+    - extract:
+        key: dynamic/pypi-user-creds
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: pypi-credentials
+spec:
+  updatePolicy: Replace
+  deletionPolicy: None
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: vault
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: pypi-credentials
+  data:
+    {{- range $property := list "username" "password" "host" }}
+    - match:
+        secretKey: {{ $property }}
+        remoteRef:
+          remoteKey: dynamic/pypi
+          property: {{ $property }}
+    {{- end }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
   name: pypi-htpasswd
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: pypi-htpasswd
     template:
+      engineVersion: v2
       type: Opaque
       data:
         htpasswd: '{{ `{{ htpasswd .USERNAME .PASSWORD "bcrypt" }}` }}'
   data:
     - remoteRef:
-        key: vendor/pip
+        key: dynamic/pypi
         property: username
       secretKey: USERNAME
     - remoteRef:
-        key: vendor/pip
+        key: dynamic/pypi
         property: password
       secretKey: PASSWORD
 ---

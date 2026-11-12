@@ -147,7 +147,6 @@ crossplane:
       enabled: true
       type: valuegen
       provider: openbao
-      vault: openbao
       name: postgres
       vars:
         - key: input
@@ -161,11 +160,78 @@ crossplane:
         - key: output
           value: none
     
+    authelia-client-creds:
+      enabled: true
+      type: valuegen
+      provider: openbao
+      name: autheliaclients
+      vars:
+        - key: input
+          value: onprem/dynamic/authelia-client-creds
+        - key: properties
+          value: client-secret-affine,client-secret-argocd,client-secret-bitwarden,client-secret-filebrowse,client-secret-gitea,client-secret-grafana,client-secret-immich,client-secret-postiz,client-secret-servc,client-secret-sure,client-secret-openbao
+        - key: value-types
+          value: password,password,password,password,password,password,password,password,password,password,password
+        - key: specialchars
+          value: no,no,no,no,no,no,no,no,no,no,no
+        - key: output
+          value: none
+
+    pypi-user-creds:
+      enabled: true
+      type: valuegen
+      provider: openbao
+      name: pypi
+      vars:
+        - key: input
+          value: onprem/dynamic/pypi-user-creds
+        - key: properties
+          value: username,password
+        - key: value-types
+          value: username,password
+        - key: specialchars
+          value: no,no
+        - key: output
+          value: none
+
+    npm-user-creds:
+      enabled: true
+      type: valuegen
+      provider: openbao
+      name: npm
+      vars:
+        - key: input
+          value: onprem/dynamic/npm-user-creds
+        - key: properties
+          value: username,password,read-username,read-password
+        - key: value-types
+          value: username,password,username,password
+        - key: specialchars
+          value: no,no,no,no
+        - key: output
+          value: none
+
+    gitea-user-creds:
+      enabled: true
+      type: valuegen
+      provider: openbao
+      name: gitea
+      vars:
+        - key: input
+          value: onprem/dynamic/gitea-user-creds
+        - key: properties
+          value: argocd,rennovate,chintan
+        - key: value-types
+          value: password,password,password
+        - key: specialchars
+          value: no,no,no
+        - key: output
+          value: none
+    
     postgres-app-creds:
       enabled: true
       type: valuegen
       provider: openbao
-      vault: openbao
       name: postgresapp
       vars:
         - key: input
@@ -183,7 +249,6 @@ crossplane:
       enabled: true
       type: secretengine
       provider: openbao
-      vault: openbao
       name: servc
       vars:
         - key: input
@@ -193,90 +258,85 @@ crossplane:
 
     github-vault-url:
       enabled: true
-      type: github
-      provider: reposecret
+      type: reposecret
+      provider: github
       name: VAULT_URL
       vars:
+        - key: credentialpath
+          value: onprem/vendor/github
+        - key: usernamekey
+          value: username
+        - key: tokenkey
+          value: token
         - key: path
-          value: external-infra/vendor/vault
+          value: onprem/dynamic/vault-root
         - key: property
           value: url
         - key: repository
           value: kubespray
         - key: org
           value: drgroot
-        - key: credentialpath
-          value: external-infra/vendor/github
-        - key: usernamekey
-          value: username
-        - key: tokenkey
-          value: token
 
     github-vault-token:
       enabled: true
-      type: github
-      provider: reposecret
+      type: reposecret
+      provider: github
       name: VAULT_TOKEN
       vars:
+        - key: credentialpath
+          value: onprem/vendor/github
+        - key: usernamekey
+          value: username
+        - key: tokenkey
+          value: token
         - key: path
-          value: external-infra/vendor/vault
+          value: onprem/dynamic/vault-root
         - key: property
           value: token
         - key: repository
           value: kubespray
         - key: org
           value: drgroot
-        - key: credentialpath
-          value: external-infra/vendor/github
-        - key: usernamekey
-          value: username
-        - key: tokenkey
-          value: token
 
-    github-comfyui-vid-vault-url:
+    openbao-servc-creds:
       enabled: true
-      type: github
-      provider: reposecret
-      name: VAULT_URL
+      type: valuegen
+      provider: openbao
+      name: servc
       vars:
-        - key: path
-          value: external-infra/vendor/vault
-        - key: property
-          value: url
-        - key: repository
-          value: comfyui-vid
-        - key: org
-          value: drgroot
-        - key: credentialpath
-          value: external-infra/vendor/github
-        - key: usernamekey
-          value: username
-        - key: tokenkey
-          value: token
+        - key: input
+          value: onprem/dynamic/vault-servc-creds
+        - key: properties
+          value: password
+        - key: value-types
+          value: password
+        - key: specialchars
+          value: "no"
+        - key: output
+          value: none
 
-    github-comfyui-vid-vault-token:
+    openbao-user-servc:
       enabled: true
-      type: github
-      provider: reposecret
-      name: VAULT_TOKEN
+      type: user
+      provider: openbao
+      name: servc
       vars:
+        - key: input
+          value: onprem/dynamic/vault-servc-creds
+        - key: output
+          value: onprem/dynamic/vault-user-servc
+        - key: passwordkey
+          value: password
+        - key: openbao_addr
+          value: https://openbao.{{ .Values.domains.external }}
         - key: path
-          value: external-infra/vendor/vault
-        - key: property
-          value: token
-        - key: repository
-          value: comfyui-vid
-        - key: org
-          value: drgroot
-        - key: credentialpath
-          value: external-infra/vendor/github
-        - key: usernamekey
-          value: username
-        - key: tokenkey
-          value: token
+          value: servc/*
+        - key: capabilities
+          value: create,read,update,delete,list,patch,sudo
 
     vault-user-servc:
       enabled: true
+      vault: vault
       type: vault
       provider: user
       name: vault-user-servc
@@ -296,11 +356,11 @@ crossplane:
         - key: capabilities
           value: create,read,update,delete,list,patch,sudo
 
-    vault-oidc:
+    openbao-oidc:
       enabled: true
-      type: vault
+      type: openbao
       provider: oidc-config
-      name: vault-oidc
+      name: openbao-oidc
       vars:
         - key: input
           value: ""
@@ -309,98 +369,127 @@ crossplane:
         - key: oidc_discovery_url
           value: https://auth.{{ .Values.domains.external }}
         - key: oidc_client_id
-          value: vault
+          value: openbao
         - key: oidc_client_secret_path
-          value: external-infra/vendor/authelia-apps
+          value: onprem/dynamic/authelia-client-creds
         - key: oidc_client_secret_key
-          value: client-secret-vault
-        - key: vault_url
-          value: https://vault.{{ .Values.domains.external }}
+          value: client-secret-openbao
+        - key: openbao_url
+          value: https://openbao.{{ .Values.domains.external }}
 
-    authelia-salihah:
+    openbao-oidc-salihah:
       enabled: true
-      type: vault
+      type: openbao
       provider: oidc
-      name: authelia-salihah
+      name: salihah
       vars:
         - key: input
           value: ""
         - key: output
           value: ""
-        - key: name
-          value: salihah
         - key: manage_identity
           value: "false"
         - key: path
-          value: external-infra/data/authelia/salihah
+          value: onprem/data/authelia/salihah
         - key: capabilities
           value: read,update,patch
 
-    authelia-salihah-browse:
+    openbao-oidc-salihah-browse:
       enabled: true
-      type: vault
+      type: openbao
       provider: oidc
-      name: authelia-salihah-browse
+      name: salihah
       vars:
         - key: input
           value: ""
         - key: output
           value: ""
-        - key: name
-          value: salihah
         - key: path
-          value: external-infra/metadata/authelia
+          value: onprem/metadata/authelia
         - key: capabilities
           value: list
 
-    authelia-yusuf-browse:
+    openbao-oidc-yusuf-browse:
       enabled: true
-      type: vault
+      type: openbao
       provider: oidc
-      name: authelia-yusuf-browse
+      name: yusuf
       vars:
         - key: input
           value: ""
         - key: output
           value: ""
-        - key: name
-          value: yusuf
         - key: path
-          value: external-infra/metadata/authelia
+          value: onprem/metadata/authelia
         - key: capabilities
           value: list
 
-    authelia-yusuf:
+    openbao-oidc-yusuf:
       enabled: true
-      type: vault
+      type: openbao
       provider: oidc
-      name: authelia-yusuf
+      name: yusuf
       vars:
         - key: input
           value: ""
         - key: output
           value: ""
-        - key: name
-          value: yusuf
         - key: manage_identity
           value: "false"
         - key: path
-          value: external-infra/data/authelia/yusuf
+          value: onprem/data/authelia/yusuf
         - key: capabilities
           value: read,update,patch
 
-    authelia-yusuf-servc:
+    openbao-oidc-yusuf-vendor:
       enabled: true
-      type: vault
+      type: openbao
       provider: oidc
-      name: authelia-yusuf-servc
+      name: yusuf
+      vars:
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: onprem/data/vendor/*
+        - key: capabilities
+          value: create,read,update,list,patch
+
+    openbao-oidc-yusuf-vendor-browse:
+      enabled: true
+      type: openbao
+      provider: oidc
+      name: yusuf
+      vars:
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: onprem/metadata/vendor/*
+        - key: capabilities
+          value: list
+
+    openbao-oidc-yusuf-vendor-browse-root:
+      enabled: true
+      type: openbao
+      provider: oidc
+      name: yusuf
+      vars:
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: onprem/metadata/vendor
+        - key: capabilities
+          value: list
+
+    openbao-oidc-yusuf-servc:
+      enabled: true
+      type: openbao
+      provider: oidc
+      name: yusuf
       vars:
         - key: input
           value: ""
         - key: output
           value: ""
-        - key: name
-          value: yusuf
         - key: manage_identity
           value: "false"
         - key: path
@@ -408,18 +497,16 @@ crossplane:
         - key: capabilities
           value: create,read,update,list,patch
 
-    authelia-murtz-servc:
+    openbao-oidc-murtz-servc:
       enabled: true
-      type: vault
+      type: openbao
       provider: oidc
-      name: authelia-murtz-servc
+      name: murtz
       vars:
         - key: input
           value: ""
         - key: output
           value: ""
-        - key: name
-          value: murtz
         - key: manage_identity
           value: "false"
         - key: path
@@ -427,46 +514,41 @@ crossplane:
         - key: capabilities
           value: create,read,update,list,patch
 
-    authelia-murtz:
+    openbao-oidc-murtz:
       enabled: true
-      type: vault
+      type: openbao
       provider: oidc
-      name: authelia-murtz
+      name: murtz
       vars:
         - key: input
           value: ""
         - key: output
           value: ""
-        - key: name
-          value: murtz
         - key: manage_identity
           value: "false"
         - key: path
-          value: external-infra/data/authelia/murtz
+          value: onprem/data/authelia/murtz
         - key: capabilities
           value: read,update,patch
 
-    authelia-murtz-browse:
+    openbao-oidc-murtz-browse:
       enabled: true
-      type: vault
+      type: openbao
       provider: oidc
-      name: authelia-murtz-browse
+      name: murtz
       vars:
         - key: input
           value: ""
         - key: output
           value: ""
-        - key: name
-          value: murtz
         - key: path
-          value: external-infra/metadata/authelia
+          value: onprem/metadata/authelia
         - key: capabilities
           value: list
 
     s3-backups-b2:
       enabled: true
       type: s3
-      vault: openbao
       provider: b2
       name: thorin-backups
       vars:
@@ -478,7 +560,6 @@ crossplane:
     s3-thanos:
       enabled: true
       type: s3
-      vault: openbao
       provider: minio
       name: thanos
       vars:
@@ -490,7 +571,6 @@ crossplane:
     s3-backups-k8s:
       enabled: true
       type: s3
-      vault: openbao
       provider: minio
       name: db-backups
       vars:
@@ -503,7 +583,6 @@ crossplane:
       enabled: true
       type: postgres
       provider: db
-      vault: openbao
       name: gitea
       vars:
         - key: input
@@ -519,7 +598,6 @@ crossplane:
       enabled: true
       type: postgres
       provider: db
-      vault: openbao
       name: coder
       vars:
         - key: input
@@ -535,7 +613,6 @@ crossplane:
       enabled: true
       type: postgres
       provider: db
-      vault: openbao
       name: grafana
       vars:
         - key: input
@@ -551,7 +628,6 @@ crossplane:
       enabled: true
       type: postgres
       provider: db
-      vault: openbao
       name: authelia
       vars:
         - key: input
@@ -565,67 +641,99 @@ crossplane:
 
     gitea-argocd:
       enabled: true
-      type: gitea
-      provider: user
+      type: user
+      provider: gitea
       name: argocd
       vars:
         - key: gitea_url
           value: https://git.{{ .Values.domains.external }}
         - key: credentialpath
-          value: external-infra/vendor/gitea
+          value: onprem/vendor/gitea
         - key: provider_usernamekey
           value: root-username
         - key: provider_passwordkey
           value: root-password
-        - key: usernamekey
-          value: argo-username
+        - key: usercredentialpath
+          value: onprem/dynamic/gitea-user-creds
         - key: passwordkey
-          value: argo-password
+          value: argocd
 
     gitea-rennovate:
       enabled: true
-      type: gitea
-      provider: user
+      type: user
+      provider: gitea
       name: rennovate
       vars:
         - key: gitea_url
           value: https://git.{{ .Values.domains.external }}
         - key: credentialpath
-          value: external-infra/vendor/gitea
+          value: onprem/vendor/gitea
         - key: provider_usernamekey
           value: root-username
         - key: provider_passwordkey
           value: root-password
-        - key: usernamekey
-          value: rennovate-username
+        - key: usercredentialpath
+          value: onprem/dynamic/gitea-user-creds
         - key: passwordkey
-          value: rennovate-password
+          value: rennovate
 
     gitea-rennovate-token:
       enabled: true
-      type: gitea
-      provider: token
+      type: token
+      provider: gitea
       name: rennovate
       vars:
         - key: gitea_url
           value: https://git.{{ .Values.domains.external }}
         - key: credentialpath
-          value: external-infra/vendor/gitea
-        - key: usernamekey
-          value: rennovate-username
+          value: onprem/dynamic/gitea-user-creds
         - key: passwordkey
-          value: rennovate-password
+          value: rennovate
         - key: output
-          value: external-infra/iac/gitea-rennovate
+          value: onprem/dynamic/gitea-rennovate
+
+    gitea-chintan:
+      enabled: true
+      type: user
+      provider: gitea
+      name: chintan
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: onprem/vendor/gitea
+        - key: provider_usernamekey
+          value: root-username
+        - key: provider_passwordkey
+          value: root-password
+        - key: usercredentialpath
+          value: onprem/dynamic/gitea-user-creds
+        - key: passwordkey
+          value: chintan
+
+    gitea-chintan-token:
+      enabled: true
+      type: token
+      provider: gitea
+      name: chintan
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: onprem/dynamic/gitea-user-creds
+        - key: passwordkey
+          value: chintan
+        - key: output
+          value: onprem/dynamic/gitea-chintan
 
     gitea-servc-vault-addr:
       enabled: true
-      type: gitea
-      provider: orgsecret
+      type: orgsecret
+      provider: gitea
       name: VAULT_ADDR
       vars:
         - key: path
-          value: external-infra/iac/vault-user-servc
+          value: onprem/dynamic/vault-user-servc
         - key: property
           value: vault-addr
         - key: org
@@ -633,7 +741,7 @@ crossplane:
         - key: gitea_url
           value: https://git.yusufali.ca
         - key: credentialpath
-          value: external-infra/vendor/gitea
+          value: onprem/vendor/gitea
         - key: usernamekey
           value: root-username
         - key: passwordkey
@@ -641,12 +749,12 @@ crossplane:
 
     gitea-servc-vault-username:
       enabled: true
-      type: gitea
-      provider: orgsecret
+      type: orgsecret
+      provider: gitea
       name: VAULT_USERNAME
       vars:
         - key: path
-          value: external-infra/iac/vault-user-servc
+          value: onprem/dynamic/vault-user-servc
         - key: property
           value: username
         - key: org
@@ -654,7 +762,7 @@ crossplane:
         - key: gitea_url
           value: https://git.yusufali.ca
         - key: credentialpath
-          value: external-infra/vendor/gitea
+          value: onprem/vendor/gitea
         - key: usernamekey
           value: root-username
         - key: passwordkey
@@ -662,12 +770,12 @@ crossplane:
 
     gitea-servc-vault-password:
       enabled: true
-      type: gitea
-      provider: orgsecret
+      type: orgsecret
+      provider: gitea
       name: VAULT_PASSWORD
       vars:
         - key: path
-          value: external-infra/iac/vault-user-servc
+          value: onprem/dynamic/vault-user-servc
         - key: property
           value: password
         - key: org
@@ -675,47 +783,31 @@ crossplane:
         - key: gitea_url
           value: https://git.yusufali.ca
         - key: credentialpath
-          value: external-infra/vendor/gitea
+          value: onprem/vendor/gitea
         - key: usernamekey
           value: root-username
         - key: passwordkey
           value: root-password
-
-    gitea-chintan:
+    gitea-servc-vault-token:
       enabled: true
-      type: gitea
-      provider: user
-      name: chintan
+      type: orgsecret
+      provider: gitea
+      name: VAULT_TOKEN
       vars:
+        - key: path
+          value: onprem/dynamic/vault-user-servc
+        - key: property
+          value: token
+        - key: org
+          value: serv-c
         - key: gitea_url
-          value: https://git.{{ .Values.domains.external }}
+          value: https://git.yusufali.ca
         - key: credentialpath
-          value: external-infra/vendor/gitea
-        - key: provider_usernamekey
+          value: onprem/vendor/gitea
+        - key: usernamekey
           value: root-username
-        - key: provider_passwordkey
+        - key: passwordkey
           value: root-password
-        - key: usernamekey
-          value: chintan-username
-        - key: passwordkey
-          value: chintan-password
-
-    gitea-chintan-token:
-      enabled: true
-      type: gitea
-      provider: token
-      name: chintan
-      vars:
-        - key: gitea_url
-          value: https://git.{{ .Values.domains.external }}
-        - key: credentialpath
-          value: external-infra/vendor/gitea
-        - key: usernamekey
-          value: chintan-username
-        - key: passwordkey
-          value: chintan-password
-        - key: output
-          value: external-infra/iac/gitea
 
 domains:
   internal: asd
@@ -738,9 +830,9 @@ authelia:
       remoteKey: authelia/murtz
 
   clients:
-    client_remote_key: vendor/authelia-apps
+    client_remote_key: dynamic/authelia-client-creds
     claims_policies:
-      vault:
+      openbao:
         id_token:
           - preferred_username
       servc-mcp:
@@ -748,13 +840,13 @@ authelia:
           - email
           - email_verified
     hmac:
-      remoteKey: vendor/authelia-apps
+      remoteKey: vendor/authelia
       property: hmac-secret
     jwks-private:
-      remoteKey: vendor/authelia-apps
+      remoteKey: vendor/authelia
       property: jwks-private
     jwks-public:
-      remoteKey: vendor/authelia-apps
+      remoteKey: vendor/authelia
       property: jwks-public
 
     list:
@@ -829,36 +921,6 @@ authelia:
           grant_types:
             - authorization_code
           access_token_signed_response_alg: none
-          userinfo_signed_response_alg: none
-          token_endpoint_auth_method: client_secret_post
-
-      affine-mcp:
-        client_id: affine-mcp
-        client_name: AFFiNE MCP
-        client_secret_property: client-secret-affine
-        oidc:
-          public: false
-          authorization_policy: one_factor
-          consent_mode: implicit
-          require_pkce: true
-          pkce_challenge_method: S256
-          redirect_uris:
-            - https://chatgpt.com/connector_platform_oauth_redirect
-            - https://claude.ai/api/mcp/auth_callback
-          audience:
-            - https://miro-mcp.yusufali.ca/mcp
-          requested_audience_mode: implicit
-          scopes:
-            - openid
-            - profile
-            - email
-            - offline_access
-          response_types:
-            - code
-          grant_types:
-            - authorization_code
-            - refresh_token
-          access_token_signed_response_alg: RS256
           userinfo_signed_response_alg: none
           token_endpoint_auth_method: client_secret_post
 
@@ -1047,18 +1109,18 @@ authelia:
           userinfo_signed_response_alg: none
           token_endpoint_auth_method: client_secret_basic
 
-      vault:
-        client_id: vault
-        client_name: Vault
-        client_secret_property: client-secret-vault
+      openbao:
+        client_id: openbao
+        client_name: OpenBao
+        client_secret_property: client-secret-openbao
         oidc:
-          claims_policy: vault
+          claims_policy: openbao
           public: false
           authorization_policy: two_factor
           consent_mode: implicit
           require_pkce: false
           redirect_uris:
-            - https://vault.yusufali.ca/ui/vault/auth/oidc/oidc/callback
+            - https://openbao.{{ .Values.domains.external }}/ui/vault/auth/oidc/oidc/callback
             - http://localhost:8250/oidc/callback
           scopes:
             - openid
@@ -1484,8 +1546,8 @@ secretSync:
   - name: authelia-oidc-clients
     input:
       kind: ClusterSecretStore
-      name: external-infra
-      path: vendor/authelia-apps
+      name: vault
+      path: dynamic/authelia-client-creds
       properties:
         - client-secret-argocd
         - client-secret-grafana
@@ -1497,48 +1559,33 @@ secretSync:
         client-secret-argocd: client-secret-argocd
         client-secret-grafana: client-secret-grafana
 
-  - name: gitea-username
-    input:
-      kind: ClusterSecretStore
-      name: external-infra
-      path: vendor/gitea
-      properties:
-        - chintan-username
-        - chintan-password
-    output:
-      kind: ClusterSecretStore
-      name: servc
-      path: iac/gitea
-      properties:
-        chintan-username: username
-        chintan-password: password
-
   - name: gitea
     input:
       kind: ClusterSecretStore
-      name: external-infra
-      path: iac/gitea
+      name: vault
+      path: dynamic/gitea-chintan
       properties:
+        - username
+        - password
         - token
     output:
       kind: ClusterSecretStore
       name: servc
       path: iac/gitea
       properties:
+        username: username
+        password: password
         token: token
 
   - name: docker
     input:
       kind: ClusterSecretStore
-      name: external-infra
+      name: vault
       path: vendor/docker
       properties:
         - private-host
         - private-username
         - private-password
-        - host-mirror
-        - mirror-username
-        - mirror-password
     output:
       kind: ClusterSecretStore
       name: servc
@@ -1547,16 +1594,14 @@ secretSync:
         private-host: host
         private-username: username
         private-password: password
-        host-mirror: host-mirror
-        mirror-username: mirror-username
-        mirror-password: mirror-password
 
   - name: npm
     input:
       kind: ClusterSecretStore
-      name: external-infra
-      path: vendor/npm
+      name: vault
+      path: dynamic/npm
       properties:
+        - host
         - password
         - username
         - read-username
@@ -1566,6 +1611,7 @@ secretSync:
       name: servc
       path: iac/npm
       properties:
+        host: host
         password: npm_write_pass
         username: npm_write_user
         read-username: npm_read_user
@@ -1574,8 +1620,8 @@ secretSync:
   - name: pip
     input:
       kind: ClusterSecretStore
-      name: external-infra
-      path: vendor/pip
+      name: vault
+      path: dynamic/pypi
       properties:
         - host
         - password

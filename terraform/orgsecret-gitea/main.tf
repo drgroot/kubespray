@@ -1,5 +1,5 @@
 variable "path" {
-  description = "Vault KV path containing the source secret (for example external-infra/iac/deploy)."
+  description = "OpenBao logical KV path containing the source secret (for example onprem/dynamic/vault-user-servc)."
   type        = string
 }
 

@@ -2,10 +2,6 @@ variable "credentialpath" {
   type = string
 }
 
-variable "usernamekey" {
-  type = string
-}
-
 variable "passwordkey" {
   type = string
 }
@@ -20,6 +16,6 @@ data "vault_generic_secret" "credentials" {
 
 provider "gitea" {
   base_url = var.gitea_url
-  username = data.vault_generic_secret.credentials.data[var.usernamekey]
+  username = var.name
   password = data.vault_generic_secret.credentials.data[var.passwordkey]
 }

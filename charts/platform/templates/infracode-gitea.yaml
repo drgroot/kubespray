@@ -6,7 +6,7 @@ metadata:
   namespace: servc-infra
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: coder-oauth-secrets
@@ -26,17 +26,17 @@ metadata:
   name: gitea-runner-secrets
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: gitea-runner-secrets
   data:
     - remoteRef:
-        key: vendor/npm
+        key: dynamic/npm
         property: read-username
       secretKey: npm_read_user
     - remoteRef:
-        key: vendor/npm
+        key: dynamic/npm
         property: read-password
       secretKey: npm_read_password
     - remoteRef:
@@ -44,7 +44,7 @@ spec:
         property: runner-token
       secretKey: token
     - remoteRef:
-        key: iac/gitea-rennovate
+        key: dynamic/gitea-rennovate
         property: token
       secretKey: renovate-token
 ---
@@ -54,7 +54,7 @@ metadata:
   name: rennovate-secrets
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: rennovate-secrets
@@ -62,16 +62,20 @@ spec:
       engineVersion: v2
       data:
         renovate-host-rules: >-
-          {{ `[{"hostType":"npm","matchHost":"npm.yusufali.ca","username":"{{ .npm_read_user }}","password":"{{ .npm_read_password }}"}]` }}
+          {{ `[{"hostType":"npm","matchHost":"{{ .npm_host }}","username":"{{ .npm_read_user }}","password":"{{ .npm_read_password }}"}]` }}
   data:
     - remoteRef:
-        key: vendor/npm
+        key: dynamic/npm
         property: read-username
       secretKey: npm_read_user
     - remoteRef:
-        key: vendor/npm
+        key: dynamic/npm
         property: read-password
       secretKey: npm_read_password
+    - remoteRef:
+        key: dynamic/npm
+        property: host
+      secretKey: npm_host
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -79,7 +83,7 @@ metadata:
   name: gitea-admin-credentials
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: gitea-admin-credentials
@@ -215,6 +219,21 @@ spec:
             existingSecret: gitea-admin-credentials
 
           additionalConfigFromEnvs:
+            - name: GITEA__QUEUE__CONN_STR
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-redis-secrets
+                  key: url
+            - name: GITEA__SESSION__PROVIDER_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-redis-secrets
+                  key: url
+            - name: GITEA__CACHE__HOST
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-redis-secrets
+                  key: url
             - name: GITEA__DATABASE__DB_TYPE
               value: postgres
             - name: GITEA__DATABASE__HOST
@@ -312,16 +331,13 @@ spec:
 
             queue:
               TYPE: redis
-              CONN_STR: redis://redis.{{ .Release.Namespace }}.svc.cluster.local:6379/0
 
             session:
               PROVIDER: redis
-              PROVIDER_CONFIG: redis://redis.{{ .Release.Namespace }}.svc.cluster.local:6379/0
 
             cache:
               ENABLED: true
               ADAPTER: redis
-              HOST: redis://redis.{{ .Release.Namespace }}.svc.cluster.local:6379/0
 
             ssh:
               minimum_key_sizes:
@@ -596,3 +612,25 @@ spec:
                   value: {{ .Values.actionsVerions.kubectl | quote }}
 
           restartPolicy: Never
+
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: gitea-redis-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault
+    kind: ClusterSecretStore
+  target:
+    name: gitea-redis-secrets
+    template:
+      engineVersion: v2
+      data:
+        url: {{ "{{ .url }}/0" | quote }}
+  data:
+    - secretKey: url
+      remoteRef:
+        key: dynamic/redis
+        property: url
