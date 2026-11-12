@@ -113,6 +113,17 @@ spec:
   runtimeConfigRef:
     name: provider-ansible-runtime
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: provider-ansible-callbacks
+  namespace: system-crossplane
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+data:
+  crossplane_json.py: |
+    {{- .Files.Get "files/callback_plugins/crossplane_json.py" | nindent 4 }}
+---
 apiVersion: pkg.crossplane.io/v1beta1
 kind: DeploymentRuntimeConfig
 metadata:
@@ -134,4 +145,12 @@ spec:
           automountServiceAccountToken: true
           containers:
             - name: package-runtime
+              volumeMounts:
+                - name: callbacks
+                  mountPath: /opt/ansible/callback_plugins
+                  readOnly: true
+          volumes:
+            - name: callbacks
+              configMap:
+                name: provider-ansible-callbacks
 {{- end }}
