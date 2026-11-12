@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - name: Read Docker mirror credentials from Vault
+      - name: Read Docker mirror credentials from OpenBao
         id: docker_secrets
         uses: hashicorp/vault-action@v4
         with:
@@ -30,9 +30,9 @@ jobs:
           token: ${{ secrets.VAULT_TOKEN }}
           exportEnv: false
           secrets: |
-            external-infra/data/vendor/docker host-mirror | DOCKER_MIRROR_HOST ;
-            external-infra/data/vendor/docker mirror-username | DOCKER_MIRROR_USERNAME ;
-            external-infra/data/vendor/docker mirror-password | DOCKER_MIRROR_PASSWORD ;
+            onprem/data/dynamic/docker-mirror hostname | DOCKER_MIRROR_HOST ;
+            onprem/data/dynamic/docker-mirror username | DOCKER_MIRROR_USERNAME ;
+            onprem/data/dynamic/docker-mirror password | DOCKER_MIRROR_PASSWORD ;
       - name: Configure Renovate mirror authentication
         env:
           MIRROR_HOST: ${{ steps.docker_secrets.outputs.DOCKER_MIRROR_HOST }}
@@ -49,9 +49,9 @@ jobs:
           if (parsed.scheme != "https" or not parsed.hostname
                   or parsed.username or parsed.password or parsed.path
                   or parsed.query or parsed.fragment):
-              raise SystemExit("Vault mirror host must be an HTTPS registry hostname")
+              raise SystemExit("OpenBao mirror host must be an HTTPS registry hostname")
           if not os.environ["MIRROR_USERNAME"] or not os.environ["MIRROR_PASSWORD"]:
-              raise SystemExit("Vault Docker mirror credentials are empty")
+              raise SystemExit("OpenBao Docker mirror credentials are empty")
           rules = json.dumps([{
               "hostType": "docker",
               "matchHost": "https://" + parsed.netloc,
@@ -63,7 +63,7 @@ jobs:
           with open(os.environ["GITHUB_ENV"], "a") as env_file:
               env_file.write("RENOVATE_HOST_RULES=" + rules + "\n")
           PY
-      # GitHub access uses the built-in token; Vault uses the existing secrets above.
+      # GitHub access uses the built-in token; OpenBao uses the existing secrets above.
       # Enable Settings > Actions > General > Workflow permissions >
       # Allow GitHub Actions to create and approve pull requests.
       # PRs opened with GITHUB_TOKEN do not trigger other Actions workflows.

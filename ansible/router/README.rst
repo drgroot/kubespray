@@ -7,8 +7,8 @@ are true. The provider must have network access to the router's LAN management
 address and Python 3.11+ with venv/pip support. Its isolated environment installs
 ``asusrouter==1.21.3`` from PyPI; no SSH access to the router is needed.
 
-The chart creates an ExternalSecret backed by the ``external-infra``
-ClusterSecretStore at ``vendor/router``. It synchronizes the ``ip``,
+The chart creates an ExternalSecret backed by the ``vault``
+ClusterSecretStore (OpenBao) at ``vendor/router``. It synchronizes the ``ip``,
 ``username``, and ``password`` properties into the ``router-credentials``
 Kubernetes Secret in ``argocd``. The Ansible provider reads all three properties
 from that Secret, keeping the connection details out of Helm values and Git.

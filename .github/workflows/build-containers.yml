@@ -96,7 +96,7 @@ jobs:
 
           echo "publish=$publish" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-      - name: Read Docker credentials from Vault
+      - name: Read Docker credentials from OpenBao
         id: docker_secrets
         if: >-
           (steps.changes.outputs.src == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
@@ -108,9 +108,9 @@ jobs:
           token: ${{ secrets.VAULT_TOKEN }}
           exportEnv: false
           secrets: |
-            external-infra/data/vendor/docker public-host | DOCKER_HOST ;
-            external-infra/data/vendor/docker public-username | DOCKER_USERNAME ;
-            external-infra/data/vendor/docker public-password | DOCKER_PASSWORD ;
+            onprem/data/vendor/docker public-host | DOCKER_HOST ;
+            onprem/data/vendor/docker public-username | DOCKER_USERNAME ;
+            onprem/data/vendor/docker public-password | DOCKER_PASSWORD ;
       - name: Set publish destination
         id: destination
         if: >-
