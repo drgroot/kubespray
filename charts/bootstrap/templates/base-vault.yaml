@@ -75,6 +75,25 @@ spec:
           matchLabels:
             app.kubernetes.io/name: ingress-nginx
             app.kubernetes.io/component: controller
+    {{- with .Values.openbao.oidcEgressCIDRs }}
+    egressRules:
+      - to:
+          {{- range . }}
+          - ipBlock:
+              cidr: {{ . | quote }}
+          {{- end }}
+          # Also match the destination after ingress/host-port translation.
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: system-networking
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: ingress-nginx
+                app.kubernetes.io/component: controller
+        ports:
+          - protocol: TCP
+            port: 443
+    {{- end }}
     ingressRules:
       - from:
           - namespaceSelector:
