@@ -51,43 +51,18 @@ spec:
         - regexp:
             source: "^password$"
             target: rootPassword
+{{- range $destination := list (dict "name" "minio-credentials" "store" "external-infra" "path" "vendor/minio") (dict "name" "minio-root" "store" "vault" "path" "dynamic/minio-root") }}
 ---
 apiVersion: external-secrets.io/v1alpha1
 kind: PushSecret
 metadata:
-  name: minio-credentials
+  name: {{ $destination.name }}
 spec:
   updatePolicy: Replace
   deletionPolicy: None
   refreshInterval: 1h
   secretStoreRefs:
-    - name: external-infra
-      kind: ClusterSecretStore
-  selector:
-    secret:
-      name: minio-credentials
-  data:
-    - match:
-        secretKey: rootUser
-        remoteRef:
-          remoteKey: vendor/minio
-          property: root-access-key
-    - match:
-        secretKey: rootPassword
-        remoteRef:
-          remoteKey: vendor/minio
-          property: root-secret-key
----
-apiVersion: external-secrets.io/v1alpha1
-kind: PushSecret
-metadata:
-  name: minio-root
-spec:
-  updatePolicy: Replace
-  deletionPolicy: None
-  refreshInterval: 1h
-  secretStoreRefs:
-    - name: vault
+    - name: {{ $destination.store }}
       kind: ClusterSecretStore
   selector:
     secret:
@@ -95,18 +70,20 @@ spec:
   template:
     engineVersion: v2
     data:
-      access-key: {{ "{{ .rootUser }}" | quote }}
-      secret-key: {{ "{{ .rootPassword }}" | quote }}
-      url: {{ printf "http://minio.%s.svc.cluster.local:9000" .Release.Namespace | quote }}
+      root-access-key: {{ "{{ .rootUser }}" | quote }}
+      root-secret-key: {{ "{{ .rootPassword }}" | quote }}
+      internal-url: {{ printf "http://minio.%s.svc.cluster.local:9000" $.Release.Namespace | quote }}
+      endpoint-url: {{ printf "https://s3.%s" $.Values.domains.external | quote }}
       region: us-east-1
   data:
-    {{- range $key := list "access-key" "secret-key" "url" "region" }}
+    {{- range $key := list "root-access-key" "root-secret-key" "internal-url" "endpoint-url" "region" }}
     - match:
         secretKey: {{ $key }}
         remoteRef:
-          remoteKey: dynamic/minio-root
+          remoteKey: {{ $destination.path }}
           property: {{ $key }}
     {{- end }}
+{{- end }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

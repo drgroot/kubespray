@@ -28,10 +28,8 @@ spec:
       engineVersion: v2
       mergePolicy: Merge
       data:
-        AWS_ENDPOINT_URL_S3: http://minio.{{ .Release.Namespace }}.svc.cluster.local:9000
         TF_BACKEND_BUCKET: tfstate
-        AWS_REGION: us-east-1
-        AWS_DEFAULT_REGION: us-east-1
+        AWS_DEFAULT_REGION: {{ "{{ .AWS_REGION }}" | quote }}
         VAULT_ADDR: http://vault.kube-tools.svc.cluster.local:8200
   data:
     - secretKey: AWS_ACCESS_KEY_ID
@@ -42,6 +40,14 @@ spec:
       remoteRef:
         key: vendor/minio
         property: root-secret-key
+    - secretKey: AWS_ENDPOINT_URL_S3
+      remoteRef:
+        key: vendor/minio
+        property: internal-url
+    - secretKey: AWS_REGION
+      remoteRef:
+        key: vendor/minio
+        property: region
     - secretKey: VAULT_TOKEN
       remoteRef:
         key: vendor/vault
@@ -67,15 +73,15 @@ spec:
     - secretKey: AWS_ACCESS_KEY_ID
       remoteRef:
         key: dynamic/minio-root
-        property: access-key
+        property: root-access-key
     - secretKey: AWS_SECRET_ACCESS_KEY
       remoteRef:
         key: dynamic/minio-root
-        property: secret-key
+        property: root-secret-key
     - secretKey: AWS_ENDPOINT_URL_S3
       remoteRef:
         key: dynamic/minio-root
-        property: url
+        property: internal-url
     - secretKey: AWS_REGION
       remoteRef:
         key: dynamic/minio-root
