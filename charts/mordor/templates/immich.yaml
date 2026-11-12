@@ -6,7 +6,7 @@ metadata:
 spec:
   refreshInterval: 1h
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: immich-redis
@@ -15,7 +15,7 @@ spec:
   data:
     - secretKey: redishostname
       remoteRef:
-        key: iac/redis
+        key: dynamic/redis
         property: hostname
 ---
 apiVersion: argoproj.io/v1alpha1

@@ -4,7 +4,7 @@ metadata:
   name: sabnzbd-config
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: sabnzbd-config
@@ -79,27 +79,27 @@ spec:
   data:
     - secretKey: usenet_address
       remoteRef:
-        key: iac/sabnzbd
+        key: vendor/sabnzbd
         property: usenet-address
     - secretKey: usenet_max_connections
       remoteRef:
-        key: iac/sabnzbd
+        key: vendor/sabnzbd
         property: usenet-max-connections
     - secretKey: usenet_password
       remoteRef:
-        key: iac/sabnzbd
+        key: vendor/sabnzbd
         property: usenet-password
     - secretKey: usenet_port
       remoteRef:
-        key: iac/sabnzbd
+        key: vendor/sabnzbd
         property: usenet-port
     - secretKey: usenet_username
       remoteRef:
-        key: iac/sabnzbd
+        key: vendor/sabnzbd
         property: usenet-username
     - secretKey: sabnzbd_api_key
       remoteRef:
-        key: iac/sabnzbd
+        key: vendor/sabnzbd
         property: sabnzbd-api-key
 {{- range $app, $port := dict "prowlarr" 9696 "radarr" 7878 "sonarr" 8989 }}
 ---
@@ -109,7 +109,7 @@ metadata:
   name: media-narrs-{{ $app }}-config
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: media-narrs-{{ $app }}-config
@@ -142,7 +142,7 @@ metadata:
   name: media-downloaders-narr-search-trigger-api-keys
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: media-downloaders-narr-search-trigger-api-keys

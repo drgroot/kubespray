@@ -44,7 +44,7 @@ metadata:
 spec:
   refreshInterval: 1h
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: bitwarden-secrets
@@ -65,7 +65,7 @@ spec:
         property: bitwarden-admin-token
     - secretKey: SSO_CLIENT_SECRET
       remoteRef:
-        key: vendor/authelia-apps
+        key: dynamic/authelia-client-creds
         property: client-secret-bitwarden
 ---
 apiVersion: networking.k8s.io/v1

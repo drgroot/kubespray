@@ -1,16 +1,14 @@
 variable "credentialpath" {
-  description = "Vault KV path containing the GitHub username and token used to manage the repository secret."
+  description = "OpenBao logical KV path containing the GitHub username and token."
   type        = string
 }
 
 variable "usernamekey" {
-  description = "Property in credentialpath containing the GitHub username."
-  type        = string
+  type = string
 }
 
 variable "tokenkey" {
-  description = "Property in credentialpath containing the GitHub token."
-  type        = string
+  type = string
 }
 
 data "vault_generic_secret" "credentials" {

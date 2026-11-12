@@ -44,7 +44,7 @@ metadata:
 spec:
   refreshInterval: 1h
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: filebrowser-config
@@ -88,9 +88,9 @@ spec:
   data:
     - secretKey: clientSecret
       remoteRef:
-        key: vendor/authelia-apps
+        key: dynamic/authelia-client-creds
         property: client-secret-filebrowse
     - secretKey: onlyofficeSecret
       remoteRef:
-        key: vendor/authelia-apps
+        key: vendor/authelia
         property: onlyoffice-jwt-secret-filebrowse

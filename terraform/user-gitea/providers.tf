@@ -2,10 +2,6 @@ variable "credentialpath" {
   type = string
 }
 
-variable "usernamekey" {
-  type = string
-}
-
 variable "passwordkey" {
   type = string
 }
@@ -30,4 +26,13 @@ provider "gitea" {
   base_url = var.gitea_url
   username = data.vault_generic_secret.credentials.data[var.provider_usernamekey]
   password = data.vault_generic_secret.credentials.data[var.provider_passwordkey]
+}
+
+variable "usercredentialpath" {
+  description = "OpenBao logical path containing generated user passwords."
+  type        = string
+}
+
+data "vault_generic_secret" "user_credentials" {
+  path = var.usercredentialpath
 }

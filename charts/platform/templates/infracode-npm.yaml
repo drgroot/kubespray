@@ -2,68 +2,107 @@
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
+  name: npm-credentials
+spec:
+  secretStoreRef:
+    name: vault
+    kind: ClusterSecretStore
+  target:
+    name: npm-credentials
+    template:
+      engineVersion: v2
+      mergePolicy: Merge
+      type: Opaque
+      data:
+        host: {{ printf "npm.%s" .Values.domains.external | quote }}
+  dataFrom:
+    - extract:
+        key: dynamic/npm-user-creds
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: npm-credentials
+spec:
+  updatePolicy: Replace
+  deletionPolicy: None
+  refreshInterval: 1h
+  secretStoreRefs:
+    - name: vault
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: npm-credentials
+  data:
+    {{- range $property := list "username" "password" "read-username" "read-password" "host" }}
+    - match:
+        secretKey: {{ $property }}
+        remoteRef:
+          remoteKey: dynamic/npm
+          property: {{ $property }}
+    {{- end }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
   name: npm-htpasswd
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: npm-htpasswd
     template:
+      engineVersion: v2
       type: Opaque
       data:
         htpasswd: |
           {{ `{{ htpasswd .PRIVATE_USERNAME .PRIVATE_PASSWORD "bcrypt" }}` }}
           {{ `{{ htpasswd .npm_read_user .npm_read_password "bcrypt" }}` }}
+        config.yaml: |
+          listen: 0.0.0.0:4873
+          storage: /verdaccio/storage
+          web:
+            showDownloadTarball: false
+            showRaw: false
+          auth:
+            htpasswd:
+              file: /htpasswd/htpasswd
+              max_users: -1
+          uplinks:
+            npmjs:
+              url: https://registry.npmjs.org/
+              cache: true
+          packages:
+            '@servc/*':
+              access: $authenticated
+              publish: {{ `{{ .PRIVATE_USERNAME | quote }}` }}
+
+            '@*/*':
+              access: $all
+              proxy: npmjs
+
+            '**':
+              access: $all
+              proxy: npmjs
   data:
     - remoteRef:
-        key: vendor/npm
+        key: dynamic/npm
         property: username
       secretKey: PRIVATE_USERNAME
     - remoteRef:
-        key: vendor/npm
+        key: dynamic/npm
         property: password
       secretKey: PRIVATE_PASSWORD
     - remoteRef:
-        key: vendor/npm
+        key: dynamic/npm
         property: read-username
       secretKey: npm_read_user
     - remoteRef:
-        key: vendor/npm
+        key: dynamic/npm
         property: read-password
       secretKey: npm_read_password
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: npm-config
-data:
-  config.yaml: |
-    listen: 0.0.0.0:4873
-    storage: /verdaccio/storage
-    web:
-      showDownloadTarball: false
-      showRaw: false
-    auth:
-      htpasswd:
-        file: /htpasswd/htpasswd
-        max_users: -1
-    uplinks:
-      npmjs:
-        url: https://registry.npmjs.org/
-        cache: true
-    packages:
-      '@servc/*':
-        access: $authenticated
-        publish: lowercaseusername
 
-      '@*/*':
-        access: $all
-        proxy: npmjs
-
-      '**':
-        access: $all
-        proxy: npmjs
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -99,8 +138,11 @@ spec:
           persistentVolumeClaim:
             claimName: npm
         - name: config
-          configMap:
-            name: npm-config
+          secret:
+            secretName: npm-htpasswd
+            items:
+              - key: config.yaml
+                path: config.yaml
         - name: htppasswd
           secret:
             secretName: npm-htpasswd

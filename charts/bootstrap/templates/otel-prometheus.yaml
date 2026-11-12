@@ -165,7 +165,7 @@ metadata:
 spec:
   refreshInterval: 1h
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: grafana-oidc
@@ -174,5 +174,5 @@ spec:
   data:
     - secretKey: client-secret
       remoteRef:
-        key: vendor/authelia-apps
+        key: dynamic/authelia-client-creds
         property: client-secret-grafana

@@ -1,5 +1,5 @@
 variable "path" {
-  description = "Vault KV path containing the source secret (for example external-infra/vendor/docker)."
+  description = "OpenBao logical KV path containing the source secret (for example onprem/dynamic/vault-root)."
   type        = string
 }
 
@@ -9,7 +9,7 @@ variable "property" {
 }
 
 variable "org" {
-  description = "Repository owner override. Defaults to the GitHub username in Vault."
+  description = "Repository owner override. Defaults to the GitHub username in OpenBao."
   type        = string
   default     = null
 }

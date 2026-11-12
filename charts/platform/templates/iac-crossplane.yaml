@@ -110,7 +110,7 @@ spec:
 {{- range $name, $config := .Values.crossplane.iac }}
 {{- $workspaceBackendSecretName := $backendSecretName }}
 {{- $workspaceEnvVars := $envVars }}
-{{- if eq ($config.vault | default "") "openbao" }}
+{{- if eq ($config.vault | default "openbao") "openbao" }}
 {{- $workspaceBackendSecretName = printf "%s-openbao" $backendSecretName }}
 {{- $workspaceEnvVars = concat (without $envVars "VAULT_TOKEN") (list "TERRAFORM_VAULT_USERNAME" "TERRAFORM_VAULT_PASSWORD") }}
 {{- end }}
@@ -137,7 +137,7 @@ spec:
     env:
       - name: VAULT_AUTH_METHOD
         value: userpass
-      {{- if eq ($config.vault | default "") "openbao" }}
+      {{- if eq ($config.vault | default "openbao") "openbao" }}
       - name: VAULT_CACERT
         value: openbao-ca.crt
       {{- end }}

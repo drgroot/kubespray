@@ -401,7 +401,7 @@ metadata:
 spec:
   refreshInterval: 1h
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: postiz-secrets
@@ -412,7 +412,7 @@ spec:
       remoteRef: {key: vendor/selfhosted-app-tokens, property: postiz-jwt-key}
     - secretKey: POSTIZ_OAUTH_CLIENT_SECRET
       remoteRef:
-        key: vendor/authelia-apps
+        key: dynamic/authelia-client-creds
         property: client-secret-postiz
     - secretKey: PINTEREST_CLIENT_ID
       remoteRef: {key: vendor/postiz-oauth, property: pinterest-client-id}

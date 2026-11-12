@@ -7,7 +7,7 @@ metadata:
     argocd.argoproj.io/secret-type: repo-creds
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: tenant-repo-credentials
@@ -18,17 +18,13 @@ spec:
       data:
         type: git
         url: https://git.yusufali.ca/
-        username: '{{ printf "{{ .USERNAME }}" }}'
+        username: argocd
         password: '{{ printf "{{ .PASSWORD }}" }}'
   data:
     - secretKey: PASSWORD
       remoteRef:
-        key: vendor/gitea
-        property: argo-password
-    - secretKey: USERNAME
-      remoteRef:
-        key: vendor/gitea
-        property: argo-username
+        key: dynamic/gitea-user-creds
+        property: argocd
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -39,7 +35,7 @@ metadata:
     argocd.argoproj.io/secret-type: repo-creds
 spec:
   secretStoreRef:
-    name: external-infra
+    name: vault
     kind: ClusterSecretStore
   target:
     name: oci-repo-credentials
