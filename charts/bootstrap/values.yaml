@@ -67,7 +67,7 @@ openbaoOperator:
 openbao:
   enabled: true
   name: openbao
-  namespace: kube-vault
+  namespace: system-vault
   createNamespace: true
   replicas: 1
   storage:
