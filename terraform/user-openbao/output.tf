@@ -9,5 +9,5 @@ resource "vault_generic_secret" "output" {
     "vault-addr" = var.openbao_addr
   })
 
-  depends_on = [vault_generic_endpoint.userpass_user]
+  depends_on = [vault_generic_endpoint.userpass_user, vault_generic_endpoint.unlock_user]
 }

@@ -94,6 +94,45 @@ resource "vault_generic_endpoint" "userpass_user" {
   })
 }
 
+data "vault_auth_backend" "userpass" {
+  provider = vault.admin
+  path     = "userpass"
+}
+
+data "vault_generic_secret" "locked_users" {
+  provider = vault.admin
+  path     = "sys/locked-users"
+}
+
+locals {
+  # Lockout metadata contains no credentials. The generic secret data source
+  # marks every response sensitive, including these usernames and accessors.
+  locked_userpass_users = flatten([
+    for namespace in coalesce(nonsensitive(jsondecode(data.vault_generic_secret.locked_users.data_json)).by_namespace, []) : [
+      for mount in namespace.mount_accessors : mount.alias_identifiers
+      if mount.mount_accessor == data.vault_auth_backend.userpass.accessor
+    ]
+  ])
+}
+
+# Updating a userpass password does not clear an existing login lockout.
+# Read lockouts on each reconciliation so an unchanged user can recover too.
+resource "vault_generic_endpoint" "unlock_user" {
+  count    = nonsensitive(contains(local.locked_userpass_users, local.username)) ? 1 : 0
+  provider = vault.admin
+  path     = "sys/locked-users/${data.vault_auth_backend.userpass.accessor}/unlock/${urlencode(local.username)}"
+
+  data_json      = "{}"
+  disable_read   = true
+  disable_delete = true
+
+  depends_on = [vault_generic_endpoint.userpass_user]
+
+  lifecycle {
+    replace_triggered_by = [vault_generic_endpoint.userpass_user]
+  }
+}
+
 resource "vault_token" "user" {
   provider = vault.admin
   policies = [vault_policy.user.name]
