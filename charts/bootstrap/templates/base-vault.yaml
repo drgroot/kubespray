@@ -92,8 +92,12 @@ spec:
               matchLabels:
                 kubernetes.io/metadata.name: system-crossplane
             podSelector:
-              matchLabels:
-                app.kubernetes.io/name: provider-ansible
+              matchExpressions:
+                - key: pkg.crossplane.io/provider
+                  operator: In
+                  values:
+                    - provider-ansible
+                    - provider-opentofu
         ports:
           - protocol: TCP
             port: 8200

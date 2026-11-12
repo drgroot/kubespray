@@ -7,6 +7,8 @@ metadata:
   name: opentofu-provider-config
 spec:
   credentials:
+    - filename: .tofurc
+      source: None
     - filename: openbao-ca.crt
       source: Secret
       secretRef:

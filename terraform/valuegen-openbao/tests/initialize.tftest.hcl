@@ -1,3 +1,5 @@
+# OpenTofu 1.10.x overrides whole resources, not for_each instances.
+# Instance references are still valid in the assertions below.
 mock_provider "vault" {
   mock_data "vault_generic_secret" {
     defaults = { data = { id = "test-session-token" } }
@@ -64,7 +66,7 @@ run "preserve_existing_empty_and_null_properties" {
   command = plan
 
   override_data {
-    target = data.http.current["input"]
+    target = data.http.current
     values = {
       status_code   = 200
       response_body = <<-JSON
@@ -83,7 +85,7 @@ run "preserve_neighbors_and_use_the_data_snapshot_version" {
   command = apply
 
   override_data {
-    target = data.http.current["input"]
+    target = data.http.current
     values = {
       status_code   = 200
       response_body = <<-JSON
@@ -92,7 +94,7 @@ run "preserve_neighbors_and_use_the_data_snapshot_version" {
     }
   }
   override_data {
-    target = data.http.metadata["input"]
+    target = data.http.metadata
     values = {
       status_code   = 200
       response_body = "{\"data\":{\"current_version\":8}}"
@@ -145,19 +147,19 @@ run "reject_invalid_special_character_flag" {
 run "authorization_failure_is_not_a_missing_record" {
   command = plan
   override_data {
-    target = data.http.current["input"]
+    target = data.http.current
     values = {
       status_code   = 403
       response_body = "{\"errors\":[\"permission denied\"]}"
     }
   }
-  expect_failures = [data.http.current["input"]]
+  expect_failures = [data.http.current]
 }
 
 run "reject_record_created_during_read" {
   command = plan
   override_data {
-    target = data.http.metadata["input"]
+    target = data.http.metadata
     values = {
       status_code   = 200
       response_body = <<-JSON
@@ -165,5 +167,5 @@ run "reject_record_created_during_read" {
       JSON
     }
   }
-  expect_failures = [vault_generic_endpoint.initialize[0]]
+  expect_failures = [vault_generic_endpoint.initialize]
 }
