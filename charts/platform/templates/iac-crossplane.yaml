@@ -82,20 +82,20 @@ spec:
         property: region
     - secretKey: VAULT_ADDR
       remoteRef:
-        key: vault-onpremise
+        key: dynamic/vault-onpremise
         property: url
     - secretKey: TERRAFORM_VAULT_USERNAME
       remoteRef:
-        key: vault-onpremise
+        key: dynamic/vault-onpremise
         property: username
     - secretKey: TERRAFORM_VAULT_PASSWORD
       remoteRef:
-        key: vault-onpremise
+        key: dynamic/vault-onpremise
         property: password
     # The ProviderConfig writes this key into each module directory.
     - secretKey: ca.crt
       remoteRef:
-        key: vault-onpremise
+        key: dynamic/vault-onpremise
         property: ca-cert
 ---
 {{- $envVars := list "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_ENDPOINT_URL_S3" "TF_BACKEND_BUCKET" "AWS_REGION" "AWS_DEFAULT_REGION" "VAULT_ADDR" "VAULT_TOKEN" -}}
