@@ -7,7 +7,7 @@ versions:
   crossplaneOpenTofu: v1.1.11
   crossplaneAnsible: v0.8.0
   argoupdater: "0.18"
-  ingressnginx: 4.13.2
+  ingressnginx: 4.15.1
   externalsecrets: 2.15.0
   nfsprovisioner: 4.0.18
   keda: 2.21.0
