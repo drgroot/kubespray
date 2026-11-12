@@ -1,4 +1,4 @@
-name: Sync Ansible inventory revision
+name: Sync Ansible revisions
 
 on:
   push:
@@ -41,20 +41,37 @@ jobs:
           grep -Fq "    revision: \"$INVENTORY_REVISION\"" charts/platform/values.yaml
           echo "revision=$INVENTORY_REVISION" >> "$GITHUB_OUTPUT"
 
+      - name: Pin OpenBao AnsibleRuns to the latest playbook revision
+        id: openbao
+        shell: bash
+        run: |
+          set -euo pipefail
+          OPENBAO_REVISION=$(git log -1 --format=%H -- ansible/openbao-admin.yml ansible/openbao-onpremise.yml)
+          test -n "$OPENBAO_REVISION"
+
+          sed -i "/^openbao:$/,/^[^[:space:]]/s/^    revision: .*/    revision: \"$OPENBAO_REVISION\"/" charts/bootstrap/values.yaml
+          grep -Fq "    revision: \"$OPENBAO_REVISION\"" charts/bootstrap/values.yaml
+          echo "revision=$OPENBAO_REVISION" >> "$GITHUB_OUTPUT"
+
       # Repository settings must allow GitHub Actions to create pull requests.
       # GitHub may require approval before CI runs on a GITHUB_TOKEN-created PR.
-      - name: Open or update inventory revision pull request
+      - name: Open or update Ansible revision pull request
         uses: peter-evans/create-pull-request@v8.1.3
         with:
           token: ${{ github.token }}
           base: main
           branch: ansible-inventory-revision
           delete-branch: true
-          add-paths: charts/platform/values.yaml
-          commit-message: "chore: pin Ansible inventory to ${{ steps.inventory.outputs.revision }}"
-          title: "chore: update Ansible inventory revision"
+          add-paths: |
+            charts/platform/values.yaml
+            charts/bootstrap/values.yaml
+          commit-message: "chore: pin Ansible configuration revisions"
+          title: "chore: update Ansible configuration revisions"
           body: |
-            Pin Crossplane's AnsibleRun to the latest inventory and Ansible configuration revision:
+            Pin the platform AnsibleRuns to the latest inventory and Ansible configuration revision:
             `${{ steps.inventory.outputs.revision }}`.
+
+            Pin the OpenBao AnsibleRuns to the latest change to `ansible/openbao-admin.yml` or `ansible/openbao-onpremise.yml`:
+            `${{ steps.openbao.outputs.revision }}`.
 
             This update goes through the required pull request checks before it is merged into `main`.
