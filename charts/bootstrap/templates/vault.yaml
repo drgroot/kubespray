@@ -154,7 +154,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: vault.{{ .Values.domains.external }}
+    - host: vault-legacy.{{ .Values.domains.external }}
       http:
         paths:
           - backend:

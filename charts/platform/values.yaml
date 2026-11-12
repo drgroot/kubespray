@@ -29,7 +29,7 @@ router:
   port: 80
   useSSL: false
   forwardingEnabled: true
-  # Synced from ClusterSecretStore external-infra, vendor/router (ip, username, password).
+  # Synced from ClusterSecretStore vault, vendor/router (ip, username, password).
   secretName: router-credentials
   secretNamespace: argocd
 
@@ -328,28 +328,6 @@ crossplane:
         - key: passwordkey
           value: password
         - key: openbao_addr
-          value: https://openbao.{{ .Values.domains.external }}
-        - key: path
-          value: servc/*
-        - key: capabilities
-          value: create,read,update,delete,list,patch,sudo
-
-    vault-user-servc:
-      enabled: true
-      vault: vault
-      type: vault
-      provider: user
-      name: vault-user-servc
-      vars:
-        - key: input
-          value: external-infra/vendor/vault
-        - key: output
-          value: external-infra/iac/vault-user-servc
-        - key: usernamekey
-          value: servc-username
-        - key: passwordkey
-          value: servc-password
-        - key: vault_addr
           value: https://vault.{{ .Values.domains.external }}
         - key: path
           value: servc/*
@@ -375,7 +353,7 @@ crossplane:
         - key: oidc_client_secret_key
           value: client-secret-openbao
         - key: openbao_url
-          value: https://openbao.{{ .Values.domains.external }}
+          value: https://vault.{{ .Values.domains.external }}
 
     openbao-oidc-salihah:
       enabled: true
@@ -1146,7 +1124,7 @@ authelia:
           consent_mode: implicit
           require_pkce: false
           redirect_uris:
-            - https://openbao.{{ .Values.domains.external }}/ui/vault/auth/oidc/oidc/callback
+            - https://vault.{{ .Values.domains.external }}/ui/vault/auth/oidc/oidc/callback
             - http://localhost:8250/oidc/callback
           scopes:
             - openid
@@ -1678,8 +1656,8 @@ secretSync:
   - name: vault
     input:
       kind: ClusterSecretStore
-      name: external-infra
-      path: iac/vault-user-servc
+      name: vault
+      path: dynamic/vault-user-servc
       properties:
         - username
         - password

@@ -1,5 +1,5 @@
 {{- if .Values.crossplane.enabled }}
-{{- $backendSecretName := "crossplane-tofu-backend" -}}
+{{- $backendSecretName := "crossplane-tofu-backend-openbao" -}}
 ---
 apiVersion: opentofu.m.upbound.io/v1beta1
 kind: ClusterProviderConfig
@@ -13,58 +13,19 @@ spec:
       source: Secret
       secretRef:
         namespace: {{ .Release.Namespace }}
-        name: {{ $backendSecretName }}-openbao
+        name: {{ $backendSecretName }}
         key: ca.crt
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: {{ $backendSecretName}}
-spec:
-  secretStoreRef:
-    kind: ClusterSecretStore
-    name: external-infra
-  target:
-    name: {{ $backendSecretName }}
-    template:
-      engineVersion: v2
-      mergePolicy: Merge
-      data:
-        TF_BACKEND_BUCKET: tfstate
-        AWS_DEFAULT_REGION: {{ "{{ .AWS_REGION }}" | quote }}
-        VAULT_ADDR: http://vault.kube-tools.svc.cluster.local:8200
-  data:
-    - secretKey: AWS_ACCESS_KEY_ID
-      remoteRef:
-        key: vendor/minio
-        property: root-access-key
-    - secretKey: AWS_SECRET_ACCESS_KEY
-      remoteRef:
-        key: vendor/minio
-        property: root-secret-key
-    - secretKey: AWS_ENDPOINT_URL_S3
-      remoteRef:
-        key: vendor/minio
-        property: internal-url
-    - secretKey: AWS_REGION
-      remoteRef:
-        key: vendor/minio
-        property: region
-    - secretKey: VAULT_TOKEN
-      remoteRef:
-        key: vendor/vault
-        property: token
----
-apiVersion: external-secrets.io/v1
-kind: ExternalSecret
-metadata:
-  name: {{ $backendSecretName }}-openbao
+  name: {{ $backendSecretName }}
 spec:
   secretStoreRef:
     kind: ClusterSecretStore
     name: vault
   target:
-    name: {{ $backendSecretName }}-openbao
+    name: {{ $backendSecretName }}
     template:
       engineVersion: v2
       mergePolicy: Merge
@@ -106,14 +67,9 @@ spec:
         key: dynamic/vault-onpremise
         property: ca-cert
 ---
-{{- $envVars := list "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_ENDPOINT_URL_S3" "TF_BACKEND_BUCKET" "AWS_REGION" "AWS_DEFAULT_REGION" "VAULT_ADDR" "VAULT_TOKEN" -}}
+{{- $envVars := list "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_ENDPOINT_URL_S3" "TF_BACKEND_BUCKET" "AWS_REGION" "AWS_DEFAULT_REGION" "VAULT_ADDR" "TERRAFORM_VAULT_USERNAME" "TERRAFORM_VAULT_PASSWORD" -}}
 {{- range $name, $config := .Values.crossplane.iac }}
-{{- $workspaceBackendSecretName := $backendSecretName }}
-{{- $workspaceEnvVars := $envVars }}
-{{- if eq ($config.vault | default "openbao") "openbao" }}
-{{- $workspaceBackendSecretName = printf "%s-openbao" $backendSecretName }}
-{{- $workspaceEnvVars = concat (without $envVars "VAULT_TOKEN") (list "TERRAFORM_VAULT_USERNAME" "TERRAFORM_VAULT_PASSWORD") }}
-{{- end }}
+
 ---
 {{- if $config.enabled }}
 apiVersion: opentofu.m.upbound.io/v1beta1
@@ -137,14 +93,12 @@ spec:
     env:
       - name: VAULT_AUTH_METHOD
         value: userpass
-      {{- if eq ($config.vault | default "openbao") "openbao" }}
       - name: VAULT_CACERT
         value: openbao-ca.crt
-      {{- end }}
-      {{- range $key := $workspaceEnvVars }}
+      {{- range $key := $envVars }}
       - name: {{ $key }}
         secretKeyRef:
-          name: {{ $workspaceBackendSecretName }}
+          name: {{ $backendSecretName }}
           key: {{ $key }}
       {{- end }}
     vars:
