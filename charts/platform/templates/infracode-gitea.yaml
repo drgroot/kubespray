@@ -105,6 +105,27 @@ spec:
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
+  name: gitea-oauth-secrets
+spec:
+  secretStoreRef:
+    name: vault
+    kind: ClusterSecretStore
+  target:
+    name: gitea-oauth-secrets
+    template:
+      engineVersion: v2
+      data:
+        key: {{ .Values.authelia.clients.list.gitea.client_id | quote }}
+        secret: "{{ `{{ .clientSecret }}` }}"
+  data:
+    - secretKey: clientSecret
+      remoteRef:
+        key: {{ .Values.authelia.clients.client_remote_key }}
+        property: {{ .Values.authelia.clients.list.gitea.client_secret_property }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
   name: gitea-postgres-secrets
 spec:
   secretStoreRef:
@@ -209,6 +230,8 @@ spec:
 
         deployment:
           env: []
+          annotations:
+            secret.reloader.stakater.com/reload: gitea-oauth-secrets
 
         persistence:
           enabled: true
@@ -217,6 +240,13 @@ spec:
         gitea:
           admin:
             existingSecret: gitea-admin-credentials
+
+          # Update the existing auth source in place using Authelia's current secret.
+          oauth:
+            - name: gitea
+              provider: openidConnect
+              existingSecret: gitea-oauth-secrets
+              autoDiscoverUrl: https://auth.{{ .Values.domains.external }}/.well-known/openid-configuration
 
           additionalConfigFromEnvs:
             - name: GITEA__QUEUE__CONN_STR
