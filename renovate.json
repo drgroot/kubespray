@@ -135,6 +135,19 @@
     },
     {
       "customType": "regex",
+      "description": "Bootstrap kube-vip image",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  kubeVip: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "ghcr.io/kube-vip/kube-vip",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
       "description": "Bootstrap crossplane",
       "managerFilePatterns": [
         "/^charts/bootstrap/values\\.yaml$/"

@@ -87,7 +87,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: kube-vip
-          image: {{ .Values.kubeVip.image | quote }}
+          image: {{ printf "%s:%s" .Values.kubeVip.image .Values.versions.kubeVip | quote }}
           imagePullPolicy: IfNotPresent
           args:
             - manager
