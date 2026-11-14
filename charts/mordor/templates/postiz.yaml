@@ -495,7 +495,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: {{ .Values.storage.default }}
+  storageClassName: thorin-fast
   resources:
     requests:
       storage: 10Gi
