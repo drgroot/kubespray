@@ -274,9 +274,9 @@ crossplane:
         - key: tokenkey
           value: token
         - key: path
-          value: onprem/dynamic/vault-root
+          value: onprem/dynamic/vault-user-ci
         - key: property
-          value: url
+          value: vault-addr
         - key: repository
           value: kubespray
         - key: org
