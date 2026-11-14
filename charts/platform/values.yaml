@@ -662,6 +662,21 @@ crossplane:
         - key: passwordkey
           value: argocd
 
+    gitea-argocd-token:
+      enabled: true
+      type: token
+      provider: gitea
+      name: argocd
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: onprem/dynamic/gitea-user-creds
+        - key: passwordkey
+          value: argocd
+        - key: output
+          value: onprem/dynamic/gitea-argocd
+
     gitea-rennovate:
       enabled: true
       type: user
@@ -1564,6 +1579,7 @@ secretSync:
         client-secret-grafana: client-secret-grafana
 
   - name: gitea
+    refreshInterval: 1m
     input:
       kind: ClusterSecretStore
       name: vault

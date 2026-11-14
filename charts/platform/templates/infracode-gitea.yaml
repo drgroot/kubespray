@@ -25,6 +25,7 @@ kind: ExternalSecret
 metadata:
   name: gitea-runner-secrets
 spec:
+  refreshInterval: 1m
   secretStoreRef:
     name: vault
     kind: ClusterSecretStore

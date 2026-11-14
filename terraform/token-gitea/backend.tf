@@ -16,6 +16,11 @@ terraform {
       source  = "hashicorp/vault"
       version = "5.13.0"
     }
+
+    time = {
+      source  = "hashicorp/time"
+      version = "0.14.2"
+    }
   }
 }
 
