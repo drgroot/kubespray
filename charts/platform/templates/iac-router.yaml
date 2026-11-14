@@ -91,7 +91,16 @@ spec:
               mode: "0600"
               content: "{{ `{{ {'router': router} | to_json }}` }}"
 
-          - name: Reconcile router configuration
+          - name: Wait for the gateway virtual IP before changing router forwards
+            ansible.builtin.wait_for:
+              host: {{ .Values.gateway.virtualIP | quote }}
+              port: "{{ `{{ item }}` }}"
+              timeout: 120
+            loop:
+              - 80
+              - 443
+
+          - name: Apply router configuration
             ansible.builtin.command:
               argv:
                 - "{{ `{{ playbook_dir }}` }}/router-venv/bin/ansible-playbook"
