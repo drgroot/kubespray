@@ -150,9 +150,11 @@ class DockerBuildStepsTests(unittest.TestCase):
 
         self.assertEqual("docker_secrets", steps[0]["id"])
         self.assertEqual("hashicorp/vault-action@v2", steps[0]["uses"])
-        self.assertEqual("userpass", steps[0]["with"]["method"])
-        self.assertEqual("${{ secrets.VAULT_USERNAME }}", steps[0]["with"]["username"])
-        self.assertEqual("${{ secrets.VAULT_PASSWORD }}", steps[0]["with"]["password"])
+        self.assertEqual("token", steps[0]["with"]["method"])
+        self.assertEqual("${{ secrets.VAULT_ADDR }}", steps[0]["with"]["url"])
+        self.assertEqual("${{ secrets.VAULT_TOKEN }}", steps[0]["with"]["token"])
+        self.assertNotIn("username", steps[0]["with"])
+        self.assertNotIn("password", steps[0]["with"])
         self.assertEqual(
             "\n".join(
                 [
@@ -188,9 +190,11 @@ class DockerBuildStepsTests(unittest.TestCase):
 
         self.assertEqual("docker_secrets", steps[0]["id"])
         self.assertEqual("hashicorp/vault-action@v2", steps[0]["uses"])
-        self.assertEqual("userpass", steps[0]["with"]["method"])
-        self.assertEqual("${{ secrets.VAULT_USERNAME }}", steps[0]["with"]["username"])
-        self.assertEqual("${{ secrets.VAULT_PASSWORD }}", steps[0]["with"]["password"])
+        self.assertEqual("token", steps[0]["with"]["method"])
+        self.assertEqual("${{ secrets.VAULT_ADDR }}", steps[0]["with"]["url"])
+        self.assertEqual("${{ secrets.VAULT_TOKEN }}", steps[0]["with"]["token"])
+        self.assertNotIn("username", steps[0]["with"])
+        self.assertNotIn("password", steps[0]["with"])
         self.assertEqual(
             "\n".join(
                 [
