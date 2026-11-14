@@ -36,7 +36,7 @@ variable "openbao_addr" {
 }
 
 variable "path" {
-  description = "OpenBao API path authorized by the generated policy."
+  description = "Comma-separated exact OpenBao API paths or patterns authorized by the generated policy."
   type        = string
 }
 
@@ -51,6 +51,18 @@ variable "capabilities" {
     ])
     error_message = "capabilities must be a comma-separated list of valid OpenBao policy capabilities."
   }
+}
+
+variable "allow_token_creation" {
+  description = "Allow this user to create child tokens for the Terraform provider. Disable for CI readers."
+  type        = bool
+  default     = true
+}
+
+variable "no_default_policy" {
+  description = "Exclude the default policy from userpass login tokens and the managed token."
+  type        = bool
+  default     = false
 }
 
 data "vault_generic_secret" "input" {
@@ -68,16 +80,20 @@ resource "vault_policy" "user" {
   name     = "openbao-user-${var.name}"
 
   policy = <<-EOT
-    path ${jsonencode(var.path)} {
+    %{for path in split(",", var.path)~}
+    path ${jsonencode(trimspace(path))} {
       capabilities = ${jsonencode(local.policy_capabilities)}
     }
 
+    %{endfor~}
+    %{if var.allow_token_creation~}
     # The Terraform OpenBao provider uses this endpoint to mint its limited
     # child token before managing OpenBao resources.
     path "auth/token/create" {
       capabilities = ["update"]
     }
 
+    %{endif~}
     path "auth/token/lookup-self" {
       capabilities = ["read"]
     }
@@ -89,8 +105,9 @@ resource "vault_generic_endpoint" "userpass_user" {
   path                 = "auth/userpass/users/${local.username}"
   ignore_absent_fields = true
   data_json = jsonencode({
-    password = local.password
-    policies = [vault_policy.user.name]
+    password                = local.password
+    policies                = [vault_policy.user.name]
+    token_no_default_policy = var.no_default_policy
   })
 }
 
@@ -137,12 +154,16 @@ resource "vault_token" "user" {
   provider = vault.admin
   policies = [vault_policy.user.name]
 
-  no_parent = true
-  renewable = true
-  period    = "24h"
+  no_default_policy = var.no_default_policy
+  no_parent         = true
+  renewable         = true
+  period            = "24h"
 
   renew_min_lease = 43200 # Renew if < 12 hours remain
   renew_increment = 86400 # Request 24 hours
 
   display_name = "openbao-user-${var.name}"
+  metadata = {
+    username = local.username
+  }
 }

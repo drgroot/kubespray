@@ -115,3 +115,23 @@ run "empty_lockout_response" {
     error_message = "An empty lockout response must not create an unlock request."
   }
 }
+
+run "readonly_ci_user" {
+  command = apply
+  variables {
+    name                 = "openbao-ci"
+    usernamekey          = null
+    path                 = "onprem/data/vendor/docker,onprem/data/dynamic/docker-mirror,servc/data/iac/coder-onpremise"
+    capabilities         = "read"
+    allow_token_creation = false
+    no_default_policy    = true
+  }
+  assert {
+    condition     = vault_generic_endpoint.userpass_user.path == "auth/userpass/users/openbao-ci" && jsondecode(vault_generic_endpoint.userpass_user.data_json).token_no_default_policy && vault_token.user.no_default_policy && vault_token.user.metadata.username == "openbao-ci" && vault_token.user.policies == toset(["openbao-user-openbao-ci"])
+    error_message = "CI login and managed tokens must identify openbao-ci and exclude the default policy."
+  }
+  assert {
+    condition     = replace(vault_policy.user.policy, "/\\s+/", "") == replace("path \"onprem/data/vendor/docker\" { capabilities = [\"read\"] }path \"onprem/data/dynamic/docker-mirror\" { capabilities = [\"read\"] }path \"servc/data/iac/coder-onpremise\" { capabilities = [\"read\"] }path \"auth/token/lookup-self\" { capabilities = [\"read\"] }", "/\\s+/", "")
+    error_message = "CI must read only the three exact workflow secret paths and its own token metadata, without child-token creation."
+  }
+}
