@@ -8,7 +8,7 @@ spec:
   resources:
     requests:
       storage: 5Gi
-  storageClassName: {{ .Values.storage.default }}
+  storageClassName: thorin-nobackup
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
