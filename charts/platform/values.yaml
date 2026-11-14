@@ -303,7 +303,7 @@ crossplane:
       enabled: true
       type: valuegen
       provider: openbao
-      name: openbao-ci
+      name: openbao_ci
       vars:
         - key: input
           value: onprem/dynamic/vault-ci-creds
