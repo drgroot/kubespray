@@ -560,6 +560,8 @@ crossplane:
           value: onprem/vendor/blackblaze
         - key: output
           value: onprem/dynamic/s3-thorin-backups
+        - key: lifecyle
+          value: "true"
 
     s3-thanos:
       enabled: true
