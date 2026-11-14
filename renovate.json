@@ -27,6 +27,87 @@
     },
     {
       "customType": "regex",
+      "description": "Platform authelia chart",
+      "managerFilePatterns": [
+        "/^charts/platform/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  authelia: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "authelia",
+      "registryUrlTemplate": "https://charts.authelia.com",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Platform gitea chart",
+      "managerFilePatterns": [
+        "/^charts/platform/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  gitea: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "gitea",
+      "registryUrlTemplate": "https://dl.gitea.com/charts/",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Platform Gitea Actions chart",
+      "managerFilePatterns": [
+        "/^charts/platform/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  giteaActions: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "actions",
+      "registryUrlTemplate": "https://dl.gitea.com/charts/",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Platform redis image",
+      "managerFilePatterns": [
+        "/^charts/platform/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  redis: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "docker.io/library/redis",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Platform registry image",
+      "managerFilePatterns": [
+        "/^charts/platform/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  registry: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "docker.io/library/registry",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Platform Pigsty Silo release and pinned image digest",
+      "managerFilePatterns": [
+        "/^charts/platform/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  minio: [\"\\x27]?(?<currentValue>RELEASE\\.[^\\s\"\\x27]+)[\"\\x27]?[\\s\\S]*?\\nminio:\\n  image:\\n    registry: [^\\n]+\\n    repository: pgsty/silo\\n    digest: (?<currentDigest>sha256:[a-f0-9]{64})"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "docker.io/pgsty/silo",
+      "versioningTemplate": "regex:^RELEASE\\.(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})T(?<build>\\d{2})-(?<revision>\\d{2})-\\d{2}Z$"
+    },
+    {
+      "customType": "regex",
       "description": "Bootstrap nvidia",
       "managerFilePatterns": [
         "/^charts/bootstrap/values\\.yaml$/"
@@ -218,6 +299,32 @@
     },
     {
       "customType": "regex",
+      "description": "Bootstrap openbaoOperator",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  openbaoOperator: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "ghcr.io/kubebao/charts/openbao-operator",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Bootstrap openbao",
+      "managerFilePatterns": [
+        "/^charts/bootstrap/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  openbao: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "docker.io/openbao/openbao",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
       "description": "Mordor image.name/tag pairs",
       "managerFilePatterns": [
         "/^charts/mordor/.*\\.ya?ml$/"
@@ -323,6 +430,13 @@
         "docker"
       ],
       "matchCurrentValue": "latest",
+      "pinDigests": true
+    },
+    {
+      "description": "Keep Silo release updates pinned to the matching image digest",
+      "matchDepNames": [
+        "docker.io/pgsty/silo"
+      ],
       "pinDigests": true
     }
   ]

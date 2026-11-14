@@ -152,7 +152,6 @@ storageClasses:
           key: dynamic/s3-thorin-backups
           property: rclone
       ignoreFolders:
-        - media/media-downloaders-narr-search-trigger-config
         - mordor/frigate-media
 
   - name: fast

@@ -134,6 +134,28 @@ spec:
                   key: rootPassword
             - name: MINIO_BROWSER_REDIRECT_URL
               value: https://s3-minio.{{ .Values.domains.external }}
+            # Silo retains the MINIO_* interface for native OIDC login.
+            - name: MINIO_IDENTITY_OPENID_CONFIG_URL
+              value: https://auth.{{ .Values.domains.external }}/.well-known/openid-configuration
+            - name: MINIO_IDENTITY_OPENID_CLIENT_ID
+              value: silo
+            - name: MINIO_IDENTITY_OPENID_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: silo-oidc
+                  key: client-secret
+            - name: MINIO_IDENTITY_OPENID_SCOPES
+              value: openid,profile,email,groups
+            - name: MINIO_IDENTITY_OPENID_REDIRECT_URI
+              value: https://s3-minio.{{ .Values.domains.external }}/oauth_callback
+            - name: MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC
+              value: "off"
+            - name: MINIO_IDENTITY_OPENID_DISPLAY_NAME
+              value: Authelia
+            - name: MINIO_IDENTITY_OPENID_CLAIM_NAME
+              value: groups
+            - name: MINIO_IDENTITY_OPENID_CLAIM_USERINFO
+              value: "on"
           ports:
             - name: api
               containerPort: 9000
@@ -208,6 +230,11 @@ spec:
                 sleep 2
               done
               mc mb --ignore-existing minio/tfstate
+              # Map the Authelia group to bucket browsing and object downloads.
+              cat > /tmp/media-admin-policy.json <<'EOF'
+              {"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:ListAllMyBuckets","s3:GetBucketLocation","s3:ListBucket","s3:ListBucketVersions","s3:GetObject","s3:GetObjectVersion"],"Resource":["arn:aws:s3:::*"]}]}
+              EOF
+              mc admin policy create minio media-admin /tmp/media-admin-policy.json
           env:
             - name: MINIO_ROOT_USER
               valueFrom:
@@ -219,6 +246,25 @@ spec:
                 secretKeyRef:
                   name: minio-credentials
                   key: rootPassword
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: silo-oidc
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault
+    kind: ClusterSecretStore
+  target:
+    name: silo-oidc
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: client-secret
+      remoteRef:
+        key: {{ .Values.authelia.clients.client_remote_key }}
+        property: client-secret-silo
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
