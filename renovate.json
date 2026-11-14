@@ -5,7 +5,8 @@
     ":semanticCommits"
   ],
   "enabledManagers": [
-    "custom.regex"
+    "custom.regex",
+    "terraform"
   ],
   "dependencyDashboard": true,
   "automerge": false,
@@ -267,6 +268,15 @@
     }
   ],
   "packageRules": [
+    {
+      "description": "Check Terraform provider releases against the OpenTofu registry",
+      "matchDatasources": [
+        "terraform-provider"
+      ],
+      "registryUrls": [
+        "https://registry.opentofu.org"
+      ]
+    },
     {
       "description": "Look up mirror images on Docker Hub while retaining mirror references",
       "matchDatasources": [
