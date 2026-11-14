@@ -1606,6 +1606,19 @@ secretSync:
         - private-host
         - private-username
         - private-password
+      data:
+        - secretKey: host-mirror
+          remoteRef:
+            key: dynamic/docker-mirror
+            property: hostname
+        - secretKey: mirror-username
+          remoteRef:
+            key: dynamic/docker-mirror
+            property: username
+        - secretKey: mirror-password
+          remoteRef:
+            key: dynamic/docker-mirror
+            property: password
     output:
       kind: ClusterSecretStore
       name: servc
@@ -1614,6 +1627,9 @@ secretSync:
         private-host: host
         private-username: username
         private-password: password
+        host-mirror: host-mirror
+        mirror-username: mirror-username
+        mirror-password: mirror-password
 
   - name: npm
     input:
