@@ -9,7 +9,11 @@ spec:
     kubernetes:
       useListenerPortAsContainerPort: true
       envoyService:
-        type: NodePort
+        type: LoadBalancer
+        loadBalancerClass: kube-vip.io/kube-vip-class
+        externalTrafficPolicy: Cluster
+        annotations:
+          kube-vip.io/loadbalancerIPs: {{ .Values.gateway.virtualIP | quote }}
       envoyDaemonSet:
         container:
           securityContext:
