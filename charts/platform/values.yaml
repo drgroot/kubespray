@@ -1586,7 +1586,6 @@ secretSync:
       path: dynamic/gitea-chintan
       properties:
         - username
-        - password
         - token
     output:
       kind: ClusterSecretStore
@@ -1594,7 +1593,6 @@ secretSync:
       path: iac/gitea
       properties:
         username: username
-        password: password
         token: token
 
   - name: docker
@@ -1691,8 +1689,6 @@ secretSync:
       name: vault
       path: dynamic/vault-user-servc
       properties:
-        - username
-        - password
         - token
         - vault-addr
     output:
@@ -1700,7 +1696,5 @@ secretSync:
       name: servc
       path: iac/vault
       properties:
-        username: username
-        password: password
         vault-addr: vault-addr
         token: vault-token
