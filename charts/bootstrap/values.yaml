@@ -60,6 +60,12 @@ nvidia:
 envoy:
   enabled: true
 
+kubeVip:
+  enabled: true
+  image: ghcr.io/kube-vip/kube-vip:v1.3.1
+  # Empty selects each node's default-route interface.
+  interface: ""
+
 openbaoOperator:
   enabled: true
   namespace: system-openbao

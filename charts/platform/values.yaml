@@ -24,6 +24,10 @@ actionsVerions:
   kubelogin: v0.0.18
   kubectl: v1.24.6
 
+gateway:
+  # Dedicated LAN address, outside DHCP; shared by all gateway listeners.
+  virtualIP: &gatewayVIP 192.168.1.4
+
 # The list owns the complete router forwarding table, including removals.
 router:
   enabled: true
