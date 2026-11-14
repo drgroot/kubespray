@@ -291,13 +291,54 @@ crossplane:
         - key: tokenkey
           value: token
         - key: path
-          value: onprem/dynamic/vault-root
+          value: onprem/dynamic/vault-user-ci
         - key: property
           value: token
         - key: repository
           value: kubespray
         - key: org
           value: drgroot
+
+    openbao-ci-creds:
+      enabled: true
+      type: valuegen
+      provider: openbao
+      name: openbao-ci
+      vars:
+        - key: input
+          value: onprem/dynamic/vault-ci-creds
+        - key: properties
+          value: password
+        - key: value-types
+          value: password
+        - key: specialchars
+          value: "no"
+        - key: output
+          value: none
+
+    openbao-user-ci:
+      enabled: true
+      type: user
+      provider: openbao
+      name: openbao-ci
+      vars:
+        - key: input
+          value: onprem/dynamic/vault-ci-creds
+        - key: output
+          value: onprem/dynamic/vault-user-ci
+        - key: passwordkey
+          value: password
+        - key: openbao_addr
+          value: https://vault.{{ .Values.domains.external }}
+        # Exact KV v2 API paths read by the repository's GitHub workflows.
+        - key: path
+          value: onprem/data/vendor/docker,onprem/data/dynamic/docker-mirror,servc/data/iac/coder-onpremise
+        - key: capabilities
+          value: read
+        - key: allow_token_creation
+          value: "false"
+        - key: no_default_policy
+          value: "true"
 
     openbao-servc-creds:
       enabled: true
