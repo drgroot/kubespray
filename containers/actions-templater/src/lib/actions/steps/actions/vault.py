@@ -61,9 +61,8 @@ def get_vault(name: str, input_secrets: List[Secret]) -> STEP_GENERATOR:
         "uses": f"hashicorp/vault-action@{m.get('vault_version', VAULT_VERSION)}",
         "with": {
             "url": m.get("vault_url", "${{ secrets.VAULT_ADDR }}"),
-            "method": "userpass",
-            "username": "${{ secrets.VAULT_USERNAME }}",
-            "password": "${{ secrets.VAULT_PASSWORD }}",
+            "method": "token",
+            "token": "${{ secrets.VAULT_TOKEN }}",
             "secrets": "\n".join(secrets),
         },
     }
