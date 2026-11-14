@@ -433,7 +433,7 @@ spec:
   source:
     chart: actions
     repoURL: https://dl.gitea.com/charts/
-    targetRevision: {{ .Values.gitea.actions.version }}
+    targetRevision: {{ .Values.versions.giteaActions }}
     helm:
       releaseName: gitea-actions
       values: |-

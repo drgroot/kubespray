@@ -246,6 +246,10 @@ spec:
                   use: sig
                   key:
                     path: /secrets/authelia-oidc/jwks-private
+              {{- with .Values.authelia.clients.authorization_policies }}
+              authorization_policies:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
               {{- with .Values.authelia.clients.claims_policies }}
               claims_policies:
                 {{- toYaml . | nindent 16 }}

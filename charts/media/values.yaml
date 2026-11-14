@@ -434,6 +434,8 @@ components:
                 name: media-downloaders-narr-search-trigger-api-keys
                 key: SONARR_API_KEY
         storage:
+          config:
+            storageClass: thorin-nobackup
           media:
             enabled: false
 

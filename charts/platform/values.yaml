@@ -9,6 +9,7 @@ versions:
   argocd: v3.6.1
   authelia: 0.11.20
   gitea: 12.7.0
+  giteaActions: 0.1.2
   redis: 8
   registry: 3.1
   # Maintained MinIO fork; release notes:
@@ -169,11 +170,11 @@ crossplane:
         - key: input
           value: onprem/dynamic/authelia-client-creds
         - key: properties
-          value: client-secret-affine,client-secret-argocd,client-secret-bitwarden,client-secret-filebrowse,client-secret-gitea,client-secret-grafana,client-secret-immich,client-secret-postiz,client-secret-servc,client-secret-sure,client-secret-openbao
+          value: client-secret-affine,client-secret-argocd,client-secret-bitwarden,client-secret-filebrowse,client-secret-gitea,client-secret-grafana,client-secret-immich,client-secret-postiz,client-secret-servc,client-secret-sure,client-secret-openbao,client-secret-silo
         - key: value-types
-          value: password,password,password,password,password,password,password,password,password,password,password
+          value: password,password,password,password,password,password,password,password,password,password,password,password
         - key: specialchars
-          value: no,no,no,no,no,no,no,no,no,no,no
+          value: no,no,no,no,no,no,no,no,no,no,no,no
         - key: output
           value: none
 
@@ -852,6 +853,12 @@ authelia:
 
   clients:
     client_remote_key: dynamic/authelia-client-creds
+    authorization_policies:
+      silo-admins:
+        default_policy: deny
+        rules:
+          - policy: one_factor
+            subject: group:media-admin
     claims_policies:
       openbao:
         id_token:
@@ -871,6 +878,30 @@ authelia:
       property: jwks-public
 
     list:
+      silo:
+        client_id: silo
+        client_name: Silo
+        client_secret_property: client-secret-silo
+        oidc:
+          public: false
+          authorization_policy: silo-admins
+          consent_mode: implicit
+          require_pkce: false
+          redirect_uris:
+            - https://s3-minio.{{ .Values.domains.external }}/oauth_callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          access_token_signed_response_alg: none
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_basic
+
       sure:
         client_id: sure
         client_name: Sure
@@ -1552,7 +1583,6 @@ bandersnatch:
 
 gitea:
   actions:
-    version: 0.1.2
     maxRunners: 5
 
     resources:
