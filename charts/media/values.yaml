@@ -121,11 +121,11 @@ components:
         resources:
           requests:
             cpu: 500m
-            memory: 3Gi
+            memory: 2.5Gi
             nvidia.com/gpu: "1"
           limits:
-            cpu: "4"
-            memory: 6Gi
+            cpu: 1024m
+            memory: 2.5Gi
             nvidia.com/gpu: "1"
         storage:
           metadata:
@@ -443,6 +443,8 @@ components:
         resources:
           requests:
             memory: 2Gi
+          limits:
+            memory: 3Gi
         ingress:
           enabled: true
           host: sabnzbd.yusufali.ca
