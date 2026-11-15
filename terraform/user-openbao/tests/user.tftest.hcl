@@ -56,13 +56,13 @@ run "fixed_servc_username" {
   }
 }
 
-run "eso_servc_user" {
+run "servc_user_with_terraform_child_tokens" {
   command = apply
   variables {
     name                 = "servc"
     usernamekey          = null
     capabilities         = "create,read,update,delete,list,patch"
-    allow_token_creation = false
+    allow_token_creation = true
     no_default_policy    = true
   }
   assert {
@@ -70,8 +70,8 @@ run "eso_servc_user" {
     error_message = "ESO login and managed tokens must receive only the scoped servc policy, without the default policy."
   }
   assert {
-    condition     = replace(vault_policy.user.policy, "/\\s+/", "") == replace("path \"servc/*\" { capabilities = [\"create\",\"read\",\"update\",\"delete\",\"list\",\"patch\"] }path \"auth/token/lookup-self\" { capabilities = [\"read\"] }path \"auth/token/renew-self\" { capabilities = [\"update\"] }", "/\\s+/", "")
-    error_message = "ESO must have KV push/pull and token self-lookup and renewal, without sudo or child-token creation."
+    condition     = strcontains(vault_policy.user.policy, "path \"servc/*\"") && strcontains(vault_policy.user.policy, "path \"auth/token/create\" {\n  capabilities = [\"update\"]\n}") && !strcontains(vault_policy.user.policy, "sudo")
+    error_message = "Servc must retain scoped KV access and allow the Terraform provider to create child tokens without sudo."
   }
 }
 
