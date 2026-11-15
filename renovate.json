@@ -352,6 +352,18 @@
     },
     {
       "customType": "regex",
+      "description": "Media Gluetun VPN sidecar image",
+      "managerFilePatterns": [
+        "/^charts/media/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "\\bimage: [\"\\x27]?(?<depName>dockerhub\\.yusufali\\.ca/qmcgaw/gluetun):(?<currentValue>v?[0-9][^\\s\"\\x27@]*)(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
       "description": "Mordor image.name/tag pairs",
       "managerFilePatterns": [
         "/^charts/mordor/.*\\.ya?ml$/"
