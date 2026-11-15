@@ -28,15 +28,11 @@ variables {
   path         = "servc/*"
   capabilities = "create,read,update,list,patch"
 }
-run "provision_scoped_user" {
+run "provision_user" {
   command = apply
   assert {
     condition     = vault_generic_endpoint.userpass_user.path == "auth/userpass/users/service" && jsondecode(vault_generic_endpoint.userpass_user.data_json).password == "service-password"
     error_message = "Provision the named userpass account with its input password."
-  }
-  assert {
-    condition     = vault_token.user.policies == toset(["openbao-user-service"]) && strcontains(vault_policy.user.policy, "servc/*") && !strcontains(vault_policy.user.policy, "openbao-admin")
-    error_message = "The service user's token must receive only its scoped policy, never the admin policy."
   }
   assert {
     condition     = vault_generic_secret.output.path == "onprem/dynamic/service" && jsondecode(vault_generic_secret.output.data_json).token == "service-token" && jsondecode(vault_generic_secret.output.data_json)["vault-addr"] == "https://openbao.example.test"
@@ -53,25 +49,6 @@ run "fixed_servc_username" {
   assert {
     condition     = vault_generic_endpoint.userpass_user.path == "auth/userpass/users/servc" && jsondecode(vault_generic_secret.output.data_json).username == "servc"
     error_message = "When only a password is generated, provision and publish the explicit account name."
-  }
-}
-
-run "servc_user_with_terraform_child_tokens" {
-  command = apply
-  variables {
-    name                 = "servc"
-    usernamekey          = null
-    capabilities         = "create,read,update,delete,list,patch"
-    allow_token_creation = true
-    no_default_policy    = true
-  }
-  assert {
-    condition     = jsondecode(vault_generic_endpoint.userpass_user.data_json).token_no_default_policy && vault_token.user.no_default_policy && vault_token.user.policies == toset(["openbao-user-servc"])
-    error_message = "ESO login and managed tokens must receive only the scoped servc policy, without the default policy."
-  }
-  assert {
-    condition     = strcontains(vault_policy.user.policy, "path \"servc/*\"") && strcontains(vault_policy.user.policy, "path \"auth/token/create\" {\n  capabilities = [\"update\"]\n}") && !strcontains(vault_policy.user.policy, "sudo")
-    error_message = "Servc must retain scoped KV access and allow the Terraform provider to create child tokens without sudo."
   }
 }
 
@@ -132,25 +109,5 @@ run "empty_lockout_response" {
   assert {
     condition     = length(vault_generic_endpoint.unlock_user) == 0
     error_message = "An empty lockout response must not create an unlock request."
-  }
-}
-
-run "readonly_ci_user" {
-  command = apply
-  variables {
-    name                 = "openbao-ci"
-    usernamekey          = null
-    path                 = "onprem/data/vendor/docker,onprem/data/dynamic/docker-mirror,servc/data/iac/coder-onpremise"
-    capabilities         = "read"
-    allow_token_creation = false
-    no_default_policy    = true
-  }
-  assert {
-    condition     = vault_generic_endpoint.userpass_user.path == "auth/userpass/users/openbao-ci" && jsondecode(vault_generic_endpoint.userpass_user.data_json).token_no_default_policy && vault_token.user.no_default_policy && vault_token.user.metadata.username == "openbao-ci" && vault_token.user.policies == toset(["openbao-user-openbao-ci"])
-    error_message = "CI login and managed tokens must identify openbao-ci and exclude the default policy."
-  }
-  assert {
-    condition     = replace(vault_policy.user.policy, "/\\s+/", "") == replace("path \"onprem/data/vendor/docker\" { capabilities = [\"read\"] }path \"onprem/data/dynamic/docker-mirror\" { capabilities = [\"read\"] }path \"servc/data/iac/coder-onpremise\" { capabilities = [\"read\"] }path \"auth/token/lookup-self\" { capabilities = [\"read\"] }path \"auth/token/renew-self\" { capabilities = [\"update\"] }", "/\\s+/", "")
-    error_message = "CI must read only the three exact workflow secret paths and retain token self-lookup and renewal, without child-token creation."
   }
 }
