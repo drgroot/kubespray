@@ -480,15 +480,32 @@ spec:
           image:
             registry: dockerhub.{{ .Values.domains.external }}/library
 ---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: gitea-keda-secrets
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: vault
+    kind: ClusterSecretStore
+  target:
+    name: gitea-keda-secrets
+  data:
+    - remoteRef:
+        key: dynamic/gitea-keda
+        property: token
+      secretKey: token
+---
 apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
-  name: gitea-db-auth
+  name: gitea-api-auth
 spec:
   secretTargetRef:
-    - parameter: connection
-      name: gitea-postgres-secrets
-      key: url
+    - parameter: token
+      name: gitea-keda-secrets
+      key: token
 ---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -513,15 +530,17 @@ spec:
               periodSeconds: 30
 
   triggers:
-    - type: postgresql
+    - type: metrics-api
+      name: jobs
+      metricType: AverageValue
       metadata:
-        targetQueryValue: "1"
-        query: |
-          SELECT CASE WHEN COUNT(*) > 0 THEN 5 ELSE 0 END::int
-          FROM public.action_run_job
-          WHERE status != 4 and stopped = 0;
+        url: "https://git.{{ .Values.domains.external }}/api/v1/admin/actions/jobs?status=queued&status=in_progress&limit=1"
+        format: json
+        valueLocation: total_count
+        targetValue: "1"
+        authMode: bearer
       authenticationRef:
-        name: gitea-db-auth
+        name: gitea-api-auth
 ---
 apiVersion: batch/v1
 kind: CronJob

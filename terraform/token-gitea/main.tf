@@ -3,7 +3,7 @@ variable "name" {
 }
 
 locals {
-  gitea_username = var.name
+  gitea_username = var.usernamekey == null ? var.name : data.vault_generic_secret.credentials.data[var.usernamekey]
 }
 
 # Match user-openbao's effective renewal cadence: a 24-hour lifetime renewed
@@ -14,7 +14,7 @@ resource "time_rotating" "user" {
 
 resource "gitea_token" "user" {
   # Gitea requires unique names, including while both generations are valid.
-  name   = "${local.gitea_username}-opentofu-${time_rotating.user.unix}"
+  name   = "${var.name}-opentofu-${time_rotating.user.unix}"
   scopes = ["all"]
 
   lifecycle {
