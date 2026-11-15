@@ -2,6 +2,8 @@
 # - owner (normal): username grants its own external-group policy without a UUID input.
 # - additional_path (normal): a second workspace adds a policy to the existing user's group.
 # - another_user (normal): a different username selects a separate group and policy.
+# - multiple_paths: trim and deduplicate paths, applying capabilities to each rule.
+# - empty paths: reject blank input and empty comma-separated entries.
 
 mock_provider "vault" {
   mock_data "vault_generic_secret" {
@@ -79,4 +81,49 @@ run "another_user" {
     condition     = vault_identity_group.user[0].name == "oidc-oidc-salihah" && vault_identity_group_alias.authelia[0].name == "salihah" && vault_identity_group_policies.user_path.policies == toset(["oidc-salihah-onprem-data-authelia-salihah"])
     error_message = "A different username must receive a separate group and only its own policy."
   }
+}
+
+run "multiple_paths" {
+  command = plan
+  variables {
+    manage_identity = false
+    path            = " onprem/data/authelia/*, onprem/metadata/authelia/* ,onprem/data/authelia/* "
+    capabilities    = "create,read,update,delete,list,patch"
+  }
+  assert {
+    condition = (
+      length(regexall("path \"", vault_policy.user_path.policy)) == 2 &&
+      strcontains(vault_policy.user_path.policy, "path \"onprem/data/authelia/*\" {\n  capabilities = [\"create\",\"read\",\"update\",\"delete\",\"list\",\"patch\"]\n}") &&
+      strcontains(vault_policy.user_path.policy, "path \"onprem/metadata/authelia/*\" {\n  capabilities = [\"create\",\"read\",\"update\",\"delete\",\"list\",\"patch\"]\n}")
+    )
+    error_message = "Each distinct trimmed path must get its own rule with the requested capabilities."
+  }
+  assert {
+    condition     = vault_policy.user_path.name == "oidc-yusuf-onprem-data-authelia---onprem-metadata-authelia-" && vault_identity_group_policies.user_path.policies == toset([vault_policy.user_path.name])
+    error_message = "The combined policy must have a normalized name and be attached to the existing user's group."
+  }
+}
+
+run "blank_path" {
+  command = plan
+  variables {
+    path = " "
+  }
+  expect_failures = [var.path]
+}
+
+run "empty_middle_path" {
+  command = plan
+  variables {
+    path = "onprem/data/authelia/*, ,onprem/metadata/authelia/*"
+  }
+  expect_failures = [var.path]
+}
+
+run "empty_trailing_path" {
+  command = plan
+  variables {
+    path = "onprem/data/authelia/*,"
+  }
+  expect_failures = [var.path]
 }

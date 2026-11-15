@@ -21,12 +21,12 @@ variable "output" {
 }
 
 variable "path" {
-  description = "OpenBao API path to authorize, for example onprem/data/authelia/salihah."
+  description = "Comma-separated OpenBao API paths to authorize with the same capabilities, for example onprem/data/authelia/*,onprem/metadata/authelia/*. Whitespace is trimmed."
   type        = string
 
   validation {
-    condition     = trimspace(var.path) != ""
-    error_message = "path must not be empty."
+    condition     = alltrue([for path in split(",", var.path) : trimspace(path) != ""])
+    error_message = "path must contain one or more comma-separated paths with no empty entries."
   }
 }
 
@@ -56,6 +56,8 @@ variable "manage_identity" {
 }
 
 locals {
+  policy_paths        = distinct([for path in split(",", var.path) : trimspace(path)])
+  policy_path_name    = join("--", [for path in local.policy_paths : replace(replace(path, "*", ""), "/", "-")])
   policy_capabilities = [for capability in split(",", var.capabilities) : trimspace(capability)]
 }
 
@@ -73,13 +75,14 @@ data "vault_identity_entity" "user" {
 
 resource "vault_policy" "user_path" {
   provider = vault.admin
-  name     = "oidc-${var.name}-${replace(replace(var.path, "*", ""), "/", "-")}"
+  name     = "oidc-${var.name}-${local.policy_path_name}"
 
-  policy = <<-EOT
-    path ${jsonencode(var.path)} {
+  policy = join("\n", [for path in local.policy_paths : <<-EOT
+    path ${jsonencode(path)} {
       capabilities = ${jsonencode(local.policy_capabilities)}
     }
   EOT
+  ])
 }
 
 resource "vault_identity_entity" "user" {
