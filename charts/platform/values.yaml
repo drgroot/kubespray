@@ -814,47 +814,6 @@ crossplane:
         - key: passwordkey
           value: root-password
 
-    gitea-servc-vault-username:
-      enabled: true
-      type: orgsecret
-      provider: gitea
-      name: VAULT_USERNAME
-      vars:
-        - key: path
-          value: onprem/dynamic/vault-user-servc
-        - key: property
-          value: username
-        - key: org
-          value: serv-c
-        - key: gitea_url
-          value: https://git.yusufali.ca
-        - key: credentialpath
-          value: onprem/vendor/gitea
-        - key: usernamekey
-          value: root-username
-        - key: passwordkey
-          value: root-password
-
-    gitea-servc-vault-password:
-      enabled: true
-      type: orgsecret
-      provider: gitea
-      name: VAULT_PASSWORD
-      vars:
-        - key: path
-          value: onprem/dynamic/vault-user-servc
-        - key: property
-          value: password
-        - key: org
-          value: serv-c
-        - key: gitea_url
-          value: https://git.yusufali.ca
-        - key: credentialpath
-          value: onprem/vendor/gitea
-        - key: usernamekey
-          value: root-username
-        - key: passwordkey
-          value: root-password
     gitea-servc-vault-token:
       enabled: true
       type: orgsecret
