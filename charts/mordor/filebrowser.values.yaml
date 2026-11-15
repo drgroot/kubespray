@@ -49,7 +49,7 @@ volumeMounts:
     mountPath: /srv
     subPath: data
   - name: social-media
-    mountPath: /srv/social_media
+    mountPath: /srv/users/yusuf/social_media
 
 volumes:
   - name: social-media
