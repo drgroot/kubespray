@@ -160,6 +160,7 @@ storageClasses:
           property: rclone
       ignoreFolders:
         - kube-platform/minio/.minio.sys/tmp/.trash
+        - kube-platform/minio/thanos
 
   - name: fast
     prefix: thorin-
