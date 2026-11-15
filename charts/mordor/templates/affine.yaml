@@ -63,7 +63,7 @@ spec:
         fullnameOverride: affine-db
         database: affine
 
-        image: pgvector/pgvector:pg16
+        image: pgvector/pgvector:pg18
         imagePullSecrets:
           - name: cluster-docker-secrets
         storageclass: {{ .Values.storage.fast }}
