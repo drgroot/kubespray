@@ -56,6 +56,25 @@ run "fixed_servc_username" {
   }
 }
 
+run "eso_servc_user" {
+  command = apply
+  variables {
+    name                 = "servc"
+    usernamekey          = null
+    capabilities         = "create,read,update,delete,list,patch"
+    allow_token_creation = false
+    no_default_policy    = true
+  }
+  assert {
+    condition     = jsondecode(vault_generic_endpoint.userpass_user.data_json).token_no_default_policy && vault_token.user.no_default_policy && vault_token.user.policies == toset(["openbao-user-servc"])
+    error_message = "ESO login and managed tokens must receive only the scoped servc policy, without the default policy."
+  }
+  assert {
+    condition     = replace(vault_policy.user.policy, "/\\s+/", "") == replace("path \"servc/*\" { capabilities = [\"create\",\"read\",\"update\",\"delete\",\"list\",\"patch\"] }path \"auth/token/lookup-self\" { capabilities = [\"read\"] }path \"auth/token/renew-self\" { capabilities = [\"update\"] }", "/\\s+/", "")
+    error_message = "ESO must have KV push/pull and token self-lookup and renewal, without sudo or child-token creation."
+  }
+}
+
 run "unlock_locked_servc" {
   command = apply
   variables {
@@ -131,7 +150,7 @@ run "readonly_ci_user" {
     error_message = "CI login and managed tokens must identify openbao-ci and exclude the default policy."
   }
   assert {
-    condition     = replace(vault_policy.user.policy, "/\\s+/", "") == replace("path \"onprem/data/vendor/docker\" { capabilities = [\"read\"] }path \"onprem/data/dynamic/docker-mirror\" { capabilities = [\"read\"] }path \"servc/data/iac/coder-onpremise\" { capabilities = [\"read\"] }path \"auth/token/lookup-self\" { capabilities = [\"read\"] }", "/\\s+/", "")
-    error_message = "CI must read only the three exact workflow secret paths and its own token metadata, without child-token creation."
+    condition     = replace(vault_policy.user.policy, "/\\s+/", "") == replace("path \"onprem/data/vendor/docker\" { capabilities = [\"read\"] }path \"onprem/data/dynamic/docker-mirror\" { capabilities = [\"read\"] }path \"servc/data/iac/coder-onpremise\" { capabilities = [\"read\"] }path \"auth/token/lookup-self\" { capabilities = [\"read\"] }path \"auth/token/renew-self\" { capabilities = [\"update\"] }", "/\\s+/", "")
+    error_message = "CI must read only the three exact workflow secret paths and retain token self-lookup and renewal, without child-token creation."
   }
 }

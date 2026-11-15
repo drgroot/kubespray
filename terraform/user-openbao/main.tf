@@ -54,7 +54,7 @@ variable "capabilities" {
 }
 
 variable "allow_token_creation" {
-  description = "Allow this user to create child tokens for the Terraform provider. Disable for CI readers."
+  description = "Allow this user to create child tokens for the Terraform provider. Disable for accounts that only access secrets."
   type        = bool
   default     = true
 }
@@ -79,6 +79,7 @@ resource "vault_policy" "user" {
   provider = vault.admin
   name     = "openbao-user-${var.name}"
 
+  # Include self-renewal for periodic tokens even when the default policy is excluded.
   policy = <<-EOT
     %{for path in split(",", var.path)~}
     path ${jsonencode(trimspace(path))} {
@@ -96,6 +97,10 @@ resource "vault_policy" "user" {
     %{endif~}
     path "auth/token/lookup-self" {
       capabilities = ["read"]
+    }
+
+    path "auth/token/renew-self" {
+      capabilities = ["update"]
     }
   EOT
 }

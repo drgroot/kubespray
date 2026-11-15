@@ -335,7 +335,6 @@ crossplane:
           value: password
         - key: openbao_addr
           value: https://vault.{{ .Values.domains.external }}
-        # Exact KV v2 API paths read by the repository's GitHub workflows.
         - key: path
           value: onprem/data/vendor/docker,onprem/data/dynamic/docker-mirror,servc/data/iac/coder-onpremise
         - key: capabilities
@@ -379,7 +378,11 @@ crossplane:
         - key: path
           value: servc/*
         - key: capabilities
-          value: create,read,update,delete,list,patch,sudo
+          value: create,read,update,delete,list,patch
+        - key: allow_token_creation
+          value: "false"
+        - key: no_default_policy
+          value: "true"
 
     openbao-oidc:
       enabled: true
@@ -445,33 +448,7 @@ crossplane:
         - key: output
           value: ""
         - key: path
-          value: onprem/metadata/authelia
-        - key: capabilities
-          value: list
-
-    openbao-oidc-yusuf-onprem-browse-root:
-      enabled: true
-      type: openbao
-      provider: oidc
-      name: yusuf
-      vars:
-        - key: manage_identity
-          value: "false"
-        - key: path
-          value: onprem/metadata
-        - key: capabilities
-          value: list
-
-    openbao-oidc-yusuf-onprem-browse:
-      enabled: true
-      type: openbao
-      provider: oidc
-      name: yusuf
-      vars:
-        - key: manage_identity
-          value: "false"
-        - key: path
-          value: onprem/metadata/*
+          value: onprem/metadata/authelia,onprem/metadata,onprem/metadata/*,onprem/metadata/vendor/*,onprem/metadata/vendor
         - key: capabilities
           value: list
 
@@ -488,50 +465,11 @@ crossplane:
         - key: manage_identity
           value: "false"
         - key: path
-          value: onprem/data/authelia/yusuf
+          value: onprem/data/authelia/*,onprem/metadata/authelia/*
         - key: capabilities
-          value: read,update,patch
+          value: create,read,update,delete,list,patch
 
-    openbao-oidc-yusuf-vendor:
-      enabled: true
-      type: openbao
-      provider: oidc
-      name: yusuf
-      vars:
-        - key: manage_identity
-          value: "false"
-        - key: path
-          value: onprem/data/vendor/*
-        - key: capabilities
-          value: create,read,update,list,patch
-
-    openbao-oidc-yusuf-vendor-browse:
-      enabled: true
-      type: openbao
-      provider: oidc
-      name: yusuf
-      vars:
-        - key: manage_identity
-          value: "false"
-        - key: path
-          value: onprem/metadata/vendor/*
-        - key: capabilities
-          value: list
-
-    openbao-oidc-yusuf-vendor-browse-root:
-      enabled: true
-      type: openbao
-      provider: oidc
-      name: yusuf
-      vars:
-        - key: manage_identity
-          value: "false"
-        - key: path
-          value: onprem/metadata/vendor
-        - key: capabilities
-          value: list
-
-    openbao-oidc-yusuf-servc:
+    openbao-oidc-yusuf-authelia-delete:
       enabled: true
       type: openbao
       provider: oidc
@@ -544,7 +482,24 @@ crossplane:
         - key: manage_identity
           value: "false"
         - key: path
-          value: servc/*
+          value: onprem/delete/authelia/*,onprem/undelete/authelia/*,onprem/destroy/authelia/*
+        - key: capabilities
+          value: update
+
+    openbao-oidc-yusuf-vendor:
+      enabled: true
+      type: openbao
+      provider: oidc
+      name: yusuf
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: onprem/data/vendor/*,servc/*
         - key: capabilities
           value: create,read,update,list,patch
 
