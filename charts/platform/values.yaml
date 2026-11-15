@@ -830,6 +830,10 @@ authelia:
 
   clients:
     client_remote_key: dynamic/authelia-client-creds
+    lifespans:
+      custom:
+        coder:
+          refresh_token: 48h
     authorization_policies:
       silo-admins:
         default_policy: deny
@@ -860,6 +864,7 @@ authelia:
         client_name: Coder
         client_secret_property: client-secret-coder
         oidc:
+          lifespan: coder
           public: false
           authorization_policy: one_factor
           consent_mode: implicit

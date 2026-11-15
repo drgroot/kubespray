@@ -250,6 +250,10 @@ spec:
               authorization_policies:
                 {{- toYaml . | nindent 16 }}
               {{- end }}
+              {{- with .Values.authelia.clients.lifespans }}
+              lifespans:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
               {{- with .Values.authelia.clients.claims_policies }}
               claims_policies:
                 {{- toYaml . | nindent 16 }}
