@@ -159,7 +159,7 @@ storageClasses:
           key: dynamic/s3-thorin-backups
           property: rclone
       ignoreFolders:
-        - mordor/frigate-media
+        - kube-platform/minio/.minio.sys/tmp/.trash
 
   - name: fast
     prefix: thorin-
