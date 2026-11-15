@@ -380,7 +380,7 @@ crossplane:
         - key: capabilities
           value: create,read,update,delete,list,patch
         - key: allow_token_creation
-          value: "false"
+          value: "true"
         - key: no_default_policy
           value: "true"
 
