@@ -692,6 +692,23 @@ crossplane:
         - key: output
           value: onprem/dynamic/postgres-app-authelia
 
+    gitea-keda-token:
+      enabled: true
+      type: token
+      provider: gitea
+      name: keda
+      vars:
+        - key: gitea_url
+          value: https://git.{{ .Values.domains.external }}
+        - key: credentialpath
+          value: onprem/vendor/gitea
+        - key: usernamekey
+          value: root-username
+        - key: passwordkey
+          value: root-password
+        - key: output
+          value: onprem/dynamic/gitea-keda
+
     gitea-argocd:
       enabled: true
       type: user
@@ -1649,6 +1666,15 @@ secretSync:
       properties:
         - username
         - token
+      data:
+        - secretKey: runner-token
+          remoteRef:
+            key: vendor/gitea
+            property: runner-token
+        - secretKey: keda-token
+          remoteRef:
+            key: dynamic/gitea-keda
+            property: token
     output:
       kind: ClusterSecretStore
       name: servc
@@ -1656,6 +1682,8 @@ secretSync:
       properties:
         username: username
         token: token
+        runner-token: runner-token
+        keda-token: keda-token
 
   - name: docker
     input:
