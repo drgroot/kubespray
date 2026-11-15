@@ -2,27 +2,6 @@
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: coder-oauth-secrets
-  namespace: servc-infra
-spec:
-  secretStoreRef:
-    name: vault
-    kind: ClusterSecretStore
-  target:
-    name: coder-oauth-secrets
-  data:
-    - remoteRef:
-        key: vendor/gitea
-        property: oauth-clientid
-      secretKey: CODER_OAUTH2_GITHUB_CLIENT_ID
-    - remoteRef:
-        key: vendor/gitea
-        property: oauth-clientsecret
-      secretKey: CODER_OAUTH2_GITHUB_CLIENT_SECRET
----
-apiVersion: external-secrets.io/v1
-kind: ExternalSecret
-metadata:
   name: gitea-runner-secrets
 spec:
   refreshInterval: 1m

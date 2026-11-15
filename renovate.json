@@ -55,6 +55,20 @@
     },
     {
       "customType": "regex",
+      "description": "Platform Coder chart",
+      "managerFilePatterns": [
+        "/^charts/platform/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  coder: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "coder",
+      "registryUrlTemplate": "https://helm.coder.com/v2",
+      "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
       "description": "Platform Gitea Actions chart",
       "managerFilePatterns": [
         "/^charts/platform/values\\.yaml$/"
