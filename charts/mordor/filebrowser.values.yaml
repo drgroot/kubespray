@@ -50,8 +50,14 @@ volumeMounts:
     subPath: data
   - name: social-media
     mountPath: /srv/users/yusuf/social_media
+  - name: syncthing
+    mountPath: /srv/users/yusuf/syncthing
+    subPath: documents
 
 volumes:
+  - name: syncthing
+    persistentVolumeClaim:
+      claimName: syncthing-pvc
   - name: social-media
     nfs:
       server: 192.168.1.3
