@@ -30,5 +30,5 @@ spec:
     helm:
       releaseName: system-envoy
       values: |-
-        namespaceOverride: {{ .Values.envoy.namespace }}
+        namespaceOverride: system-envoy
 {{- end -}}
