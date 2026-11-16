@@ -8,16 +8,6 @@ spec:
     kind: ClusterSecretStore
   target:
     name: media-downloaders-deluge-vpn
-    template:
-      engineVersion: v2
-      data:
-        VPN_SERVICE_PROVIDER: '{{ `{{ .VPN_SERVICE_PROVIDER }}` }}'
-        OPENVPN_USER: '{{ `{{ .OPENVPN_USER }}` }}'
-        OPENVPN_PASSWORD: '{{ `{{ .OPENVPN_PASSWORD }}` }}'
-        # Privado publishes cities (e.g. Atlanta), with no region metadata.
-        # Preserve the vault's SERVER_REGIONS key and adapt it for Gluetun.
-        SERVER_REGIONS: '{{ `{{ if ne .VPN_SERVICE_PROVIDER "privado" }}{{ .SERVER_REGIONS }}{{ end }}` }}'
-        SERVER_CITIES: '{{ `{{ if eq .VPN_SERVICE_PROVIDER "privado" }}{{ .SERVER_REGIONS }}{{ end }}` }}'
   data:
     - secretKey: VPN_SERVICE_PROVIDER
       remoteRef:
