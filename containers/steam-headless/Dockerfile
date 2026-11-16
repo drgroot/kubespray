@@ -65,6 +65,17 @@ RUN test "$(dpkg --print-architecture)" = amd64 \
     && mv squashfs-root pince \
     && rm /tmp/pince.AppImage
 
+FROM debian:trixie-slim AS rockstar
+ARG ROCKSTAR_INSTALLER_SHA256=7bcbe2fa7e218aa740cced4e72a74e3b0f32e6a6ba7cd8228dd65f3b07f2e575
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && install -d /opt/rockstar-games-launcher \
+    && curl -fL --retry 3 \
+        "https://gamedownloads.rockstargames.com/public/installer/Rockstar-Games-Launcher.exe" \
+        -o /opt/rockstar-games-launcher/installer.exe \
+    && echo "${ROCKSTAR_INSTALLER_SHA256}  /opt/rockstar-games-launcher/installer.exe" | sha256sum -c -
+
 FROM josh5/steam-headless:latest
 USER root
 
@@ -90,6 +101,8 @@ COPY --from=pcsx2 /opt/pcsx2 /opt/pcsx2
 COPY --from=gopher64 /opt/gopher64 /opt/gopher64
 COPY --from=eden /opt/eden /opt/eden
 COPY --from=pince /opt/pince /opt/pince
+COPY --from=rockstar /opt/rockstar-games-launcher /opt/rockstar-games-launcher
+COPY --chmod=755 rockstar-games-launcher /usr/local/bin/rockstar-games-launcher
 COPY --chmod=755 pince-launcher /usr/local/bin/pince
 COPY --chmod=755 emulator-launcher /usr/local/bin/emulator-launcher
 COPY --chmod=755 init-emulators.sh /usr/local/sh-init.d/95-configure_emulators.sh
@@ -101,6 +114,7 @@ COPY pcsx2.desktop /usr/share/applications/pcsx2.desktop
 COPY gopher64.desktop /usr/share/applications/gopher64.desktop
 COPY eden.desktop /usr/share/applications/eden.desktop
 COPY pince.desktop /usr/share/applications/pince.desktop
+COPY rockstar-games-launcher.desktop /usr/share/applications/rockstar-games-launcher.desktop
 
 ENV PUID=1000 \
     PGID=1000 \

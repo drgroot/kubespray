@@ -5,6 +5,8 @@ AppImage, checksum verified and extracted so FUSE is unnecessary), Dolphin,
 Gopher64 1.1.42 (official standalone executable, checksum verified), and
 Eden 0.2.1 (official amd64 PGO AppImage, checksum verified and extracted).
 Includes PINCE 0.10.2 (official AppImage, checksum verified and extracted).
+Includes the official Rockstar Games Launcher installer (checksum verified),
+launched through Proton using the base image's `umu-run`.
 Supports Linux amd64. The current upstream latest image uses Fedora and systemd.
 
 Startup prefers a visible NVIDIA DRM render device for both the compositor and
@@ -48,6 +50,8 @@ and `PCSX2_SHA256` together when upgrading PCSX2.
 Update `GOPHER64_VERSION` and `GOPHER64_SHA256` together when upgrading Gopher64.
 Update `EDEN_VERSION` and `EDEN_SHA256` together when upgrading Eden.
 Update `PINCE_VERSION` and `PINCE_SHA256` together when upgrading PINCE.
+Update `ROCKSTAR_INSTALLER_SHA256` after verifying a new official Rockstar
+installer; the upstream download URL changes in place.
 
 ## Persistent configuration
 
@@ -80,6 +84,26 @@ the desktop environment. Settings live under `~/.config/PINCE` in the persistent
 Steam home. Save `.pct` session files somewhere in that home to retain them.
 The existing privileged Steam pod provides the permissions needed to debug game
 processes in the same container.
+
+## Rockstar Games Launcher
+
+Choose **Rockstar Games Launcher** in the desktop application menu, or run
+`rockstar-games-launcher`. The first launch opens Rockstar's setup wizard;
+keep the default installation directory. Subsequent launches open the launcher.
+Sign in using your Rockstar account after setup.
+
+The wrapper reuses Proton from Steam's default library, the shared
+`/mnt/games/GameLibrary/Steam` library, or `compatibilitytools.d`. Set `PROTONPATH`
+to a Proton directory to select a specific version or another library. The
+base image already includes [umu](https://github.com/Open-Wine-Components/umu-launcher),
+which supplies the Steam runtime outside Steam and downloads Proton if none is
+installed. Its first run needs internet access and can take several minutes.
+
+The launcher's prefix, account data, and default game installations persist in
+`~/.local/share/rockstar-games-launcher/pfx`. Set `ROCKSTAR_WINEPREFIX` to override
+this location. For games on the shared games volume, select a directory under
+`Z:\mnt\games` in Rockstar's installer. Launch from the desktop session so the
+installer and login windows are visible.
 
 ## Coder integration
 
