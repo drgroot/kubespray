@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# PINCE requires root. Elevate before AppRun: its own elevation expects a mounted
+# AppImage, whereas this image uses an extracted AppDir without FUSE.
+if (( EUID != 0 )); then
+    exec sudo -E -- /usr/local/bin/pince "$@"
+fi
+
+export HOME="${USER_HOME:-/home/steamheadless}"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_CACHE_HOME="$HOME/.cache"
+
+exec /opt/pince/AppRun "$@"

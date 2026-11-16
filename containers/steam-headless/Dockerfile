@@ -48,11 +48,28 @@ RUN test "$(dpkg --print-architecture)" = amd64 \
     && mv "$(readlink -f squashfs-root)" eden \
     && rm /tmp/eden.AppImage
 
+FROM debian:trixie-slim AS pince
+ARG PINCE_VERSION=0.10.2
+ARG PINCE_SHA256=4454664009aa4f2ada7e38971ab8d99215a917d8f3f4e2158b72d6ed4c0908b8
+RUN test "$(dpkg --print-architecture)" = amd64 \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fL --retry 3 \
+        "https://github.com/korcankaraokcu/PINCE/releases/download/v${PINCE_VERSION}/PINCE-x86_64.AppImage" \
+        -o /tmp/pince.AppImage \
+    && echo "${PINCE_SHA256}  /tmp/pince.AppImage" | sha256sum -c - \
+    && chmod +x /tmp/pince.AppImage \
+    && cd /opt \
+    && /tmp/pince.AppImage --appimage-extract \
+    && mv squashfs-root pince \
+    && rm /tmp/pince.AppImage
+
 FROM josh5/steam-headless:latest
 USER root
 
 # The latest upstream image is Fedora. Gopher64 also needs fontconfig at runtime.
-RUN dnf install -y --setopt=install_weak_deps=False dolphin-emu fontconfig \
+RUN dnf install -y --setopt=install_weak_deps=False dolphin-emu fontconfig sudo \
     && dnf clean all
 
 # The persistent NVIDIA cache can carry NFS ACLs that the container filesystem
@@ -72,6 +89,8 @@ RUN sed -i 's/for _ in {1\.\.200}; do/for _ in {1..2400}; do/' \
 COPY --from=pcsx2 /opt/pcsx2 /opt/pcsx2
 COPY --from=gopher64 /opt/gopher64 /opt/gopher64
 COPY --from=eden /opt/eden /opt/eden
+COPY --from=pince /opt/pince /opt/pince
+COPY --chmod=755 pince-launcher /usr/local/bin/pince
 COPY --chmod=755 emulator-launcher /usr/local/bin/emulator-launcher
 COPY --chmod=755 init-emulators.sh /usr/local/sh-init.d/95-configure_emulators.sh
 COPY --chmod=755 start-coder-agent /usr/local/bin/start-coder-agent
@@ -81,6 +100,7 @@ COPY steam-local-runtime.conf /etc/systemd/system/steam-headless-steam.service.d
 COPY pcsx2.desktop /usr/share/applications/pcsx2.desktop
 COPY gopher64.desktop /usr/share/applications/gopher64.desktop
 COPY eden.desktop /usr/share/applications/eden.desktop
+COPY pince.desktop /usr/share/applications/pince.desktop
 
 ENV PUID=1000 \
     PGID=1000 \
