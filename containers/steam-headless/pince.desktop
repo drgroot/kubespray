@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PINCE
+Comment=Memory scanner and debugger
+Exec=/usr/local/bin/pince %f
+TryExec=/usr/local/bin/pince
+Icon=/opt/pince/PINCE.png
+Terminal=false
+Categories=Development;Debugger;
