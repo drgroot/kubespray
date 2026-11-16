@@ -7,7 +7,7 @@ storage:
 
 versions:
   argocd: v3.6.1
-  authelia: 0.11.20
+  authelia: 0.11.22
   gitea: 12.7.0
   coder: 2.38.0
   giteaActions: 0.1.3
