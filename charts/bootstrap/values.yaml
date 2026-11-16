@@ -174,11 +174,6 @@ tenants:
     permissions:
       - pvc
     updater:
-      - name: deluge
-        image: dockerhub.yusufali.ca/linuxserver/deluge:latest
-        updateStrategy: digest
-        helmImageName: components.downloaders.list.deluge.image.name
-        helmImageVersion: components.downloaders.list.deluge.image.tag
       - name: radarr
         image: linuxserver/radarr:latest
         updateStrategy: digest
