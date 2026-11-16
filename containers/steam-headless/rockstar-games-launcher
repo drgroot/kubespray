@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export HOME="${USER_HOME:-$HOME}"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+
+# umu supplies the Steam runtime for running Proton outside the Steam client.
+# Prefer an explicitly selected Proton, then Steam's installed copies.
+if [[ -z "${PROTONPATH:-}" ]]; then
+    shopt -s nullglob
+    candidates=(
+        "$HOME/.local/share/Steam/steamapps/common"/Proton*/proton
+        "$HOME/.local/share/Steam/compatibilitytools.d"/*/proton
+        "$HOME/.steam/steam/steamapps/common"/Proton*/proton
+        "$HOME/.steam/steam/compatibilitytools.d"/*/proton
+        /mnt/games/GameLibrary/Steam/steamapps/common/Proton*/proton
+    )
+    if (( ${#candidates[@]} )); then
+        while IFS= read -r candidate; do
+            if [[ -x "$candidate" ]]; then
+                export PROTONPATH="${candidate%/proton}"
+                break
+            fi
+        done < <(printf '%s\n' "${candidates[@]}" | sort -Vr)
+    fi
+fi
+
+# Keep the launcher and its Windows user data on the persistent home, separate
+# from Steam games' compatibility prefixes. umu can provision Proton if absent.
+export WINEPREFIX="${ROCKSTAR_WINEPREFIX:-$XDG_DATA_HOME/rockstar-games-launcher/pfx}"
+export GAMEID=umu-default
+export STORE=none
+mkdir -p "$WINEPREFIX"
+
+launcher="$WINEPREFIX/drive_c/Program Files/Rockstar Games/Launcher/Launcher.exe"
+if [[ ! -f "$launcher" ]]; then
+    # First use runs the official setup wizard in the user's desktop session.
+    # Keep its default install location; later launches open the installed app.
+    exec umu-run /opt/rockstar-games-launcher/installer.exe
+fi
+
+cd "${launcher%/*}"
+exec umu-run "$launcher" "$@"

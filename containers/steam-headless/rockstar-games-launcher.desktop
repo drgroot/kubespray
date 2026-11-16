@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Rockstar Games Launcher
+Comment=Install and play Rockstar games using Proton
+Exec=/usr/local/bin/rockstar-games-launcher
+TryExec=/usr/local/bin/rockstar-games-launcher
+Icon=applications-games
+Terminal=false
+Categories=Game;
