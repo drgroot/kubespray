@@ -77,29 +77,37 @@ spec:
   dnsNames:
     - argocd.{{ .Values.domains.external }}
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: argocd-server
   namespace: argocd
-  annotations:
-    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
-  ingressClassName: nginx
-  tls:
-    - hosts:
-        - argocd.{{ .Values.domains.external }}
-      secretName: argocd-tls
+  parentRefs:
+  - name: gateway
+    namespace: system-envoy
+    sectionName: https
+  hostnames:
+  - argocd.{{ .Values.domains.external }}
   rules:
-    - host: argocd.{{ .Values.domains.external }}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  name: https
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - group: gateway.envoyproxy.io
+      kind: Backend
+      name: argocd-server-tls
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: argocd-server-tls
+  namespace: argocd
+spec:
+  endpoints:
+  - fqdn:
+      hostname: argocd-server.argocd.svc.cluster.local
+      port: 443
+  tls:
+    insecureSkipVerify: true

@@ -36,49 +36,191 @@ spec:
       protocol: TCP
     {{- end }}
 ---
-{{- if ($config.ingress).enabled -}}
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+{{- if ($config.route).enabled }}
+{{- $name := printf "%s-%s-%s-svc" (include "servc.fullname" $) $componentType $component }}
+{{- with (dict "root" $ "name" (trimSuffix "-svc" $name) "namespace" $.Release.Namespace "config" $config.route "service" $name "port" ($config.route.port | default (first $ports).port)) }}
+{{- $context := . -}}
+{{- $root := .root -}}
+{{- $name := tpl .name $root -}}
+{{- $ns := .namespace -}}
+{{- $c := .config -}}
+{{- $hosts := $c.hostnames | default list -}}
+{{- $rules := $c.rules | default list -}}
+{{- if $c.host }}{{- $hosts = list $c.host -}}{{- end -}}
+{{- if $c.hosts -}}
+  {{- range $host := $c.hosts -}}
+    {{- $hosts = append $hosts $host.host -}}
+  {{- end -}}
+{{- end -}}
+{{- if not $rules -}}
+  {{- $paths := list (dict "path" "/" "pathType" "Prefix") -}}
+  {{- if $c.hosts }}{{- $paths = (first $c.hosts).paths -}}{{- end -}}
+  {{- range $path := $paths -}}
+    {{- $rules = append $rules (dict "matches" (list (dict "path" (dict "type" (ternary "Exact" "PathPrefix" (eq ($path.pathType | default "Prefix") "Exact")) "value" $path.path))) "backendRefs" (list (dict "name" $context.service "port" $context.port))) -}}
+  {{- end -}}
+{{- end -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-ingress
-  labels:
-    {{- include "servc.labels" $ | nindent 4 }}
-    {{- with $config.labels }}
-      {{- toYaml . | nindent 4 }}
-    {{- end }}
-    type: ingress
-    component: {{ $componentType }}
-    {{ $componentType }}: {{ $component }}
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  {{- with $c.annotations }}
   annotations:
-    {{- with ($config.ingress | default dict).annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-    type: ingress
-spec:
-  ingressClassName: {{ ($config.ingress).className }}
-  rules:
-    {{- if ($config.ingress).host }}
-    - host: {{ ($config.ingress).host }}
-      http:
-        paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ include "servc.fullname" $ }}-{{ $componentType }}-{{ $component }}-svc
-              port:
-                number: {{ ($config.ingress).port | default (first $ports).port }}
-    {{- end }}
-    {{- with ($config.ingress).rules }}
-      {{- toYaml . | nindent 4 }}
-    {{- end }}
-  {{- with ($config.ingress).tls }}
-  tls:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: https
+  hostnames:
+    {{- toYaml $hosts | nindent 4 }}
+  rules:
+    {{- range $i, $rule := $rules }}
+    {{- if $c.bodyLimit }}
+    - name: websocket-{{ $i }}
+      matches:
+        {{- range $match := $rule.matches }}
+        - path:
+            {{- toYaml $match.path | nindent 12 }}
+          headers:
+            - name: Upgrade
+              value: websocket
+        {{- end }}
+      backendRefs:
+        {{- toYaml $rule.backendRefs | nindent 8 }}
+    {{- end }}
+    - name: http-{{ $i }}
+      matches:
+        {{- toYaml $rule.matches | nindent 8 }}
+      {{- if $c.originalURI }}
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            set:
+              - name: X-Original-URI
+                value: "%REQ(:PATH)%"
+      {{- end }}
+      backendRefs:
+        {{- range $b := $rule.backendRefs }}
+        - name: {{ $b.name }}{{ if $c.backendTLS }}-tls{{ end }}
+          {{- if $c.backendTLS }}
+          group: gateway.envoyproxy.io
+          kind: Backend
+          {{- else }}
+          port: {{ $b.port }}
+          {{- end }}
+        {{- end }}
+    {{- end }}
+{{- if or $c.bodyLimit $c.idleTimeout $c.connectTimeout }}
 ---
-{{- end -}}
-{{- end -}}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+spec:
+  targetRefs:
+    {{- if $c.bodyLimit }}
+    {{- range $i, $_ := $rules }}
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $name }}
+      sectionName: http-{{ $i }}
+    {{- end }}
+    {{- else }}
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $name }}
+    {{- end }}
+  {{- if $c.bodyLimit }}
+  requestBuffer:
+    limit: {{ $c.bodyLimit | quote }}
+  {{- end }}
+  timeout:
+    http:
+      requestTimeout: 0s
+      streamIdleTimeout: {{ $c.idleTimeout | default "60s" }}
+    tcp:
+      connectTimeout: {{ $c.connectTimeout | default "5s" }}
+{{- end }}
+{{- if and $c.bodyLimit $c.idleTimeout }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ $name }}-websocket
+  namespace: {{ $ns }}
+spec:
+  targetRefs:
+    {{- range $i, $_ := $rules }}
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $name }}
+      sectionName: websocket-{{ $i }}
+    {{- end }}
+  timeout:
+    http:
+      requestTimeout: 0s
+      streamIdleTimeout: {{ $c.idleTimeout }}
+{{- end }}
+{{- if or $c.auth $c.cors }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $name }}
+  {{- if $c.auth }}
+  extAuth:
+    failOpen: false
+    headersToExtAuth:
+      - accept
+      - cookie
+      - authorization
+      - proxy-authorization
+      - x-forwarded-proto
+    http:
+      backendRefs:
+        - name: authelia
+          namespace: kube-platform
+          port: 80
+      path: /api/authz/ext-authz/
+      headersToBackend:
+        - Remote-User
+        - Remote-Name
+        - Remote-Groups
+        - Remote-Email
+  {{- end }}
+  {{- with $c.cors }}
+  cors:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- if $c.backendTLS }}
+{{- $b := first (first $rules).backendRefs }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: {{ $b.name }}-tls
+  namespace: {{ $ns }}
+spec:
+  endpoints:
+    - fqdn:
+        hostname: {{ $b.name }}.{{ $ns }}.svc.cluster.local
+        port: {{ $b.port }}
+  tls:
+    # Preserve the previous nginx HTTPS upstream behavior for private/self-signed certificates.
+    insecureSkipVerify: true
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

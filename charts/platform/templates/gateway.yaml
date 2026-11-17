@@ -51,6 +51,8 @@ kind: Gateway
 metadata:
   name: gateway
   namespace: system-envoy
+  annotations:
+    external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
 spec:
   gatewayClassName: envoy-nodeport
 
@@ -171,23 +173,28 @@ spec:
         namespaces:
           from: All
 
-    - name: ingress-https
-      protocol: TCP
+    - name: https
+      protocol: HTTPS
       port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: gateway-tls
       allowedRoutes:
         kinds:
-          - kind: TCPRoute
+          - kind: HTTPRoute
         namespaces:
-          from: Same
+          from: All
 
-    - name: ingress-http
-      protocol: TCP
+    - name: http
+      protocol: HTTP
       port: 80
       allowedRoutes:
         kinds:
-          - kind: TCPRoute
+          - kind: HTTPRoute
         namespaces:
           from: Same
+
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
@@ -204,50 +211,6 @@ spec:
           namespace: kube-platform
           port: 5432
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
-metadata:
-  name: ingress-https
-  namespace: system-envoy
-spec:
-  parentRefs:
-    - name: gateway
-      sectionName: ingress-https
-  rules:
-    - backendRefs:
-        - name: ingress-nginx-controller
-          namespace: system-networking
-          port: 443
----
-apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
-metadata:
-  name: ingress-http
-  namespace: system-envoy
-spec:
-  parentRefs:
-    - name: gateway
-      sectionName: ingress-http
-  rules:
-    - backendRefs:
-        - name: ingress-nginx-controller
-          namespace: system-networking
-          port: 80
----
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: ReferenceGrant
-metadata:
-  name: ingress
-  namespace: system-networking
-spec:
-  from:
-    - group: gateway.networking.k8s.io
-      kind: TCPRoute
-      namespace: system-envoy
-  to:
-    - group: ""
-      kind: Service
----
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
@@ -261,3 +224,56 @@ spec:
   to:
     - group: ""
       kind: Service
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gateway-tls
+  namespace: system-envoy
+spec:
+  secretName: gateway-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - {{ .Values.domains.external | quote }}
+    - "*.{{ .Values.domains.external }}"
+    {{- if .Values.coder.enabled }}
+    - {{ tpl .Values.coder.route.domain . | quote }}
+    - "*.{{ tpl .Values.coder.route.domain . }}"
+    {{- end }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: https-redirect
+  namespace: system-envoy
+spec:
+  parentRefs:
+    - name: gateway
+      sectionName: http
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            port: 443
+            statusCode: 301
+
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: http-defaults
+  namespace: system-envoy
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: gateway
+  timeout:
+    http:
+      requestTimeout: 0s
+      streamIdleTimeout: 60s
+    tcp:
+      connectTimeout: 5s

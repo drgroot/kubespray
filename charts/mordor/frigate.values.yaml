@@ -90,25 +90,14 @@ probes:
     successThreshold: 1
     failureThreshold: 5
 
-ingress:
+route:
   enabled: true
-  annotations:
-    nginx.ingress.kubernetes.io/auth-method: GET
-    nginx.ingress.kubernetes.io/auth-response-headers: Remote-User,Remote-Name,Remote-Groups,Remote-Email
-    nginx.ingress.kubernetes.io/auth-signin: https://auth.yusufali.ca?rm=$request_method
-    nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-  tls:
-    - hosts:
-        - "*.yusufali.ca"
-      secretName: wildcard-tls
   hosts:
-    - host: nvr.yusufali.ca
-      paths:
-        - path: /
-          pathType: Prefix
-
+  - host: nvr.yusufali.ca
+    paths:
+    - path: /
+      pathType: Prefix
+  auth: true
 resources:
   requests:
     cpu: 500m

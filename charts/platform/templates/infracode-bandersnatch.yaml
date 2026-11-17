@@ -143,29 +143,23 @@ spec:
       targetPort: 8080
   type: ClusterIP
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: bandersnatch
-  annotations:
-    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
-    # external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: HTTP
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  namespace: "{{ .Release.Namespace }}"
 spec:
-  tls:
-    - hosts:
-        - "*.{{ .Values.domains.external }}"
-      secretName: wildcard-external
-  ingressClassName: nginx
+  parentRefs:
+  - name: gateway
+    namespace: system-envoy
+    sectionName: https
+  hostnames:
+  - bandersnatch.{{ .Values.domains.external }}
   rules:
-    - host: bandersnatch.{{ .Values.domains.external }}
-      http:
-        paths:
-          - backend:
-              service:
-                name: bandersnatch
-                port:
-                  number: 8080
-            path: /
-            pathType: Prefix
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: bandersnatch
+      port: 8080

@@ -192,37 +192,70 @@ spec:
       targetPort: 4873
   type: ClusterIP
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: npm
-  annotations:
-    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
-    nginx.ingress.kubernetes.io/backend-protocol: HTTP
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
-    nginx.ingress.kubernetes.io/client_max_body_size: 512m
-    nginx.ingress.kubernetes.io/proxy-body-size: 512m
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_set_header Host $host;
-      proxy_set_header X-Original-URI $request_uri;
+  namespace: {{ .Release.Namespace }}
 spec:
-  tls:
-    - hosts:
-        - "*.{{ .Values.domains.external }}"
-      secretName: wildcard-external
-  ingressClassName: nginx
+  parentRefs:
+  - name: gateway
+    namespace: system-envoy
+    sectionName: https
+  hostnames:
+  - npm.{{ .Values.domains.external }}
   rules:
-    - host: npm.{{ .Values.domains.external }}
-      http:
-        paths:
-          - backend:
-              service:
-                name: npm
-                port:
-                  number: 4873
-            path: /
-            pathType: Prefix
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+      headers:
+      - name: Upgrade
+        value: websocket
+    backendRefs:
+    - name: npm
+      port: 4873
+    filters:
+    - type: RequestHeaderModifier
+      requestHeaderModifier:
+        set:
+        - name: X-Original-URI
+          value: '%REQ(:PATH)%'
+    name: websocket-0
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: npm
+      port: 4873
+    filters:
+    - type: RequestHeaderModifier
+      requestHeaderModifier:
+        set:
+        - name: X-Original-URI
+          value: '%REQ(:PATH)%'
+    name: http-0
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: npm
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: npm
+    sectionName: http-0
+  requestBuffer:
+    limit: 512Mi
+  timeout:
+    http:
+      requestTimeout: 0s
+      streamIdleTimeout: 60s
+    tcp:
+      connectTimeout: 5s
 ---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -243,6 +276,6 @@ spec:
         metricName: npm_web_rps_per_pod
         threshold: "3"
         query: |
-          sum(rate(nginx_ingress_controller_requests{exported_namespace="{{ .Release.Namespace }}",ingress="npm"}[1m]))
+          sum(rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~"httproute/{{ .Release.Namespace }}/npm/.*"}[1m]))
           /
           count(kube_pod_info{namespace="{{ .Release.Namespace }}",pod=~"npm-.*"})

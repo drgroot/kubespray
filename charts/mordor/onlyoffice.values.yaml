@@ -40,28 +40,26 @@ resources:
     cpu: 4
     memory: 4Gi
 
-ingress:
+route:
   enabled: true
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: https://drive.yusufali.ca
-    nginx.ingress.kubernetes.io/cors-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
-    nginx.ingress.kubernetes.io/proxy-body-size: 512m
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-  tls:
-    - hosts:
-        - "*.yusufali.ca"
-      secretName: wildcard-tls
   hosts:
-    - host: onlyoffice.yusufali.ca
-      paths:
-        - path: /
-          pathType: Prefix
-
+  - host: onlyoffice.yusufali.ca
+    paths:
+    - path: /
+      pathType: Prefix
+  cors:
+    allowOrigins:
+    - https://drive.yusufali.ca
+    allowMethods:
+    - GET
+    - PUT
+    - POST
+    - DELETE
+    - PATCH
+    - OPTIONS
+  bodyLimit: 512Mi
+  connectTimeout: 300s
+  idleTimeout: 300s
 probes:
   livenessProbe:
     httpGet:

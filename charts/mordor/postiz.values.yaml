@@ -124,20 +124,12 @@ resources:
 deploymentAnnotations:
   secret.reloader.stakater.com/reload: redis-credentials,postiz-secrets,postiz-s3-secrets,postiz-postgres-secrets
 
-ingress:
+route:
   enabled: true
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: 2g
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
   hosts:
-    - host: postiz.yusufali.ca
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - hosts:
-        - "*.yusufali.ca"
-      secretName: wildcard-tls
+  - host: postiz.yusufali.ca
+    paths:
+    - path: /
+      pathType: Prefix
+  bodyLimit: 2Gi
+  idleTimeout: 600s

@@ -74,24 +74,14 @@ pvc:
   name: storage
   storageClass: thorin-default
 
-ingress:
+route:
   enabled: true
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: 512m
-    nginx.ingress.kubernetes.io/client_max_body_size: 512m
-    nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-  tls:
-    - hosts:
-        - "*.yusufali.ca"
-      secretName: wildcard-tls
   hosts:
-    - host: drive.yusufali.ca
-      paths:
-        - path: /
-          pathType: Prefix
-
+  - host: drive.yusufali.ca
+    paths:
+    - path: /
+      pathType: Prefix
+  bodyLimit: 512Mi
 probes:
   startupProbe:
     httpGet:

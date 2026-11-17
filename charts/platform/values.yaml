@@ -813,6 +813,9 @@ domains:
   external: asd
 
 authelia:
+  gatewayAuthNamespaces:
+    - mordor
+    - media
   enabled: true
   database:
     remoteKey: dynamic/postgres-app-authelia
@@ -870,7 +873,7 @@ authelia:
           consent_mode: implicit
           require_pkce: false
           redirect_uris:
-            - https://{{ tpl .Values.coder.ingress.domain . }}/api/v2/users/oidc/callback
+            - https://{{ tpl .Values.coder.route.domain . }}/api/v2/users/oidc/callback
           scopes:
             - openid
             - profile
@@ -1753,11 +1756,9 @@ coder:
   enabled: true
   namespace: kube-platform
 
-  ingress:
+  route:
     domain: coder.{{ .Values.domains.external }}
-    annotations:
-      external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
-
+    annotations: {}
   env:
     - name: CODER_OAUTH2_GITHUB_DEFAULT_PROVIDER_ENABLE
       value: "false"
