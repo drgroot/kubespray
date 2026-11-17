@@ -15,7 +15,7 @@ versions:
   registry: 3.1
   # Maintained MinIO fork; release notes:
   # https://github.com/pgsty/silo/releases/tag/RELEASE.2026-09-16T00-00-00Z
-  minio: RELEASE.2026-09-16T00-00-00Z
+  minio: RELEASE.2026-11-12T00-00-00Z
 
 actionsVerions:
   python: 3.13
@@ -1234,7 +1234,7 @@ minio:
   image:
     registry: "dockerhub.{{ .Values.domains.external }}/"
     repository: pgsty/silo
-    digest: sha256:635197cb9f36d01bee221d34d1c7d7960f6a95c48b0b6c01d99cd13bdae51a46
+    digest: sha256:c20d112390b9a9ce8c11b8af95ad35bcaa62f4759663c09c936cd8d2b511f329
 
   storage:
     size: 20Gi
