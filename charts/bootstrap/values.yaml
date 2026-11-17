@@ -17,7 +17,7 @@ versions:
   prometheus: 77.14.0
   reloader: 2.2.20
   openbaoOperator: 0.6.1
-  openbao: "2.6.2"
+  openbao: "2.7.2"
 
 nvidia:
   enabled: true
