@@ -35,4 +35,5 @@ spec:
           envoyGateway:
             extensionApis:
               enableBackend: true
+              enableLua: true
 {{- end -}}
