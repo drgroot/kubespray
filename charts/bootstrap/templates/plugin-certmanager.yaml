@@ -170,7 +170,7 @@ spec:
           - {{ $i }}
           {{- end }}
         sources:
-          - ingress
+          - gateway-httproute
         extraArgs:
           - --default-targets=mordorhome.{{ .Values.domains.external }}
           - --managed-record-types=CNAME

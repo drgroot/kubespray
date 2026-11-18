@@ -181,25 +181,7 @@ spec:
             port: 2222
 
         ingress:
-          enabled: true
-          className: nginx
-          hosts:
-            - host: git.{{ .Values.domains.external }}
-              paths:
-                - path: /
-                  pathType: Prefix
-          annotations:
-            kubernetes.io/ingress.class: nginx
-            nginx.ingress.kubernetes.io/ssl-redirect: "true"
-            nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-            external-dns.alpha.kubernetes.io/target: "mordorhome.{{ .Values.domains.external }}"
-            nginx.ingress.kubernetes.io/client-body-buffer-size: 20m
-            nginx.ingress.kubernetes.io/proxy-body-size: 20m
-          tls:
-            - hosts:
-                - "*.{{ .Values.domains.external }}"
-              secretName: wildcard-external
-
+          enabled: false
         resources:
           requests:
             cpu: 500m
@@ -665,3 +647,58 @@ spec:
       remoteRef:
         key: dynamic/redis
         property: url
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gitea
+  namespace: {{ .Release.Namespace }}
+spec:
+  parentRefs:
+  - name: gateway
+    namespace: system-envoy
+    sectionName: https
+  hostnames:
+  - git.{{ .Values.domains.external }}
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+      headers:
+      - name: Upgrade
+        value: websocket
+    backendRefs:
+    - name: gitea-http
+      port: 3000
+    name: websocket-0
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: gitea-http
+      port: 3000
+    name: http-0
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: gitea
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: gitea
+    sectionName: http-0
+  requestBuffer:
+    limit: 20Mi
+
+  timeout:
+    http:
+      requestTimeout: 0s
+      streamIdleTimeout: 60s
+    tcp:
+      connectTimeout: 5s

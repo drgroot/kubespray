@@ -31,4 +31,8 @@ spec:
       releaseName: system-envoy
       values: |-
         namespaceOverride: system-envoy
+        config:
+          envoyGateway:
+            extensionApis:
+              enableBackend: true
 {{- end -}}

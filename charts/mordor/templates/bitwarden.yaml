@@ -68,47 +68,104 @@ spec:
         key: dynamic/authelia-client-creds
         property: client-secret-bitwarden
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  annotations:
-    external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    nginx.ingress.kubernetes.io/client-body-buffer-size: 10m
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: 10m
   name: {{ .Values.project }}-bitwarden
+  namespace: {{ .Release.Namespace }}
 spec:
-  tls:
-    - hosts:
-        - "*.{{ .Values.domains.external }}"
-      secretName: wildcard-tls
-  ingressClassName: nginx
+  parentRefs:
+  - name: gateway
+    namespace: system-envoy
+    sectionName: https
+  hostnames:
+  - bitwarden.{{ .Values.domains.external }}
   rules:
-  - host: bitwarden.{{ .Values.domains.external }}
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+      headers:
+      - name: Upgrade
+        value: websocket
+    backendRefs:
+    - name: bitwarden
+      port: 80
+    name: websocket-0
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: bitwarden
+      port: 80
+    name: http-0
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /notifications/hub
+      headers:
+      - name: Upgrade
+        value: websocket
+    backendRefs:
+    - name: bitwarden
+      port: 3012
+    name: websocket-1
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /notifications/hub
+    backendRefs:
+    - name: bitwarden
+      port: 3012
+    name: http-1
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /notifications/hub/negotiate
+      headers:
+      - name: Upgrade
+        value: websocket
+    backendRefs:
+    - name: bitwarden
+      port: 80
+    name: websocket-2
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /notifications/hub/negotiate
+    backendRefs:
+    - name: bitwarden
+      port: 80
+    name: http-2
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ .Values.project }}-bitwarden
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: {{ .Values.project }}-bitwarden
+    sectionName: http-0
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: {{ .Values.project }}-bitwarden
+    sectionName: http-1
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: {{ .Values.project }}-bitwarden
+    sectionName: http-2
+  requestBuffer:
+    limit: 10Mi
+  timeout:
     http:
-      paths:
-      - backend:
-          service:
-            name: bitwarden
-            port:
-              number: 80
-        path: /
-        pathType: Prefix
-      - backend:
-          service:
-            name: bitwarden
-            port:
-              number: 3012
-        path: /notifications/hub
-        pathType: Prefix
-      - backend:
-          service:
-            name: bitwarden
-            port:
-              number: 80
-        path: /notifications/hub/negotiate
-        pathType: Prefix
+      requestTimeout: 0s
+      streamIdleTimeout: 60s
+    tcp:
+      connectTimeout: 5s
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret

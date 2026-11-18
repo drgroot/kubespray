@@ -214,20 +214,6 @@
     },
     {
       "customType": "regex",
-      "description": "Bootstrap ingressnginx",
-      "managerFilePatterns": [
-        "/^charts/bootstrap/values\\.yaml$/"
-      ],
-      "matchStrings": [
-        "(?:^|\\n)  ingressnginx: [\"\\x27]?(?<currentValue>[^\\s\"\\x27]+)"
-      ],
-      "datasourceTemplate": "helm",
-      "depNameTemplate": "ingress-nginx",
-      "registryUrlTemplate": "https://kubernetes.github.io/ingress-nginx",
-      "versioningTemplate": "helm"
-    },
-    {
-      "customType": "regex",
       "description": "Bootstrap externalsecrets",
       "managerFilePatterns": [
         "/^charts/bootstrap/values\\.yaml$/"

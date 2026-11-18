@@ -30,14 +30,9 @@ globals:
   ports: []
   service:
     ports: []
-  ingress:
+  route:
     enabled: false
-    annotations: {}
-    className: 'nginx'
-    # host: 'google.com'
-    # port: 0
     rules: []
-    tls: []
   keda:
     enabled: false
     # minReplicaCount: 0

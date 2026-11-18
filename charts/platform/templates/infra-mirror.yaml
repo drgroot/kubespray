@@ -219,34 +219,50 @@ spec:
     app: docker-pull
   type: ClusterIP
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  annotations:
-    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
-    kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/backend-protocol: HTTP
-    nginx.ingress.kubernetes.io/client-body-buffer-size: 5000m
-    nginx.ingress.kubernetes.io/proxy-body-size: 5000m
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
   name: docker-pull
+  namespace: {{ .Release.Namespace }}
 spec:
-  ingressClassName: nginx
+  parentRefs:
+  - name: gateway
+    namespace: system-envoy
+    sectionName: https
+  hostnames:
+  - dockerhub.{{ .Values.domains.external }}
   rules:
-    - host: dockerhub.{{ .Values.domains.external }}
-      http:
-        paths:
-          - backend:
-              service:
-                name: docker-pull
-                port:
-                  number: 5000
-            path: /
-            pathType: Prefix
-  tls:
-    - hosts:
-      - '*.{{ .Values.domains.external }}'
-      secretName: wildcard-external
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: docker-pull
+      port: 5000
+    name: http-0
+---
+# Envoy's full-body buffer is limited to uint32 bytes. Keep multi-GB uploads
+# streaming, and enforce the legacy 5000 MiB limit on declared Content-Length.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyExtensionPolicy
+metadata:
+  name: docker-pull
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: docker-pull
+  lua:
+    - type: Inline
+      inline: |
+        function envoy_on_request(handle)
+          local length = tonumber(handle:headers():get("content-length"))
+          if length and length > 5242880000 then
+            handle:respond({[":status"] = "413"}, "Request body too large")
+          end
+        end
+
 ---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -267,6 +283,6 @@ spec:
         metricName: registr_web_rps_per_pod
         threshold: "2"
         query: |
-          sum(rate(nginx_ingress_controller_requests{exported_namespace="{{ .Release.Namespace }}",ingress="docker-pull"}[1m]))
+          sum(rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~"httproute/{{ .Release.Namespace }}/docker-pull/.*"}[1m]))
           /
           count(kube_pod_info{namespace="{{ .Release.Namespace }}",pod=~"docker-pull-.*"})

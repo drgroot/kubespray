@@ -80,17 +80,13 @@ podSecurityContext:
   {}
   # fsGroup: 2000
 
-ingress:
+route:
   enabled: false
-  className: "nginx"
-  annotations: {}
   hosts:
-    - host: myhostname.com
-      paths:
-        - path: /
-          pathType: Prefix
-  tls: []
-
+  - host: myhostname.com
+    paths:
+    - path: /
+      pathType: Prefix
 pvc:
   enabled: false
   name: my-pvc

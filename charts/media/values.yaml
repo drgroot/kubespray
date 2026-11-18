@@ -41,11 +41,7 @@ globals:
         securityContext:
           runAsUser: 1000
           runAsGroup: 1000
-  ingress:
-    annotations:
-      external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
-      nginx.ingress.kubernetes.io/backend-protocol: HTTP
-    className: nginx
+  route: {}
 
 components:
   media:
@@ -67,18 +63,8 @@ components:
           enabled: true
           backup:
             enabled: true
-      ingress:
+      route:
         enabled: true
-        annotations:
-          cert-manager.io/cluster-issuer: letsencrypt-prod
-          external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
-          nginx.ingress.kubernetes.io/backend-protocol: HTTP
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
-        tls:
-          - hosts:
-              - "*.yusufali.ca"
-            secretName: wildcard-yusufali
-
     list:
       plex:
         imagePullPolicy: IfNotPresent
@@ -146,7 +132,7 @@ components:
                   value: "/config/Library/Application Support/Plex Media Server/Plug-ins;/config/Library/Application Support/Plex Media Server/Plug-in Support/Preferences"
         image:
           name: plexinc/pms-docker
-        ingress:
+        route:
           host: plex.yusufali.ca
         ports:
           - port: 32400
@@ -198,18 +184,8 @@ components:
           enabled: true
           backup:
             enabled: true
-      ingress:
+      route:
         enabled: true
-        annotations:
-          cert-manager.io/cluster-issuer: letsencrypt-prod
-          external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
-          nginx.ingress.kubernetes.io/backend-protocol: HTTP
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
-        tls:
-          - hosts:
-              - "*.yusufali.ca"
-            secretName: wildcard-yusufali
-
     list:
       prowlarr:
         image:
@@ -237,21 +213,10 @@ components:
               - name: arr-config
                 mountPath: /seed
                 readOnly: true
-        ingress:
+        route:
           host: prowlarr.yusufali.ca
-          annotations:
-            cert-manager.io/cluster-issuer: letsencrypt-prod
-            external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
-            nginx.ingress.kubernetes.io/auth-method: GET
-            nginx.ingress.kubernetes.io/auth-response-headers: Remote-User,Remote-Name,Remote-Groups,Remote-Email
-            nginx.ingress.kubernetes.io/auth-signin: https://auth.yusufali.ca?rm=$request_method
-            nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
-            nginx.ingress.kubernetes.io/backend-protocol: HTTP
-            nginx.ingress.kubernetes.io/ssl-redirect: "true"
-          tls:
-            - hosts:
-                - prowlarr.yusufali.ca
-              secretName: prowlarr-tls
+          annotations: {}
+          auth: true
         ports:
           - port: 9696
         resources:
@@ -304,21 +269,10 @@ components:
               - name: arr-config
                 mountPath: /seed
                 readOnly: true
-        ingress:
+        route:
           host: radarr.yusufali.ca
-          annotations:
-            cert-manager.io/cluster-issuer: letsencrypt-prod
-            external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
-            nginx.ingress.kubernetes.io/auth-method: GET
-            nginx.ingress.kubernetes.io/auth-response-headers: Remote-User,Remote-Name,Remote-Groups,Remote-Email
-            nginx.ingress.kubernetes.io/auth-signin: https://auth.yusufali.ca?rm=$request_method
-            nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
-            nginx.ingress.kubernetes.io/backend-protocol: HTTP
-            nginx.ingress.kubernetes.io/ssl-redirect: "true"
-          tls:
-            - hosts:
-                - radarr.yusufali.ca
-              secretName: radarr-tls
+          annotations: {}
+          auth: true
         ports:
           - port: 7878
         probes:
@@ -363,21 +317,10 @@ components:
               - name: arr-config
                 mountPath: /seed
                 readOnly: true
-        ingress:
+        route:
           host: sonarr.yusufali.ca
-          annotations:
-            cert-manager.io/cluster-issuer: letsencrypt-prod
-            external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
-            nginx.ingress.kubernetes.io/auth-method: GET
-            nginx.ingress.kubernetes.io/auth-response-headers: Remote-User,Remote-Name,Remote-Groups,Remote-Email
-            nginx.ingress.kubernetes.io/auth-signin: https://auth.yusufali.ca?rm=$request_method
-            nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
-            nginx.ingress.kubernetes.io/backend-protocol: HTTP
-            nginx.ingress.kubernetes.io/ssl-redirect: "true"
-          tls:
-            - hosts:
-                - sonarr.yusufali.ca
-              secretName: sonarr-tls
+          annotations: {}
+          auth: true
         ports:
           - port: 8989
         probes:
@@ -398,7 +341,7 @@ components:
 
   downloaders:
     globals:
-      ingress:
+      route:
         enabled: false
       storage:
         metadata:
@@ -445,22 +388,11 @@ components:
             memory: 2Gi
           limits:
             memory: 3Gi
-        ingress:
+        route:
           enabled: true
           host: sabnzbd.yusufali.ca
-          annotations:
-            cert-manager.io/cluster-issuer: letsencrypt-prod
-            external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
-            nginx.ingress.kubernetes.io/auth-method: GET
-            nginx.ingress.kubernetes.io/auth-response-headers: Remote-User,Remote-Name,Remote-Groups,Remote-Email
-            nginx.ingress.kubernetes.io/auth-signin: https://auth.yusufali.ca?rm=$request_method
-            nginx.ingress.kubernetes.io/auth-url: http://authelia.kube-platform.svc.cluster.local/api/authz/auth-request
-            nginx.ingress.kubernetes.io/backend-protocol: HTTP
-            nginx.ingress.kubernetes.io/ssl-redirect: "true"
-          tls:
-            - hosts:
-                - sabnzbd.yusufali.ca
-              secretName: sabnzbd-tls
+          annotations: {}
+          auth: true
         podAnnotations:
           secret.reloader.stakater.com/reload: sabnzbd-config
         image:

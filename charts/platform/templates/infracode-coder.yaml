@@ -24,8 +24,8 @@ rules:
   - apiGroups: ["apps"]
     resources: ["deployments", "statefulsets"]
     verbs: ["*"]
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["Ingress"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["httproutes"]
     verbs: ["*"]
   - apiGroups: ["keda.sh"]
     resources: ["scaledobjects", "scaledjobs"]
@@ -107,9 +107,9 @@ spec:
 
           env:
             - name: CODER_ACCESS_URL
-              value: https://{{ tpl .Values.coder.ingress.domain . }}
+              value: https://{{ tpl .Values.coder.route.domain . }}
             - name: CODER_WILDCARD_ACCESS_URL
-              value: "*.{{ tpl .Values.coder.ingress.domain . }}"
+              value: "*.{{ tpl .Values.coder.route.domain . }}"
             - name: CODER_PG_CONNECTION_URL
               valueFrom:
                 secretKeyRef:
@@ -131,22 +131,7 @@ spec:
             {{- end }}
 
           ingress:
-            enable: true
-            className: nginx
-            host: {{ tpl .Values.coder.ingress.domain . }}
-            wildcardHost: "*.{{ tpl .Values.coder.ingress.domain . }}"
-            annotations:
-              kubernetes.io/ingress.class: nginx
-              cert-manager.io/cluster-issuer: letsencrypt-prod
-              nginx.ingress.kubernetes.io/ssl-redirect: "true"
-              nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-              {{- with .Values.coder.ingress.annotations }}
-                {{- tpl (toYaml .) $ | nindent 14 }}
-              {{- end }}
-            tls:
-              enable: true
-              secretName: coder-tls
-              wildcardSecretName: coder-wildcard-tls
+            enable: false
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -164,4 +149,27 @@ spec:
       remoteRef:
         key: {{ .Values.authelia.clients.client_remote_key }}
         property: {{ .Values.authelia.clients.list.coder.client_secret_property }}
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: coder
+  namespace: "{{ .Values.coder.namespace }}"
+spec:
+  parentRefs:
+  - name: gateway
+    namespace: system-envoy
+    sectionName: https
+  hostnames:
+  - {{ tpl .Values.coder.route.domain . }}
+  - '*.{{ tpl .Values.coder.route.domain . }}'
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: coder
+      port: 80
 {{- end }}

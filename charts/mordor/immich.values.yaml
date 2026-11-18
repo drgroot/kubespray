@@ -120,21 +120,11 @@ components:
           limits:
             cpu: 1000m
             memory: 2Gi
-        ingress:
+        route:
           enabled: true
-          className: nginx
           host: photos.yusufali.ca
-          annotations:
-            external-dns.alpha.kubernetes.io/target: mordorhome.yusufali.ca
-            nginx.ingress.kubernetes.io/backend-protocol: HTTP
-            nginx.ingress.kubernetes.io/ssl-redirect: "true"
-            nginx.ingress.kubernetes.io/proxy-body-size: 512m
-            nginx.ingress.kubernetes.io/client_max_body_size: 512m
-            nginx.ingress.kubernetes.io/client-body-buffer-size: 512m
-          tls:
-            - hosts:
-                - "*.yusufali.ca"
-              secretName: wildcard-tls
+          annotations: {}
+          bodyLimit: 512Mi
         ports:
           - port: 2283
         probes:

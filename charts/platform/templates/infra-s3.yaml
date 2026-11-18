@@ -266,56 +266,68 @@ spec:
         key: {{ .Values.authelia.clients.client_remote_key }}
         property: client-secret-silo
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: minio
-  annotations:
-    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
-    nginx.ingress.kubernetes.io/backend-protocol: HTTP
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/client-body-buffer-size: 5000m
-    nginx.ingress.kubernetes.io/proxy-body-size: 5000m
+  namespace: {{ .Release.Namespace }}
 spec:
-  ingressClassName: nginx
-  tls:
-    - hosts:
-        - "*.{{ .Values.domains.external }}"
-      secretName: wildcard-external
+  parentRefs:
+  - name: gateway
+    namespace: system-envoy
+    sectionName: https
+  hostnames:
+  - s3.{{ .Values.domains.external }}
   rules:
-    - host: s3.{{ .Values.domains.external }}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: minio
-                port:
-                  name: api
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: minio
+      port: 9000
+    name: http-0
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+# Envoy's full-body buffer is limited to uint32 bytes. Keep multi-GB uploads
+# streaming, and enforce the legacy 5000 MiB limit on declared Content-Length.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyExtensionPolicy
+metadata:
+  name: minio
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: minio
+  lua:
+    - type: Inline
+      inline: |
+        function envoy_on_request(handle)
+          local length = tonumber(handle:headers():get("content-length"))
+          if length and length > 5242880000 then
+            handle:respond({[":status"] = "413"}, "Request body too large")
+          end
+        end
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: minio-console
-  annotations:
-    external-dns.alpha.kubernetes.io/target: mordorhome.{{ .Values.domains.external }}
-    nginx.ingress.kubernetes.io/backend-protocol: HTTP
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  namespace: "{{ .Release.Namespace }}"
 spec:
-  ingressClassName: nginx
-  tls:
-    - hosts:
-        - "*.{{ .Values.domains.external }}"
-      secretName: wildcard-external
+  parentRefs:
+  - name: gateway
+    namespace: system-envoy
+    sectionName: https
+  hostnames:
+  - s3-minio.{{ .Values.domains.external }}
   rules:
-    - host: s3-minio.{{ .Values.domains.external }}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: minio
-                port:
-                  name: console
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: minio
+      port: 9001
