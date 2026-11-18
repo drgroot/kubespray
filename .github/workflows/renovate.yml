@@ -68,7 +68,7 @@ jobs:
       # Allow GitHub Actions to create and approve pull requests.
       # PRs opened with GITHUB_TOKEN do not trigger other Actions workflows.
       - name: Open dependency update pull requests
-        uses: renovatebot/github-action@v46.3.12
+        uses: renovatebot/github-action@v46.3.13
         with:
           token: ${{ github.token }}
         env:
