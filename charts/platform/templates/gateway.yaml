@@ -239,7 +239,6 @@ spec:
     - {{ .Values.domains.external | quote }}
     - "*.{{ .Values.domains.external }}"
     {{- if .Values.coder.enabled }}
-    - {{ tpl .Values.coder.route.domain . | quote }}
     - "*.{{ tpl .Values.coder.route.domain . }}"
     {{- end }}
 ---
