@@ -218,7 +218,8 @@ metadata:
 spec:
   endpoints:
   - fqdn:
-      hostname: {{ .Values.openbao.name }}-public.{{ .Values.openbao.namespace }}.svc.cluster.local
+      # Resolve pod addresses directly; avoid the IPVS Service VIP on gateway nodes.
+      hostname: {{ .Values.openbao.name }}.{{ .Values.openbao.namespace }}.svc.cluster.local
       port: 8200
   tls:
     insecureSkipVerify: true
