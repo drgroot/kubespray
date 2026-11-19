@@ -100,33 +100,6 @@ crossplane:
   opentofuOciAuthSecretName: cluster-docker-secrets
   opentofuMaxReconcileRate: 3
 
-vault:
-  username: kubernetesadmin
-  secretName: vault-password
-  key: password
-  servc:
-    namespace: argocd
-    secretName: vault-servc-token
-    remoteKey: iac/vault-user-servc
-    tokenProperty: token
-  image:
-    repository: hashicorp/vault
-    tag: "2.2.2"
-    pullPolicy: IfNotPresent
-  probes:
-    startup:
-      failureThreshold: 30
-      periodSeconds: 5
-    liveness:
-      initialDelaySeconds: 60
-      failureThreshold: 3
-      periodSeconds: 15
-      timeoutSeconds: 5
-    readiness:
-      failureThreshold: 3
-      periodSeconds: 30
-      timeoutSeconds: 5
-
 domains:
   internal: k8s.private
   external: yusufali.ca
