@@ -42,7 +42,7 @@ volume: {}
 
 secrets:
   secretStore:
-    name: external-infra
+    name: vault
     type: ClusterSecretStore
   username:
     remoteRef:
@@ -56,7 +56,7 @@ secrets:
   pushsecret:
     enabled: true
     secretStore:
-      name: external-infra
+      name: vault
       type: ClusterSecretStore
     remoteKey: iac/postgres
 
