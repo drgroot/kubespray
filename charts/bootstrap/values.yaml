@@ -1,7 +1,7 @@
 project: bootstrap
 
 versions:
-  nvidia: v26.7.2
+  nvidia: v26.7.3
   envoy: 1.10.0
   kubeVip: v1.3.1
   crossplane: 2.4.3
