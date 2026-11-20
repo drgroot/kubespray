@@ -72,6 +72,36 @@ spec:
       selector: {}
       template:
         spec:
+          {{- if .Values.versions.crossplaneOpenTofuBinary }}
+          securityContext:
+            fsGroup: 2000
+          initContainers:
+            - name: install-opentofu
+              image: alpine:3.22.2
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 2000
+                runAsGroup: 2000
+              env:
+                - name: OPENTOFU_VERSION
+                  value: {{ .Values.versions.crossplaneOpenTofuBinary | trimPrefix "v" | quote }}
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  case "$(uname -m)" in
+                    x86_64) arch=amd64 ;;
+                    aarch64) arch=arm64 ;;
+                    *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+                  esac
+                  wget -O /tmp/tofu.zip "https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/tofu_${OPENTOFU_VERSION}_linux_${arch}.zip"
+                  unzip -p /tmp/tofu.zip tofu > /opentofu-bin/tofu
+                  chmod 0755 /opentofu-bin/tofu
+                  /opentofu-bin/tofu version
+              volumeMounts:
+                - name: opentofu-bin
+                  mountPath: /opentofu-bin
+          {{- end }}
           containers:
             - name: package-runtime
               args:
@@ -84,11 +114,21 @@ spec:
                 - name: HELM_CONFIG_HOME
                   value: /tmp/helm
               volumeMounts:
+                {{- if .Values.versions.crossplaneOpenTofuBinary }}
+                - name: opentofu-bin
+                  mountPath: /usr/local/bin/tofu
+                  subPath: tofu
+                  readOnly: true
+                {{- end }}
                 - name: oci-auth
                   mountPath: /etc/opentofu/containers/auth.json
                   subPath: .dockerconfigjson
                   readOnly: true
           volumes:
+            {{- if .Values.versions.crossplaneOpenTofuBinary }}
+            - name: opentofu-bin
+              emptyDir: {}
+            {{- end }}
             - name: oci-auth
               secret:
                 secretName: {{ .Values.crossplane.opentofuOciAuthSecretName | quote }}

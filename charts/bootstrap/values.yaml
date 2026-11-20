@@ -6,6 +6,7 @@ versions:
   kubeVip: v1.3.1
   crossplane: 2.4.3
   crossplaneOpenTofu: v1.1.11
+  crossplaneOpenTofuBinary: v1.13.9
   crossplaneAnsible: v0.8.0
   argoupdater: "0.18"
   externalsecrets: 2.15.0
