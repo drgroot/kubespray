@@ -587,6 +587,17 @@ crossplane:
         - key: output
           value: onprem/dynamic/s3-db-backups
 
+    s3-servc-tfstate:
+      enabled: true
+      type: s3
+      provider: minio
+      name: servc-tfstate
+      vars:
+        - key: input
+          value: onprem/dynamic/minio-root
+        - key: output
+          value: onprem/dynamic/s3-servc-tfstate
+
     postgres-gitea:
       enabled: true
       type: postgres
