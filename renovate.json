@@ -14,6 +14,18 @@
   "customManagers": [
     {
       "customType": "regex",
+      "description": "Platform GitHub Action versions",
+      "managerFilePatterns": [
+        "/^charts/platform/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?:^|\\n)  # renovate: datasource=github-tags depName=(?<depName>[^\\s]+)\\r?\\n  [A-Za-z]+: [\"\\x27]?(?<currentValue>v[0-9]+(?:\\.[0-9]+){0,2})[\"\\x27]?"
+      ],
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "github-actions"
+    },
+    {
+      "customType": "regex",
       "description": "Platform Argo CD release",
       "managerFilePatterns": [
         "/^charts/platform/values\\.yaml$/"

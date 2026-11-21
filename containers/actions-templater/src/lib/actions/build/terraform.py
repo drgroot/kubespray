@@ -1,6 +1,7 @@
 from src.com.actions.step import STEP
 from src.com.repo import MODIFIERS, RepoContext
 from src.com.repo.common import is_monorepo
+from src.lib import ORAS_VERSION
 from src.lib.actions.build import default_on, make_build
 from src.lib.actions.steps.actions.vault import process_vault_secrets
 from src.lib.actions.steps.mono_repo import get_working_path
@@ -70,8 +71,8 @@ echo "module_archive=$MODULE_NAME-$MODULE_VERSION.zip" >> "$GITHUB_ENV"''',
         },
         {
             "name": "Install ORAS",
+            "env": {"ORAS_VERSION": ORAS_VERSION},
             "run": """set -euo pipefail
-ORAS_VERSION="1.2.2"
 install_dir="$(mktemp -d)"
 trap 'rm -rf "$install_dir"' EXIT
 curl -fsSL "https://github.com/oras-project/oras/releases/download/v${ORAS_VERSION}/oras_${ORAS_VERSION}_linux_amd64.tar.gz" -o "$install_dir/oras.tar.gz"
