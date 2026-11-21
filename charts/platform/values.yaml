@@ -38,6 +38,12 @@ router:
   # Synced from ClusterSecretStore vault, vendor/router (ip, username, password).
   secretName: router-credentials
   secretNamespace: argocd
+  ssh:
+    port: 1024
+
+  dnsmasq:
+    - yusufali.ca
+    - "*.yusufali.ca"
 
   dchp:
     reservations:
@@ -823,6 +829,27 @@ crossplane:
           value: chintan
         - key: output
           value: onprem/dynamic/gitea-chintan
+
+    gitea-servc-github-actions-download-token:
+      enabled: true
+      type: orgsecret
+      provider: gitea
+      name: GH_ACTIONS_DOWNLOAD_TOKEN
+      vars:
+        - key: path
+          value: onprem/vendor/github
+        - key: property
+          value: token
+        - key: org
+          value: serv-c
+        - key: gitea_url
+          value: https://git.yusufali.ca
+        - key: credentialpath
+          value: onprem/vendor/gitea
+        - key: usernamekey
+          value: root-username
+        - key: passwordkey
+          value: root-password
 
     gitea-servc-vault-addr:
       enabled: true

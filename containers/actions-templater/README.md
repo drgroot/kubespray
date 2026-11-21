@@ -89,3 +89,18 @@ After building, matching package tags run `npm --prefix dist --workspaces=false 
 Change filters select the package directory, `common-ci/**`, and workflow configuration. Matrix fail-fast is disabled so a failed package does not cancel unrelated jobs. Build matrices still discover publishable root npm workspaces (or honor `monorepo-modules`). Test matrices additionally include Angular application directories with their own `package.json` and a test target, such as `demo/`; they use directory names, not Angular project names. `npm_test_projects` can explicitly select additional package directories.
 
 `npm_install_command`, `npm_build_command`, `npm_version_command`, and `npm_publish_directory` remain overrideable. Custom commands should retain the explicit prefix and workspace disabling; for strict package lockfiles use `npm ci --prefix . --workspaces=false --include=dev`. Single-package and tenant workflows keep their existing behavior.
+
+## GitHub download authentication
+
+The platform syncs OpenBao `onprem/vendor/github` property `token` into the
+Gitea `serv-c` organization's Actions secret `GH_ACTIONS_DOWNLOAD_TOKEN` through
+the `gitea-servc-github-actions-download-token` Crossplane workspace.
+Generated Node.js and Python setup steps pass this secret as their download
+`token`; kubelogin setup passes it through `GITHUB_TOKEN`. These credentials
+are separate from the Gitea tokens used for checkout, releases, and publishing.
+If the secret is unavailable, GitHub-hosted workflows fall back to
+`github.token`; Gitea workflows leave GitHub download authentication empty.
+Authentication raises the API allowance but does not remove rate limits.
+
+Rebuild/deploy actions-templater and regenerate the target workflows to apply
+these generator changes to existing repositories.

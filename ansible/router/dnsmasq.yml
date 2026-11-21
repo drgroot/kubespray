@@ -1,0 +1,16 @@
+---
+- name: Reconcile Merlin local DNS
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tasks:
+    - name: Apply persistent DNS overrides and enable JFFS custom configs
+      merlin_dnsmasq:
+        hostname: "{{ lookup('ansible.builtin.env', 'ROUTER_IP') | trim }}"
+        username: "{{ lookup('ansible.builtin.env', 'ROUTER_USERNAME') | trim }}"
+        password: "{{ lookup('ansible.builtin.env', 'ROUTER_PASSWORD') }}"
+        port: "{{ router.ssh.port }}"
+        virtual_ip: "{{ gateway.virtualIP }}"
+        domains: "{{ router.dnsmasq }}"

@@ -26,10 +26,19 @@ from src.lib.actions.steps.actions import (
     SETUP_YQ_VERSION,
 )
 
+# Gitea's workflow token cannot authenticate downloads from github.com.
+# Keep GitHub's normal default when the organization secret is unavailable.
+GITHUB_DOWNLOAD_TOKEN = (
+    "${{ secrets.GH_ACTIONS_DOWNLOAD_TOKEN || "
+    "(github.server_url == 'https://github.com' && github.token || '') }}"
+)
+
+
 nodejs: STEP_GENERATOR = lambda ctx, m: {
     "uses": f"actions/setup-node@{m.get('setup_node_version', SETUP_NODE_VERSION)}",
     "with": {
         "node-version": m.get("node_version", NODEJS_VERSION),
+        "token": GITHUB_DOWNLOAD_TOKEN,
         **({"cache": "npm", "cache-dependency-path": m["npm_cache_path"]} if m.get("npm_cache_path") else {}),
     },
 }
@@ -38,6 +47,7 @@ python: STEP_GENERATOR = lambda ctx, m: {
     "uses": f"actions/setup-python@{m.get('setup_python_version', SETUP_PYTHON_VERSION)}",
     "with": {
         "python-version": m.get("python_version", PYTHON_VERSION),
+        "token": GITHUB_DOWNLOAD_TOKEN,
     },
 }
 
@@ -89,7 +99,7 @@ helm: STEP_GENERATOR = lambda ctx, m: {
 kubelogin: STEP_GENERATOR = lambda ctx, m: {
     "uses": f"azure/use-kubelogin@{m.get('setup_kubelogin_version', SETUP_KUBELOGIN_VERSION)}",
     "env": {
-        "GITHUB_TOKEN": "${{ secrets.GITHUB_TOKEN }}",
+        "GITHUB_TOKEN": GITHUB_DOWNLOAD_TOKEN,
     },
     "with": {
         "kubelogin-version": m.get("kubelogin-version", KUBELOGIN_VERSION),

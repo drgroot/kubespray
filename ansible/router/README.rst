@@ -5,7 +5,8 @@ The platform Helm chart creates a dedicated Crossplane AnsibleRun when
 ``crossplane.enabled``, ``crossplane.ansible.enabled``, and ``router.enabled``
 are true. The provider must have network access to the router's LAN management
 address and Python 3.11+ with venv/pip support. Its isolated environment installs
-``asusrouter==1.21.3`` from PyPI; no SSH access to the router is needed.
+``asusrouter==1.21.3`` from PyPI; the API playbook does not need SSH.
+Merlin DNS configuration uses a separate SSH playbook described below.
 
 The chart creates an ExternalSecret backed by the ``vault``
 ClusterSecretStore (OpenBao) at ``vendor/router``. It synchronizes the ``ip``,
@@ -114,3 +115,19 @@ mapping (set ROUTER_IP, ROUTER_USERNAME, and ROUTER_PASSWORD in your environment
     ansible-playbook -i localhost, ansible/router/playbook.yml -e @router-values.yaml
 
 Add --check to preview changes without writing to the router.
+
+Merlin DNS overrides
+--------------------
+
+``ansible/router/dnsmasq.yml`` manages ``router.dnsmasq`` as a list of exact
+hostnames and ``*.domain`` patterns, all pointing to ``gateway.virtualIP``.
+The separate Crossplane AnsibleRun uses ``router.ssh.port`` (1024 on this
+router) and the same credential Secret. It accepts host keys per connection
+without saving them. Dependencies are in ``dnsmasq-requirements.txt``.
+
+It reads and enables JFFS custom configs when needed, creates missing config
+paths, preserves content outside its managed block, validates before applying,
+and restarts dnsmasq only on change. An empty list removes the managed block.
+For deployment, selective hostname examples, and verification, see
+``docs/dnsmasq.md``. The playbook and module live alongside the API playbooks;
+the chart contains only the Crossplane run definition.
