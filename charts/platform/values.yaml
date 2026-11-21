@@ -1768,7 +1768,7 @@ secretSync:
       name: vault
       path: dynamic/pypi
       properties:
-        - host
+        - url
         - password
         - username
     output:
@@ -1776,7 +1776,7 @@ secretSync:
       name: servc
       path: iac/pip
       properties:
-        host: url
+        url: url
         password: token
         username: username
 

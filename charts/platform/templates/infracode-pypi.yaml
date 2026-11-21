@@ -14,6 +14,7 @@ spec:
       type: Opaque
       data:
         host: {{ printf "pypi.%s" .Values.domains.external | quote }}
+        url: {{ printf "https://pypi.%s/" .Values.domains.external | quote }}
   dataFrom:
     - extract:
         key: dynamic/pypi-user-creds
@@ -33,7 +34,7 @@ spec:
     secret:
       name: pypi-credentials
   data:
-    {{- range $property := list "username" "password" "host" }}
+    {{- range $property := list "username" "password" "host" "url" }}
     - match:
         secretKey: {{ $property }}
         remoteRef:
