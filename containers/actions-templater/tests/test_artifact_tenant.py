@@ -7,6 +7,8 @@
 - sc6 (normal): Changelog releases share the UI, ETL, and typings tag prefixes.
 """
 import os
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -17,7 +19,7 @@ from src.lib.actions.artifact_tenant import (
     artifact_tenant_changelog,
     artifact_tenant_unit,
 )
-from src.writeyaml import write_workflow_file
+from src.writeyaml import remove_obsolete_workflows, write_workflow_file
 
 
 def make_repo(local_folder: str = "", **extra) -> RepoContext:
@@ -50,6 +52,29 @@ class ArtifactTenantSelectionTests(unittest.TestCase):
             selected[".github/workflows/changelog.yml"],
         )
         self.assertNotIn(".github/workflows/python-pip-options.yml", selected)
+        self.assertNotIn(".github/workflows/deploy.yml", selected)
+        self.assertNotIn(".github/workflows/deploy.yaml", selected)
+
+    def test_legacy_dag_cleanup_preserves_other_deploy_workflows(self):
+        for filename in ("deploy.yml", "deploy.yaml"):
+            with self.subTest(filename=filename), tempfile.TemporaryDirectory() as directory:
+                folder = os.path.join(directory, ".github", "workflows")
+                os.makedirs(folder)
+                path = os.path.join(folder, filename)
+                with open(path, "w") as file:
+                    file.write("jobs:\n  deploy:\n    steps:\n      - uses: serv-c/servc-publish-action@main\n")
+
+                non_tenant = make_repo().model_copy(update={"artifact": "docker"})
+                self.assertEqual(0, remove_obsolete_workflows(non_tenant, directory))
+                self.assertTrue(os.path.exists(path))
+                self.assertEqual(1, remove_obsolete_workflows(make_repo(), directory))
+                self.assertFalse(os.path.exists(path))
+                self.assertEqual(0, remove_obsolete_workflows(make_repo(), directory))
+
+                with open(path, "w") as file:
+                    file.write("jobs:\n  deploy:\n    steps:\n      - run: echo custom deployment\n")
+                self.assertEqual(0, remove_obsolete_workflows(make_repo(), directory))
+                self.assertTrue(os.path.exists(path))
 
 
 class ArtifactTenantBuildTests(unittest.TestCase):
@@ -121,6 +146,58 @@ class ArtifactTenantBuildTests(unittest.TestCase):
 
 
 class ArtifactTenantUnitTests(unittest.TestCase):
+    def test_dag_job_uses_etl_configuration_and_never_publishes(self):
+        workflow = artifact_tenant_unit["function"](
+            make_repo(),
+            {
+                "python_version": "3.12",
+                "runs-on": ["etl-runner"],
+                "ci_steps": [{"name": "Prepare ETL", "run": "echo prepare"}],
+                "ci_env": {"PROFILE_ID": "yusuf", "DAG_SETTING": "configured"},
+                "workflow_env": {"PROFILE_ID": "production"},
+                "ci_services": {"cache": {"image": "redis:8"}},
+            },
+        )
+        dag = workflow["jobs"]["unit-dag"]
+        self.assertNotIn("needs", dag)
+        self.assertEqual(["etl-runner"], dag["runs-on"])
+        self.assertEqual({"cache": {"image": "redis:8"}}, dag["services"])
+        self.assertEqual("etl", named_step(dag, "Prepare ETL")["working-directory"])
+        filters = named_step(dag, "Filter Changes")["with"]["filters"]
+        self.assertIn("etl/**", filters)
+        self.assertIn(".github/workflows/unit.yml", filters)
+        install = named_step(dag, "Install pip dependencies")
+        self.assertEqual("etl", install["working-directory"])
+        self.assertIn("requirements.txt", install["run"])
+        self.assertIn("requirements-dev.txt", install["run"])
+        validate = named_step(dag, "Validate DAG")
+        self.assertEqual("etl", validate["working-directory"])
+        self.assertEqual({"PROFILE_ID": "", "DAG_SETTING": "configured"}, validate["env"])
+        self.assertIn("steps.changes.outputs.src == 'true'", validate["if"])
+        self.assertNotIn("Run Tests", [step.get("name") for step in dag["steps"]])
+
+        with tempfile.TemporaryDirectory() as directory:
+            os.makedirs(os.path.join(directory, ".venv", "bin"))
+            os.symlink(sys.executable, os.path.join(directory, ".venv", "bin", "python"))
+            path = os.path.join(directory, "dag.py")
+            with open(path, "w") as file:
+                file.write("import os\nassert not os.environ.get('PROFILE_ID')\nopen('dag.json', 'w').write('{}')\n")
+            result = subprocess.run(
+                validate["run"], shell=True, cwd=directory,
+                env={**os.environ, **dag["env"], **validate["env"]},
+                capture_output=True, text=True,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertTrue(os.path.isfile(os.path.join(directory, "dag.json")))
+            with open(path, "w") as file:
+                file.write("raise RuntimeError('invalid DAG')\n")
+            result = subprocess.run(
+                validate["run"], shell=True, cwd=directory,
+                env={**os.environ, **validate["env"]}, capture_output=True, text=True,
+            )
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn("invalid DAG", result.stderr)
+
     def test_unit_jobs_apply_actions_config_only_as_requested(self):
         """Scenario: sc4. Relevant input: custom runtime versions and ETL settings. Relevant output: unit jobs. Expected outcome: configuration stays scoped to its intended component."""
         custom_step = {"name": "Configured Step", "run": "echo configured"}
@@ -135,7 +212,7 @@ class ArtifactTenantUnitTests(unittest.TestCase):
             },
         )
 
-        self.assertEqual({"unit-ui", "unit-etl", "unit-typings"}, set(workflow["jobs"]))
+        self.assertEqual({"unit-ui", "unit-etl", "unit-dag", "unit-typings"}, set(workflow["jobs"]))
         ui = workflow["jobs"]["unit-ui"]
         etl = workflow["jobs"]["unit-etl"]
         typings = workflow["jobs"]["unit-typings"]

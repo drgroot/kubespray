@@ -15,7 +15,8 @@ from src.lib.actions.steps.python import pip_install
 from src.lib.actions.common.semver import changelog
 from src.lib.actions.steps.filter import filter
 from src.lib.actions.test.npm import npm_test
-from src.lib.actions.test.python import python_test
+from src.lib.actions.test import make_job
+from src.lib.actions.test.python import docker_python_version_check, python_test
 
 ARTIFACT_TENANT_CONTEXT: CONTEXT_MATCHERS = {"artifact": ["tenant"]}
 BUILD_WORKFLOW = ".github/workflows/build.yml"
@@ -203,6 +204,24 @@ def artifact_tenant_unit_workflow(ctx: RepoContext, m: MODIFIERS) -> Workflow:
     if isinstance(m.get("workflow_env"), dict):
         etl["env"] = copy.deepcopy(m["workflow_env"])
 
+    dag = _scope_job(
+        ctx,
+        make_job(
+            lambda ctx, modifiers: [
+                python(ctx, modifiers),
+                *docker_python_version_check(ctx, modifiers),
+                pip_install(ctx, modifiers),
+                {"name": "Validate DAG", "run": ".venv/bin/python -m dag"},
+            ]
+        )(ctx, copy.deepcopy(etl_modifiers)),
+        "etl",
+        UNIT_WORKFLOW,
+    )
+    if isinstance(m.get("workflow_env"), dict):
+        dag["env"] = copy.deepcopy(m["workflow_env"])
+    # A profile publishes the DAG; CI only validates and writes dag.json.
+    dag["steps"][-1].setdefault("env", {})["PROFILE_ID"] = ""
+
     typings_modifiers = {
         "mono": False,
         "artifact": "pip",
@@ -219,6 +238,7 @@ def artifact_tenant_unit_workflow(ctx: RepoContext, m: MODIFIERS) -> Workflow:
 
     ui["name"] = "Test UI"
     etl["name"] = "Test ETL"
+    dag["name"] = "Test DAG"
     typings["name"] = "Test Typings"
     return {
         "name": "Unit Test",
@@ -226,6 +246,7 @@ def artifact_tenant_unit_workflow(ctx: RepoContext, m: MODIFIERS) -> Workflow:
         "jobs": {
             "unit-ui": ui,
             "unit-etl": etl,
+            "unit-dag": dag,
             "unit-typings": typings,
         },
     }

@@ -13,6 +13,16 @@ runs on changes under `typings/**`, `build.yml`, or `.github/actions.json`,
 typings tags, and manual runs. UI/ETL builds also run after configuration or
 workflow changes, so architecture changes take effect on the next pipeline run.
 
+Tenant `unit.yml` also includes an independent DAG test job. It installs the ETL
+dependencies and runs `.venv/bin/python -m dag` from `etl/`, with `PROFILE_ID`
+empty so the DAG is validated without publishing. The job uses the ETL test
+configuration and runs when ETL files or `unit.yml` change. Actions maker removes
+legacy `deploy.yml`/`deploy.yaml` workflows that use `serv-c/servc-publish-action`;
+DAG publication is handled by the tenant Helm job.
+
+The retired `agent-issue.yml`, `agent-markdown.yml`, and `issue-agent.yml`
+workflows are no longer generated and are removed from existing checkouts.
+
 The pip typings job reuses the standard pip generator: dependency installation,
 version setup, build, distribution checks, Vault credentials, and publication.
 Only its folder, release prefix, and workflow guards are scoped to the tenant.

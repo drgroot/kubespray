@@ -18,7 +18,11 @@ from src.com.run import (
 from src.config import CHANGE_BRANCH
 from src.get_workflows import get_workflows
 from src.lib.actions.dependabot import DEPENDABOT_AUTO_MERGE_FILENAME
-from src.writeyaml import write_dependabot, write_workflow_file
+from src.writeyaml import (
+    remove_obsolete_workflows,
+    write_dependabot,
+    write_workflow_file,
+)
 
 
 def template_github_actions(
@@ -57,7 +61,7 @@ def template_github_actions(
     print("Found workflows", workflows, "and dependabot", dependabot, flush=True)
 
     checkout(target_branch)
-    changed_files = 0
+    changed_files = remove_obsolete_workflows(repo_context, local_path)
 
     auto_merge_file = os.path.join(local_path, DEPENDABOT_AUTO_MERGE_FILENAME)
     if os.path.exists(auto_merge_file):
