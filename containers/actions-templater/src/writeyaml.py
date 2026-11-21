@@ -126,6 +126,40 @@ def write_workflow_file(
     return static_files
 
 
+def remove_obsolete_workflows(repo: RepoContext, repo_dir: str) -> int:
+    """Remove retired agents and tenant DAG publishers from existing checkouts."""
+    removed = 0
+    for filename in ("agent-issue.yml", "agent-markdown.yml", "issue-agent.yml"):
+        path = os.path.join(repo_dir, ".github", "workflows", filename)
+        if os.path.isfile(path):
+            os.remove(path)
+            removed += 1
+            print(f"Deleted obsolete workflow {path}", flush=True)
+
+    if getattr(repo, "artifact", None) != "tenant":
+        return removed
+
+    for filename in ("deploy.yml", "deploy.yaml"):
+        path = os.path.join(repo_dir, ".github", "workflows", filename)
+        if not os.path.isfile(path):
+            continue
+        with open(path) as file:
+            workflow = yaml.safe_load(file)
+        if not isinstance(workflow, dict):
+            continue
+        publishes_dag = any(
+            str(step.get("uses", "")).split("@")[0]
+            == "serv-c/servc-publish-action"
+            for job in workflow.get("jobs", {}).values()
+            for step in job.get("steps", [])
+        )
+        if publishes_dag:
+            os.remove(path)
+            removed += 1
+            print(f"Deleted legacy DAG workflow {path}", flush=True)
+    return removed
+
+
 def write_dependabot(
     repo: RepoContext,
     dependabots: List[GENERATE_DEPENDABOT],

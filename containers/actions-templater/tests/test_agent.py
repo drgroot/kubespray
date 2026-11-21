@@ -1,58 +1,43 @@
+import os
+import tempfile
 import unittest
 
 from src.com.repo import RepoContext
 from src.get_workflows import get_workflows
+from src.writeyaml import remove_obsolete_workflows
 from src.lib.actions.common.agent import embed_issues, embed_markdown, issue_agent_workflow
 
 
 class AgentWorkflowSelectionTests(unittest.TestCase):
-    def test_servc_repos_always_get_agent_workflows(self):
+    def test_agent_workflows_are_never_shipped(self):
+        for owner in ("serv-c", "Serv-C", "example-org"):
+            for agent in (True, False):
+                with self.subTest(owner=owner, agent=agent):
+                    repo = RepoContext(
+                        source="github", repo_full_name=f"{owner}/example",
+                        repo_name="example", repo_owner=owner,
+                        clone_url="https://example.com/example.git", agent=agent,
+                    )
+                    workflows, _ = get_workflows(repo)
+                    filenames = {workflow["filename"] for workflow in workflows}
+                    for name in ("issue-agent.yml", "agent-issue.yml", "agent-markdown.yml"):
+                        self.assertNotIn(f".github/workflows/{name}", filenames)
+
+    def test_existing_agent_workflows_are_removed_once(self):
         repo = RepoContext(
-            source="github",
-            repo_full_name="serv-c/example",
-            repo_name="example",
-            repo_owner="serv-c",
-            clone_url="https://example.com/example.git",
+            source="github", repo_full_name="example/repo", repo_name="repo",
+            clone_url="https://example.com/repo.git",
         )
-
-        workflows, _dependabot = get_workflows(repo)
-        workflow_filenames = {workflow["filename"] for workflow in workflows}
-
-        self.assertIn(".github/workflows/issue-agent.yml", workflow_filenames)
-        self.assertIn(".github/workflows/agent-issue.yml", workflow_filenames)
-        self.assertIn(".github/workflows/agent-markdown.yml", workflow_filenames)
-
-    def test_servc_repo_owner_matching_is_case_insensitive(self):
-        repo = RepoContext(
-            source="github",
-            repo_full_name="Serv-C/example",
-            repo_name="example",
-            repo_owner="Serv-C",
-            clone_url="https://example.com/example.git",
-        )
-
-        workflows, _dependabot = get_workflows(repo)
-        workflow_filenames = {workflow["filename"] for workflow in workflows}
-
-        self.assertIn(".github/workflows/issue-agent.yml", workflow_filenames)
-        self.assertIn(".github/workflows/agent-issue.yml", workflow_filenames)
-        self.assertIn(".github/workflows/agent-markdown.yml", workflow_filenames)
-
-    def test_non_servc_repos_still_require_agent_flag(self):
-        repo = RepoContext(
-            source="github",
-            repo_full_name="example-org/example",
-            repo_name="example",
-            repo_owner="example-org",
-            clone_url="https://example.com/example.git",
-        )
-
-        workflows, _dependabot = get_workflows(repo)
-        workflow_filenames = {workflow["filename"] for workflow in workflows}
-
-        self.assertNotIn(".github/workflows/issue-agent.yml", workflow_filenames)
-        self.assertNotIn(".github/workflows/agent-issue.yml", workflow_filenames)
-        self.assertNotIn(".github/workflows/agent-markdown.yml", workflow_filenames)
+        with tempfile.TemporaryDirectory() as directory:
+            folder = os.path.join(directory, ".github", "workflows")
+            os.makedirs(folder)
+            retired = ("issue-agent.yml", "agent-issue.yml", "agent-markdown.yml")
+            for name in (*retired, "unit.yml", "deploy.yml"):
+                with open(os.path.join(folder, name), "w") as file:
+                    file.write("jobs: {}\n")
+            self.assertEqual(3, remove_obsolete_workflows(repo, directory))
+            self.assertEqual({"unit.yml", "deploy.yml"}, set(os.listdir(folder)))
+            self.assertEqual(0, remove_obsolete_workflows(repo, directory))
 
 
 class AgentTokenWorkflowTests(unittest.TestCase):
