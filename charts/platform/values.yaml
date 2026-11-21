@@ -38,6 +38,12 @@ router:
   # Synced from ClusterSecretStore vault, vendor/router (ip, username, password).
   secretName: router-credentials
   secretNamespace: argocd
+  ssh:
+    port: 1024
+
+  dnsmasq:
+    - yusufali.ca
+    - "*.yusufali.ca"
 
   dchp:
     reservations:

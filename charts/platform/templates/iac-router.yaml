@@ -116,4 +116,85 @@ spec:
               ROUTER_PASSWORD: "{{ `{{ lookup('ansible.builtin.file', playbook_dir + '/router_password', rstrip=False) }}` }}"
               ANSIBLE_STDOUT_CALLBACK: default
             no_log: true
+{{- if hasKey .Values.router "dnsmasq" }}
+---
+apiVersion: ansible.crossplane.io/v1alpha1
+kind: AnsibleRun
+metadata:
+  name: {{ .Release.Namespace }}-router-dnsmasq
+  annotations:
+    ansible.crossplane.io/runPolicy: ObserveAndDelete
+spec:
+  deletionPolicy: Orphan
+  providerConfigRef:
+    name: {{ .Release.Namespace }}-router
+  forProvider:
+    inventoryInline: |
+      localhost ansible_connection=local
+    vars:
+      repository: {{ .Values.crossplane.ansible.repository | quote }}
+      revision: {{ .Values.crossplane.ansible.revision | quote }}
+      gateway:
+        virtualIP: {{ .Values.gateway.virtualIP | quote }}
+      router:
+        ssh:
+          port: {{ .Values.router.ssh.port }}
+        dnsmasq: {{ .Values.router.dnsmasq | toJson }}
+    playbookInline: |
+      - name: Run Merlin DNS configuration from the repository
+        hosts: localhost
+        connection: local
+        gather_facts: false
+        tasks:
+          - name: Check out the configuration repository
+            ansible.builtin.git:
+              repo: "{{ `{{ repository }}` }}"
+              dest: "{{ `{{ playbook_dir }}` }}/repository"
+              version: "{{ `{{ revision }}` }}"
+              recursive: false
+
+          - name: Create an isolated environment for Merlin DNS
+            ansible.builtin.command:
+              argv:
+                - python3
+                - -m
+                - venv
+                - "{{ `{{ playbook_dir }}` }}/dns-venv"
+              creates: "{{ `{{ playbook_dir }}` }}/dns-venv/bin/python3"
+
+          - name: Install DNS Ansible dependencies
+            ansible.builtin.pip:
+              requirements: "{{ `{{ playbook_dir }}` }}/repository/ansible/router/dnsmasq-requirements.txt"
+              executable: "{{ `{{ playbook_dir }}` }}/dns-venv/bin/pip"
+
+          - name: Write DNS variables
+            ansible.builtin.copy:
+              dest: "{{ `{{ playbook_dir }}` }}/dns-vars.json"
+              mode: "0600"
+              content: "{{ `{{ {'router': router, 'gateway': gateway} | to_json }}` }}"
+
+          - name: Apply persistent DNS configuration
+            ansible.builtin.command:
+              argv:
+                - "{{ `{{ playbook_dir }}` }}/dns-venv/bin/ansible-playbook"
+                - --inventory
+                - localhost,
+                - ansible/router/dnsmasq.yml
+                - --extra-vars
+                - "@{{ `{{ playbook_dir }}` }}/dns-vars.json"
+              chdir: "{{ `{{ playbook_dir }}` }}/repository"
+            environment:
+              ROUTER_IP: "{{ `{{ lookup('ansible.builtin.file', playbook_dir + '/router_ip', rstrip=False) | trim }}` }}"
+              ROUTER_USERNAME: "{{ `{{ lookup('ansible.builtin.file', playbook_dir + '/router_username', rstrip=False) | trim }}` }}"
+              ROUTER_PASSWORD: "{{ `{{ lookup('ansible.builtin.file', playbook_dir + '/router_password', rstrip=False) }}` }}"
+              ANSIBLE_STDOUT_CALLBACK: default
+            no_log: true
+            register: dns_result
+            failed_when: false
+
+          - name: Report DNS playbook failures
+            ansible.builtin.assert:
+              that: dns_result.rc == 0
+              fail_msg: "{{ `{{ dns_result.stdout }}` }}"
+{{- end }}
 {{- end }}
