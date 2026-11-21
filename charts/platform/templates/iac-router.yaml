@@ -146,6 +146,11 @@ spec:
         connection: local
         gather_facts: false
         tasks:
+          - name: Remove the previous DNS repository checkout
+            ansible.builtin.file:
+              path: "{{ `{{ playbook_dir }}` }}/repository"
+              state: absent
+
           - name: Check out the configuration repository
             ansible.builtin.git:
               repo: "{{ `{{ repository }}` }}"
