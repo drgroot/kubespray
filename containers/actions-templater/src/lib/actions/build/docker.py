@@ -6,6 +6,12 @@ from src.com.actions.step import STEP, UsesStep
 from src.com.repo import MODIFIERS, RepoContext
 from src.com.repo.common import is_monorepo, is_servc
 from src.lib.actions.build import default_on, make_build
+from src.lib.actions.steps.actions import (
+    DOCKER_BUILD_AND_PUSH_VERSION,
+    DOCKER_LOGIN_VERSION,
+    SETUP_BUILDX_VERSION,
+    SETUP_QEMU_VERSION,
+)
 from src.lib.actions.steps.actions.vault import process_vault_secrets
 from src.lib.actions.test.npm import NPM_VAULT_PATH
 
@@ -172,7 +178,7 @@ echo "artifactname=${artifact_name}" >> "$GITHUB_ENV"
                 UsesStep,
                 {
                     "name": "Login to Mirror",
-                    "uses": "docker/login-action@v3",
+                    "uses": f"docker/login-action@{DOCKER_LOGIN_VERSION}",
                     "with": {
                         "registry": docker_mirror,
                         "username": docker_mirror_username,
@@ -184,7 +190,7 @@ echo "artifactname=${artifact_name}" >> "$GITHUB_ENV"
                 UsesStep,
                 {
                     "name": "Login to ACR",
-                    "uses": "docker/login-action@v3",
+                    "uses": f"docker/login-action@{DOCKER_LOGIN_VERSION}",
                     "with": {
                         "registry": "${{ env.repository }}",
                         "username": docker_username,
@@ -198,7 +204,7 @@ echo "artifactname=${artifact_name}" >> "$GITHUB_ENV"
                         UsesStep,
                         {
                             "name": "Set up QEMU",
-                            "uses": "docker/setup-qemu-action@v3",
+                            "uses": f"docker/setup-qemu-action@{SETUP_QEMU_VERSION}",
                         },
                     )
                 ]
@@ -209,7 +215,7 @@ echo "artifactname=${artifact_name}" >> "$GITHUB_ENV"
                 UsesStep,
                 {
                     "name": "Set up Docker Buildx",
-                    "uses": "docker/setup-buildx-action@v3",
+                    "uses": f"docker/setup-buildx-action@{SETUP_BUILDX_VERSION}",
                     "with": {
                         "driver": "docker-container",
                         "buildkitd-config-inline": f"""
@@ -223,7 +229,7 @@ echo "artifactname=${artifact_name}" >> "$GITHUB_ENV"
                 UsesStep,
                 {
                     "name": "Build and Push",
-                    "uses": "docker/build-push-action@v5",
+                    "uses": f"docker/build-push-action@{DOCKER_BUILD_AND_PUSH_VERSION}",
                     "with": build_push_inputs,
                 },
             ),

@@ -13,7 +13,6 @@ from src.lib.actions.steps.filter import filter
 from src.lib.actions.steps.mono_repo import get_monorepo_modules, get_working_path
 
 CHANGELOG_ACTION_VERSION = os.getenv("CHANGELOG_ACTION_VERSION", "v6")
-CREATE_RELEASE_ACTION_VERSION = os.getenv("CREATE_RELEASE_ACTION_VERSION", "v1")
 
 
 def make_steps(ctx: RepoContext, m: MODIFIERS) -> FLIGHT:

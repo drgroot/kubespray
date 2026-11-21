@@ -623,6 +623,44 @@ spec:
                   value: {{ .Values.actionsVerions.kubelogin | quote }}
                 - name: KUBECTL_VERSION
                   value: {{ .Values.actionsVerions.kubectl | quote }}
+                - name: CHECKOUT_VERSION
+                  value: {{ .Values.actionsVerions.checkout | quote }}
+                - name: SETUP_NODE_VERSION
+                  value: {{ .Values.actionsVerions.setupNode | quote }}
+                - name: SETUP_PYTHON_VERSION
+                  value: {{ .Values.actionsVerions.setupPython | quote }}
+                - name: SETUP_JQ_VERSION
+                  value: {{ .Values.actionsVerions.setupJq | quote }}
+                - name: SETUP_YQ_VERSION
+                  value: {{ .Values.actionsVerions.setupYq | quote }}
+                - name: SETUP_MAVEN_VERSION
+                  value: {{ .Values.actionsVerions.setupMaven | quote }}
+                - name: SETUP_JFROG_VERSION
+                  value: {{ .Values.actionsVerions.setupJfrog | quote }}
+                - name: SETUP_KUBECTL_VERSION
+                  value: {{ .Values.actionsVerions.setupKubectl | quote }}
+                - name: SETUP_HELM_VERSION
+                  value: {{ .Values.actionsVerions.setupHelm | quote }}
+                - name: SETUP_KUBELOGIN_VERSION
+                  value: {{ .Values.actionsVerions.setupKubelogin | quote }}
+                - name: SETUP_TERRAFORM_VERSION
+                  value: {{ .Values.actionsVerions.setupTerraform | quote }}
+                - name: SETUP_BUILDX_VERSION
+                  value: {{ .Values.actionsVerions.setupBuildx | quote }}
+                - name: SETUP_QEMU_VERSION
+                  value: {{ .Values.actionsVerions.setupQemu | quote }}
+                - name: DOCKER_LOGIN_VERSION
+                  value: {{ .Values.actionsVerions.dockerLogin | quote }}
+                - name: DOCKER_BUILD_AND_PUSH_VERSION
+                  value: {{ .Values.actionsVerions.dockerBuildAndPush | quote }}
+                - name: CHANGELOG_ACTION_VERSION
+                  value: {{ .Values.actionsVerions.changelog | quote }}
+                - name: JQ_VERSION
+                  value: {{ .Values.actionsVerions.jq | quote }}
+                - name: YQ_VERSION
+                  value: {{ .Values.actionsVerions.yq | quote }}
+                - name: ORAS_VERSION
+                  value: {{ .Values.actionsVerions.oras | quote }}
 
           restartPolicy: Never
 

@@ -24,6 +24,43 @@ actionsVerions:
   helm: 3.10.3
   kubelogin: v0.0.18
   kubectl: v1.24.6
+  jq: "1.6"
+  yq: "v4.44.2"
+  oras: "1.2.2"
+
+  # setup stuff
+  # renovate: datasource=github-tags depName=actions/checkout
+  checkout: "v6"
+  # renovate: datasource=github-tags depName=actions/setup-node
+  setupNode: "v6"
+  # renovate: datasource=github-tags depName=actions/setup-python
+  setupPython: "v5"
+  # renovate: datasource=github-tags depName=dcarbone/install-jq-action
+  setupJq: "v3.0.1"
+  # renovate: datasource=github-tags depName=chrisdickinson/setup-yq
+  setupYq: "v1.0.1"
+  # renovate: datasource=github-tags depName=s4u/setup-maven-action
+  setupMaven: "v1.18.0"
+  # renovate: datasource=github-tags depName=jfrog/setup-jfrog-cli
+  setupJfrog: "v4"
+  # renovate: datasource=github-tags depName=azure/setup-kubectl
+  setupKubectl: "v3"
+  # renovate: datasource=github-tags depName=azure/setup-helm
+  setupHelm: "v3"
+  # renovate: datasource=github-tags depName=azure/use-kubelogin
+  setupKubelogin: "v1"
+  # renovate: datasource=github-tags depName=hashicorp/setup-terraform
+  setupTerraform: "v3"
+  # renovate: datasource=github-tags depName=docker/setup-buildx-action
+  setupBuildx: "v3"
+  # renovate: datasource=github-tags depName=docker/setup-qemu-action
+  setupQemu: "v3"
+  # renovate: datasource=github-tags depName=docker/login-action
+  dockerLogin: "v3"
+  # renovate: datasource=github-tags depName=docker/build-push-action
+  dockerBuildAndPush: "v5"
+  # renovate: datasource=github-tags depName=TriPSs/conventional-changelog-action
+  changelog: "v6"
 
 gateway:
   # Dedicated LAN address, outside DHCP; shared by all gateway listeners.
