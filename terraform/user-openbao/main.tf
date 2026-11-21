@@ -69,10 +69,24 @@ data "vault_generic_secret" "input" {
   path = var.input
 }
 
+# The legacy sys/policy endpoint supports GET to list policy names. Each
+# userpolicy-openbao workspace publishes its own policy under this prefix.
+# Keep one owner of the account/token lists and discover additional grants on
+# reconciliation, instead of having policy workspaces overwrite those lists.
+data "vault_generic_secret" "available_policies" {
+  provider = vault.admin
+  path     = "sys/policy"
+}
+
 locals {
   username            = var.usernamekey == null ? var.name : data.vault_generic_secret.input.data[var.usernamekey]
   password            = data.vault_generic_secret.input.data[var.passwordkey]
   policy_capabilities = [for capability in split(",", var.capabilities) : trimspace(capability)]
+  additional_policies = sort([
+    for policy in nonsensitive(jsondecode(data.vault_generic_secret.available_policies.data_json)).policies : policy
+    if startswith(policy, "openbao-userpolicy-${local.username}--")
+  ])
+  user_policies = concat([vault_policy.user.name], local.additional_policies)
 }
 
 resource "vault_policy" "user" {
@@ -111,7 +125,7 @@ resource "vault_generic_endpoint" "userpass_user" {
   ignore_absent_fields = true
   data_json = jsonencode({
     password                = local.password
-    policies                = [vault_policy.user.name]
+    policies                = local.user_policies
     token_no_default_policy = var.no_default_policy
   })
 }
@@ -157,7 +171,7 @@ resource "vault_generic_endpoint" "unlock_user" {
 
 resource "vault_token" "user" {
   provider = vault.admin
-  policies = [vault_policy.user.name]
+  policies = local.user_policies
 
   no_default_policy = var.no_default_policy
   no_parent         = true
