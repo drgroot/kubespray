@@ -378,11 +378,24 @@ crossplane:
         - key: path
           value: servc/*
         - key: capabilities
-          value: create,read,update,delete,list,patch
+          value: read,list
         - key: allow_token_creation
           value: "true"
         - key: no_default_policy
           value: "true"
+
+    openbao-userpolicy-servc-write:
+      enabled: true
+      type: userpolicy
+      provider: openbao
+      name: platform-write
+      vars:
+        - key: username
+          value: servc
+        - key: path
+          value: servc/data/infra/*,servc/metadata/infra/*,servc/delete/infra/*,servc/undelete/infra/*,servc/destroy/infra/*,servc/data/nonprod/*,servc/metadata/nonprod/*,servc/delete/nonprod/*,servc/undelete/nonprod/*,servc/destroy/nonprod/*,servc/data/prod/*,servc/metadata/prod/*,servc/delete/prod/*,servc/undelete/prod/*,servc/destroy/prod/*,servc/data/iac/authelia,servc/metadata/iac/authelia,servc/delete/iac/authelia,servc/undelete/iac/authelia,servc/destroy/iac/authelia,servc/data/iac/gitea,servc/metadata/iac/gitea,servc/delete/iac/gitea,servc/undelete/iac/gitea,servc/destroy/iac/gitea,servc/data/iac/docker,servc/metadata/iac/docker,servc/delete/iac/docker,servc/undelete/iac/docker,servc/destroy/iac/docker,servc/data/iac/npm,servc/metadata/iac/npm,servc/delete/iac/npm,servc/undelete/iac/npm,servc/destroy/iac/npm,servc/data/iac/pip,servc/metadata/iac/pip,servc/delete/iac/pip,servc/undelete/iac/pip,servc/destroy/iac/pip,servc/data/nonprod/coder-postgres-secret,servc/metadata/nonprod/coder-postgres-secret,servc/delete/nonprod/coder-postgres-secret,servc/undelete/nonprod/coder-postgres-secret,servc/destroy/nonprod/coder-postgres-secret,servc/data/iac/vault,servc/metadata/iac/vault,servc/delete/iac/vault,servc/undelete/iac/vault,servc/destroy/iac/vault
+        - key: capabilities
+          value: create,read,update,delete,list,patch
 
     openbao-oidc:
       enabled: true
@@ -499,9 +512,9 @@ crossplane:
         - key: manage_identity
           value: "false"
         - key: path
-          value: onprem/data/vendor/*,servc/*
+          value: onprem/data/vendor/*,onprem/metadata/vendor/*,onprem/delete/vendor/*,onprem/undelete/vendor/*,onprem/destroy/vendor/*,servc/data/client-secrets/*,servc/metadata/client-secrets/*,servc/delete/client-secrets/*,servc/undelete/client-secrets/*,servc/destroy/client-secrets/*,servc/data/iac/*,servc/metadata/iac/*,servc/delete/iac/*,servc/undelete/iac/*,servc/destroy/iac/*,servc/data/oauth/*,servc/metadata/oauth/*,servc/delete/oauth/*,servc/undelete/oauth/*,servc/destroy/oauth/*
         - key: capabilities
-          value: create,read,update,list,patch
+          value: create,read,update,delete,list,patch
 
     openbao-oidc-murtz-servc:
       enabled: true
@@ -518,7 +531,41 @@ crossplane:
         - key: path
           value: servc/*
         - key: capabilities
-          value: create,read,update,list,patch
+          value: read,list
+
+    openbao-oidc-yusuf-servc:
+      enabled: true
+      type: openbao
+      provider: oidc
+      name: yusuf
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: servc/*
+        - key: capabilities
+          value: read,list
+
+    openbao-oidc-murtz-servc-write:
+      enabled: true
+      type: openbao
+      provider: oidc
+      name: murtz
+      vars:
+        - key: input
+          value: ""
+        - key: output
+          value: ""
+        - key: manage_identity
+          value: "false"
+        - key: path
+          value: servc/data/client-secrets/*,servc/metadata/client-secrets/*,servc/delete/client-secrets/*,servc/undelete/client-secrets/*,servc/destroy/client-secrets/*,servc/data/iac/*,servc/metadata/iac/*,servc/delete/iac/*,servc/undelete/iac/*,servc/destroy/iac/*,servc/data/oauth/*,servc/metadata/oauth/*,servc/delete/oauth/*,servc/undelete/oauth/*,servc/destroy/oauth/*
+        - key: capabilities
+          value: create,read,update,delete,list,patch
 
     openbao-oidc-murtz:
       enabled: true
