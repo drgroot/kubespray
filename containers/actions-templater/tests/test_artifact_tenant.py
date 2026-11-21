@@ -164,8 +164,11 @@ class ArtifactTenantUnitTests(unittest.TestCase):
         self.assertEqual({"cache": {"image": "redis:8"}}, dag["services"])
         self.assertEqual("etl", named_step(dag, "Prepare ETL")["working-directory"])
         filters = named_step(dag, "Filter Changes")["with"]["filters"]
-        self.assertIn("etl/**", filters)
-        self.assertIn(".github/workflows/unit.yml", filters)
+        self.assertEqual("src:\n  - etl/dag.py\n", filters)
+        self.assertNotIn(
+            "Verify Docker Python Version",
+            [step.get("name") for step in dag["steps"]],
+        )
         install = named_step(dag, "Install pip dependencies")
         self.assertEqual("etl", install["working-directory"])
         self.assertIn("requirements.txt", install["run"])

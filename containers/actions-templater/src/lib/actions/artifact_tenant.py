@@ -16,7 +16,7 @@ from src.lib.actions.common.semver import changelog
 from src.lib.actions.steps.filter import filter
 from src.lib.actions.test.npm import npm_test
 from src.lib.actions.test import make_job
-from src.lib.actions.test.python import docker_python_version_check, python_test
+from src.lib.actions.test.python import python_test
 
 ARTIFACT_TENANT_CONTEXT: CONTEXT_MATCHERS = {"artifact": ["tenant"]}
 BUILD_WORKFLOW = ".github/workflows/build.yml"
@@ -55,13 +55,16 @@ def _scope_job(
     workflow_file: str,
     tag_prefix: str | None = None,
     working_directory: str | None = None,
+    filter_paths: list[str] | None = None,
 ) -> Job:
     """Scope a standard single-repository job to one tenant component."""
-    paths = [component_filter_path(ctx, component)]
-    if workflow_file in {BUILD_WORKFLOW, UNIT_WORKFLOW}:
-        paths.append(workflow_file)
-    if workflow_file == BUILD_WORKFLOW:
-        paths.append(".github/actions.json")
+    paths = filter_paths
+    if paths is None:
+        paths = [component_filter_path(ctx, component)]
+        if workflow_file in {BUILD_WORKFLOW, UNIT_WORKFLOW}:
+            paths.append(workflow_file)
+        if workflow_file == BUILD_WORKFLOW:
+            paths.append(".github/actions.json")
 
     change_filter = filter(ctx, {"filter_paths": paths})
     steps = job["steps"]
@@ -209,13 +212,13 @@ def artifact_tenant_unit_workflow(ctx: RepoContext, m: MODIFIERS) -> Workflow:
         make_job(
             lambda ctx, modifiers: [
                 python(ctx, modifiers),
-                *docker_python_version_check(ctx, modifiers),
                 pip_install(ctx, modifiers),
                 {"name": "Validate DAG", "run": ".venv/bin/python -m dag"},
             ]
         )(ctx, copy.deepcopy(etl_modifiers)),
         "etl",
         UNIT_WORKFLOW,
+        filter_paths=["etl/dag.py"],
     )
     if isinstance(m.get("workflow_env"), dict):
         dag["env"] = copy.deepcopy(m["workflow_env"])
