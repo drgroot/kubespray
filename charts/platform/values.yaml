@@ -77,9 +77,6 @@ router:
       - name: camera3
         ip: 192.168.1.22
         mac: E8:A0:ED:F9:BA:7E
-      - name: pihole
-        ip: 192.168.1.50
-        mac: 02:42:C0:A8:01:32
 
   portForwards:
     - name: HTTPS
