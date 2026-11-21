@@ -19,7 +19,6 @@ We assume the following:
   - GitHub Actions has the secrets for tailscale. `TS_HOSTNAME`, `TS_OAUTH_CLIENT_ID`, and `TS_OAUTH_SECRET`
 - router configured for 192.168.1.1 and dhcp to start at 192.168.1.51. leaving 192.168.1.2 - 192.168.1.49 available for dhcp reservations
 - [router ansible playbooks](./ansible/router/) support the router being used for all the required [router configurations][1]
-- dns is configured already for 192.168.1.50
 - k8s nodes are installed with `ubuntu` user, same password
   - secrets configured in GitHub Actions: `SSH_PASSWORD`, `ID_RSA`, and `ID_RSA_PUB`
 
