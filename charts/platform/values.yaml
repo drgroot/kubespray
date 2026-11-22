@@ -36,7 +36,7 @@ actionsVerions:
   # renovate: datasource=github-tags depName=actions/setup-python
   setupPython: "v5"
   # renovate: datasource=github-tags depName=dcarbone/install-jq-action
-  setupJq: "v3.0.1"
+  setupJq: "v3.2.0"
   # renovate: datasource=github-tags depName=chrisdickinson/setup-yq
   setupYq: "v1.0.1"
   # renovate: datasource=github-tags depName=s4u/setup-maven-action
