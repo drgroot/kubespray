@@ -114,6 +114,9 @@ router:
       - name: camera3
         ip: 192.168.1.22
         mac: E8:A0:ED:F9:BA:7E
+      - name: macstudio
+        ip: 192.168.1.50
+        mac: 9C:76:0E:2E:46:FD
 
   portForwards:
     - name: HTTPS
