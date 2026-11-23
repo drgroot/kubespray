@@ -15,7 +15,7 @@ versions:
   certmanager: v1.21.3
   externaldns: 1.21.1
   prometheus: 77.14.0
-  reloader: 2.2.20
+  reloader: 2.2.21
   openbaoOperator: 0.6.3
   openbao: "2.7.3"
 
