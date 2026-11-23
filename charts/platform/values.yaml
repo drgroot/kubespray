@@ -52,7 +52,7 @@ actionsVerions:
   # renovate: datasource=github-tags depName=hashicorp/setup-terraform
   setupTerraform: "v3"
   # renovate: datasource=github-tags depName=docker/setup-buildx-action
-  setupBuildx: "v3"
+  setupBuildx: "v4"
   # renovate: datasource=github-tags depName=docker/setup-qemu-action
   setupQemu: "v4"
   # renovate: datasource=github-tags depName=docker/login-action
