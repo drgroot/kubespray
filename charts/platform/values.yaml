@@ -56,7 +56,7 @@ actionsVerions:
   # renovate: datasource=github-tags depName=docker/setup-qemu-action
   setupQemu: "v3"
   # renovate: datasource=github-tags depName=docker/login-action
-  dockerLogin: "v3"
+  dockerLogin: "v4"
   # renovate: datasource=github-tags depName=docker/build-push-action
   dockerBuildAndPush: "v5"
   # renovate: datasource=github-tags depName=TriPSs/conventional-changelog-action
