@@ -50,7 +50,7 @@ actionsVerions:
   # renovate: datasource=github-tags depName=azure/use-kubelogin
   setupKubelogin: "v1"
   # renovate: datasource=github-tags depName=hashicorp/setup-terraform
-  setupTerraform: "v3"
+  setupTerraform: "v4"
   # renovate: datasource=github-tags depName=docker/setup-buildx-action
   setupBuildx: "v3"
   # renovate: datasource=github-tags depName=docker/setup-qemu-action
