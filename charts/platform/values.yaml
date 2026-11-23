@@ -30,7 +30,7 @@ actionsVerions:
 
   # setup stuff
   # renovate: datasource=github-tags depName=actions/checkout
-  checkout: "v6"
+  checkout: "v7"
   # renovate: datasource=github-tags depName=actions/setup-node
   setupNode: "v6"
   # renovate: datasource=github-tags depName=actions/setup-python
