@@ -16,7 +16,7 @@ versions:
   externaldns: 1.21.1
   prometheus: 77.14.0
   reloader: 2.2.21
-  openbaoOperator: 0.6.3
+  openbaoOperator: 0.7.0
   openbao: "2.7.3"
 
 nvidia:
