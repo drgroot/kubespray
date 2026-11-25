@@ -46,7 +46,7 @@ actionsVerions:
   # renovate: datasource=github-tags depName=azure/setup-kubectl
   setupKubectl: "v5"
   # renovate: datasource=github-tags depName=azure/setup-helm
-  setupHelm: "v3"
+  setupHelm: "v5"
   # renovate: datasource=github-tags depName=azure/use-kubelogin
   setupKubelogin: "v1"
   # renovate: datasource=github-tags depName=hashicorp/setup-terraform
