@@ -68,6 +68,7 @@ spec:
     source: Remote
     module: git::https://github.com/drgroot/kubespray.git//terraform/{{ $config.type | default $name }}-{{ $config.provider }}?ref={{ $config.version | default "main" }}
     initArgs:
+      - -upgrade
       - -backend-config=bucket=tfstate
       - -backend-config=key={{ $name }}.tfstate
       - -backend-config=use_path_style=true
