@@ -1121,6 +1121,8 @@ authelia:
           pkce_challenge_method: S256
           redirect_uris:
             - https://chatgpt.com/connector_platform_oauth_redirect
+            - https://nonprod-api.servc.io/auth/callback/onprem
+            - https://api.servc.io/auth/callback/onprem
           audience:
             - https://nonprod-api.servc.io/mcp/onprem
             - https://nonprod-mcp.modlin.ai/mcp/onprem
@@ -1741,6 +1743,20 @@ secretSync:
       properties:
         client-secret-argocd: client-secret-argocd
         client-secret-grafana: client-secret-grafana
+
+  - name: onprem-authelia
+    input:
+      kind: ClusterSecretStore
+      name: vault
+      path: dynamic/authelia-client-creds
+      properties:
+        - client-secret-servc
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: oauth/onprem-authelia
+      properties:
+        client-secret-servc: client-secret
 
   - name: gitea
     refreshInterval: 1m
