@@ -168,6 +168,9 @@ spec:
                   key: PASSWORD
             - name: REGISTRY_PROXY_TTL
               value: 168h
+            # Expired shared blobs can leave stale descriptors that cause truncated pulls.
+            - name: REGISTRY_STORAGE_CACHE_BLOBDESCRIPTOR
+              value: "none"
             - name: REGISTRY_STORAGE_DELETE_ENABLED
               value: "true"
           resources:
