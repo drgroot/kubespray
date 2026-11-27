@@ -10,7 +10,7 @@ domains:
   external: exampe.com
 
 mcpGateway:
-  image: dockerhub.yusufali.ca/yusufali/mcp-gateway:latest
+  image: dockerhub.yusufali.ca/yusufali/mcp-gateway:latest@sha256:0c0451a3128b3bf0886d44735a6cebbe0d2f740d928dc6c87386240708b1add6
   hostname: mcp.yusufali.ca
   giteaURL: http://gitea-http.kube-platform.svc.cluster.local:3000
   affineWorkspaceID: 320c07fd-57ef-435d-80aa-f4ac8faaaa2d
