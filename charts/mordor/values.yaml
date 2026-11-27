@@ -9,6 +9,12 @@ domains:
   internal: example.com
   external: exampe.com
 
+mcpGateway:
+  image: dockerhub.yusufali.ca/yusufali/mcp-gateway:latest
+  hostname: mcp.yusufali.ca
+  giteaURL: http://gitea-http.kube-platform.svc.cluster.local:3000
+  affineWorkspaceID: 320c07fd-57ef-435d-80aa-f4ac8faaaa2d
+
 crossplane:
   enabled: true
   iac:
