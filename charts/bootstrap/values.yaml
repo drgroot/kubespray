@@ -13,7 +13,7 @@ versions:
   nfsprovisioner: 4.0.18
   keda: 2.21.1
   certmanager: v1.21.3
-  externaldns: 1.21.1
+  externaldns: 1.24.0
   prometheus: 77.14.0
   reloader: 2.2.21
   openbaoOperator: 0.7.0
