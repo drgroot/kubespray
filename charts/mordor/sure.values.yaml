@@ -2,7 +2,7 @@ fullnameOverride: sure
 
 image:
   name: ghcr.io/we-promise/sure
-  tag: 0.7.7-alpha.9
+  tag: 0.7.7-alpha.10
 
 imagePullSecrets:
   - name: cluster-docker-secrets
@@ -42,7 +42,7 @@ env: &sure-email-env
 # Prepare the shared database before either Rails or Sidekiq starts.
 initContainers:
   - name: db-prepare
-    image: ghcr.io/we-promise/sure:0.7.7-alpha.9
+    image: ghcr.io/we-promise/sure:0.7.7-alpha.10
     command:
       - /rails/bin/docker-entrypoint
     args:
@@ -59,7 +59,7 @@ initContainers:
 
 sideCars:
   - name: worker
-    image: ghcr.io/we-promise/sure:0.7.7-alpha.9
+    image: ghcr.io/we-promise/sure:0.7.7-alpha.10
     command:
       - /rails/bin/docker-entrypoint
     args:
