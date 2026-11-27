@@ -9,7 +9,7 @@ versions:
   argocd: v3.6.3
   authelia: 0.11.22
   gitea: 12.7.0
-  coder: 2.39.4
+  coder: 2.39.5
   giteaActions: 0.1.4
   redis: 8
   registry: 3.1
