@@ -4,7 +4,7 @@ versions:
   nvidia: v26.7.3
   envoy: 1.10.0
   kubeVip: v1.3.2
-  crossplane: 2.4.3
+  crossplane: 2.5.0
   crossplaneOpenTofu: v1.1.11
   crossplaneOpenTofuBinary: v1.13.9
   crossplaneAnsible: v0.8.0
