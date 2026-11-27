@@ -1,0 +1,128 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mcp-gateway
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: vault
+    kind: ClusterSecretStore
+  target:
+    name: mcp-gateway
+    creationPolicy: Owner
+  data:
+    - secretKey: gitea-token
+      remoteRef:
+        key: dynamic/gitea-chintan
+        property: token
+    - secretKey: affine-mcp-token
+      remoteRef:
+        key: vendor/selfhosted-app-tokens
+        property: affine-mcp-token
+    - secretKey: onprem-mcp-token
+      remoteRef:
+        key: vendor/selfhosted-app-tokens
+        property: onprem-mcp-token
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-gateway
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mcp-gateway
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: cluster-docker-secrets
+      containers:
+        - name: mcp-gateway
+          image: {{ .Values.mcpGateway.image | quote }}
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: MCP_HOSTNAME
+              value: {{ .Values.mcpGateway.hostname | quote }}
+            - name: GITEA_URL
+              value: {{ .Values.mcpGateway.giteaURL | quote }}
+            - name: AFFINE_MCP_URL
+              value: {{ printf "http://affine.%s.svc.cluster.local:3010/api/workspaces/%s/mcp" .Release.Namespace .Values.mcpGateway.affineWorkspaceID | quote }}
+          volumeMounts:
+            - name: credentials
+              mountPath: /var/run/mcp-secrets
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 96Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - name: credentials
+          secret:
+            secretName: mcp-gateway
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-gateway
+spec:
+  selector:
+    app.kubernetes.io/name: mcp-gateway
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mcp-gateway
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: system-envoy
+      sectionName: https
+  hostnames:
+    - {{ .Values.mcpGateway.hostname | quote }}
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /
+        - path:
+            type: Exact
+            value: /mcp
+      backendRefs:
+        - name: mcp-gateway
+          port: 8080
+      timeouts:
+        request: 60s
