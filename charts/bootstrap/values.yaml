@@ -188,6 +188,14 @@ tenants:
       - url: https://github.com/drgroot/kubespray.git
         path: "charts/mordor"
 
+  - name: system-agents
+    namespace: system-agents
+    createNamespace: true
+    permissions: []
+    sources:
+      - url: https://github.com/drgroot/kubespray.git
+        path: charts/system-agents
+
   - name: servc
     namespace: servc
     createNamespace: false

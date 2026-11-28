@@ -1,0 +1,87 @@
+{{- if .Values.crossplane.enabled }}
+{{- $backendSecretName := "crossplane-tofu-backend-openbao" -}}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $backendSecretName }}
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault
+  target:
+    name: {{ $backendSecretName }}
+    template:
+      engineVersion: v2
+      mergePolicy: Merge
+      data:
+        TF_BACKEND_BUCKET: tfstate
+        AWS_DEFAULT_REGION: {{ `{{ .AWS_REGION }}` | quote }}
+  data:
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef:
+        key: dynamic/minio-root
+        property: root-access-key
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: dynamic/minio-root
+        property: root-secret-key
+    - secretKey: AWS_ENDPOINT_URL_S3
+      remoteRef:
+        key: dynamic/minio-root
+        property: internal-url
+    - secretKey: AWS_REGION
+      remoteRef:
+        key: dynamic/minio-root
+        property: region
+    - secretKey: VAULT_ADDR
+      remoteRef:
+        key: dynamic/vault-onpremise
+        property: url
+    - secretKey: TERRAFORM_VAULT_USERNAME
+      remoteRef:
+        key: dynamic/vault-onpremise
+        property: username
+    - secretKey: TERRAFORM_VAULT_PASSWORD
+      remoteRef:
+        key: dynamic/vault-onpremise
+        property: password
+{{- $envVars := list "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_ENDPOINT_URL_S3" "TF_BACKEND_BUCKET" "AWS_REGION" "AWS_DEFAULT_REGION" "VAULT_ADDR" "TERRAFORM_VAULT_USERNAME" "TERRAFORM_VAULT_PASSWORD" -}}
+{{- range $name, $config := .Values.crossplane.iac }}
+{{- if $config.enabled }}
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: {{ $.Release.Namespace }}-{{ $name }}
+spec:
+  providerConfigRef:
+    kind: ClusterProviderConfig
+    name: opentofu-provider-config
+  forProvider:
+    source: Remote
+    module: git::https://github.com/drgroot/kubespray.git//terraform/{{ $config.type | default $name }}-{{ $config.provider }}?ref={{ $config.version | default "main" }}
+    initArgs:
+      - -upgrade
+      - -backend-config=bucket=tfstate
+      - -backend-config=key={{ $.Release.Namespace }}-{{ $name }}.tfstate
+      - -backend-config=use_path_style=true
+    env:
+      - name: VAULT_AUTH_METHOD
+        value: userpass
+      - name: VAULT_CACERT
+        value: openbao-ca.crt
+      {{- range $key := $envVars }}
+      - name: {{ $key }}
+        secretKeyRef:
+          name: {{ $backendSecretName }}
+          key: {{ $key }}
+      {{- end }}
+    vars:
+      - key: name
+        value: {{ $config.name | default (printf "%s-%s" $.Release.Namespace $name) | quote }}
+      {{- with $config.vars }}
+      {{- tpl (toYaml .) $ | nindent 6 }}
+      {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

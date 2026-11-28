@@ -1,0 +1,32 @@
+domains:
+  external: example.com
+
+crossplane:
+  enabled: true
+  iac:
+    postgres-litellm:
+      enabled: true
+      type: postgres
+      provider: db
+      name: litellm
+      vars:
+        - key: input
+          value: onprem/dynamic/postgres
+        - key: credentialpath
+          value: onprem/dynamic/postgres-app-creds
+        - key: passwordkey
+          value: litellm
+        - key: output
+          value: onprem/dynamic/postgres-app-litellm
+
+litellm:
+  image: ghcr.io/berriai/litellm:v1.108.19
+  omlx:
+    apiBase: http://192.168.1.50:8000/v1
+    models:
+      - name: qwen3.8-27b
+        upstream: Qwen3.8-27B
+        mode: chat
+      - name: qwen-embedding-4b
+        upstream: Qwen3-Embedding-4B
+        mode: embedding

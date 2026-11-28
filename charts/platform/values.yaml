@@ -218,11 +218,11 @@ crossplane:
         - key: input
           value: onprem/dynamic/authelia-client-creds
         - key: properties
-          value: client-secret-affine,client-secret-argocd,client-secret-bitwarden,client-secret-filebrowse,client-secret-gitea,client-secret-grafana,client-secret-immich,client-secret-postiz,client-secret-servc,client-secret-sure,client-secret-openbao,client-secret-silo,client-secret-coder
+          value: client-secret-affine,client-secret-argocd,client-secret-bitwarden,client-secret-filebrowse,client-secret-gitea,client-secret-grafana,client-secret-immich,client-secret-postiz,client-secret-servc,client-secret-sure,client-secret-openbao,client-secret-silo,client-secret-coder,client-secret-litellm
         - key: value-types
-          value: password,password,password,password,password,password,password,password,password,password,password,password,password
+          value: password,password,password,password,password,password,password,password,password,password,password,password,password,password
         - key: specialchars
-          value: no,no,no,no,no,no,no,no,no,no,no,no,no
+          value: no,no,no,no,no,no,no,no,no,no,no,no,no,no
         - key: output
           value: none
 
@@ -286,11 +286,11 @@ crossplane:
         - key: input
           value: onprem/dynamic/postgres-app-creds
         - key: properties
-          value: affine,authelia,bitwarden,coder,gitea,grafana,immich,postiz,postiz-temporal,sure
+          value: affine,authelia,bitwarden,coder,gitea,grafana,immich,litellm,postiz,postiz-temporal,sure
         - key: value-types
-          value: password,password,password,password,password,password,password,password,password,password
+          value: password,password,password,password,password,password,password,password,password,password,password
         - key: specialchars
-          value: no,no,no,no,no,no,no,no,no,no
+          value: no,no,no,no,no,no,no,no,no,no,no
         - key: output
           value: none
 
@@ -436,7 +436,7 @@ crossplane:
         - key: username
           value: servc
         - key: path
-          value: servc/data/infra/*,servc/metadata/infra/*,servc/delete/infra/*,servc/undelete/infra/*,servc/destroy/infra/*,servc/data/nonprod/*,servc/metadata/nonprod/*,servc/delete/nonprod/*,servc/undelete/nonprod/*,servc/destroy/nonprod/*,servc/data/prod/*,servc/metadata/prod/*,servc/delete/prod/*,servc/undelete/prod/*,servc/destroy/prod/*,servc/data/iac/authelia,servc/metadata/iac/authelia,servc/delete/iac/authelia,servc/undelete/iac/authelia,servc/destroy/iac/authelia,servc/data/iac/gitea,servc/metadata/iac/gitea,servc/delete/iac/gitea,servc/undelete/iac/gitea,servc/destroy/iac/gitea,servc/data/iac/docker,servc/metadata/iac/docker,servc/delete/iac/docker,servc/undelete/iac/docker,servc/destroy/iac/docker,servc/data/iac/npm,servc/metadata/iac/npm,servc/delete/iac/npm,servc/undelete/iac/npm,servc/destroy/iac/npm,servc/data/iac/pip,servc/metadata/iac/pip,servc/delete/iac/pip,servc/undelete/iac/pip,servc/destroy/iac/pip,servc/data/nonprod/coder-postgres-secret,servc/metadata/nonprod/coder-postgres-secret,servc/delete/nonprod/coder-postgres-secret,servc/undelete/nonprod/coder-postgres-secret,servc/destroy/nonprod/coder-postgres-secret,servc/data/iac/vault,servc/metadata/iac/vault,servc/delete/iac/vault,servc/undelete/iac/vault,servc/destroy/iac/vault
+          value: servc/data/infra/*,servc/metadata/infra/*,servc/delete/infra/*,servc/undelete/infra/*,servc/destroy/infra/*,servc/data/nonprod/*,servc/metadata/nonprod/*,servc/delete/nonprod/*,servc/undelete/nonprod/*,servc/destroy/nonprod/*,servc/data/prod/*,servc/metadata/prod/*,servc/delete/prod/*,servc/undelete/prod/*,servc/destroy/prod/*,servc/data/iac/authelia,servc/metadata/iac/authelia,servc/delete/iac/authelia,servc/undelete/iac/authelia,servc/destroy/iac/authelia,servc/data/iac/gitea,servc/metadata/iac/gitea,servc/delete/iac/gitea,servc/undelete/iac/gitea,servc/destroy/iac/gitea,servc/data/iac/docker,servc/metadata/iac/docker,servc/delete/iac/docker,servc/undelete/iac/docker,servc/destroy/iac/docker,servc/data/iac/npm,servc/metadata/iac/npm,servc/delete/iac/npm,servc/undelete/iac/npm,servc/destroy/iac/npm,servc/data/iac/pip,servc/metadata/iac/pip,servc/delete/iac/pip,servc/undelete/iac/pip,servc/destroy/iac/pip,servc/data/nonprod/coder-postgres-secret,servc/metadata/nonprod/coder-postgres-secret,servc/delete/nonprod/coder-postgres-secret,servc/undelete/nonprod/coder-postgres-secret,servc/destroy/nonprod/coder-postgres-secret,servc/data/iac/vault,servc/metadata/iac/vault,servc/delete/iac/vault,servc/undelete/iac/vault,servc/destroy/iac/vault,servc/data/iac/litellm,servc/metadata/iac/litellm
         - key: capabilities
           value: create,read,update,delete,list,patch
 
@@ -960,6 +960,11 @@ authelia:
         coder:
           refresh_token: 48h
     authorization_policies:
+      litellm-admins:
+        default_policy: deny
+        rules:
+          - policy: one_factor
+            subject: group:media-admin
       silo-admins:
         default_policy: deny
         rules:
@@ -984,6 +989,29 @@ authelia:
       property: jwks-public
 
     list:
+      litellm:
+        client_id: litellm
+        client_name: LiteLLM
+        client_secret_property: client-secret-litellm
+        oidc:
+          public: false
+          authorization_policy: litellm-admins
+          consent_mode: implicit
+          require_pkce: true
+          pkce_challenge_method: S256
+          redirect_uris:
+            - https://litellm.{{ .Values.domains.external }}/sso/callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+          token_endpoint_auth_method: client_secret_basic
+
       coder:
         client_id: coder
         client_name: Coder
@@ -1728,6 +1756,26 @@ gitea:
         cpu: "2"
 
 secretSync:
+  - name: litellm
+    input:
+      kind: ClusterSecretStore
+      name: vault
+      path: dynamic/litellm
+      properties:
+        - master-key
+        - hostname
+        - url
+        - internal-url
+    output:
+      kind: ClusterSecretStore
+      name: servc
+      path: iac/litellm
+      properties:
+        master-key: master-key
+        hostname: hostname
+        url: url
+        internal-url: internal-url
+
   - name: authelia-oidc-clients
     input:
       kind: ClusterSecretStore

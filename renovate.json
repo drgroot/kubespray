@@ -362,9 +362,10 @@
     },
     {
       "customType": "regex",
-      "description": "Mordor inline images in templates, init containers, and sidecars",
+      "description": "Mordor and system-agents inline image references",
       "managerFilePatterns": [
-        "/^charts/mordor/.*\\.ya?ml$/"
+        "/^charts/mordor/.*\\.ya?ml$/",
+        "/^charts/system-agents/values\\.yaml$/"
       ],
       "matchStrings": [
         "\\bimage: [\"\\x27]?(?<depName>[^\\s:\"\\x27]+):(?<currentValue>(?:v?[0-9]|pg[0-9])[^\\s\"\\x27@]*)(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
@@ -434,6 +435,16 @@
       ],
       "versioning": "semver",
       "ignoreUnstable": false
+    },
+    {
+      "description": "Track stable versioned LiteLLM images",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/berriai/litellm"
+      ],
+      "allowedVersions": "/^v\\d+\\.\\d+\\.\\d+$/"
     },
     {
       "description": "Treat four-part OnlyOffice tags as versions",
