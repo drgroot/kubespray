@@ -99,10 +99,10 @@ spec:
         coder:
           resources:
             requests:
-              cpu: 100m
+              cpu: 500m
               memory: 512Mi
             limits:
-              cpu: 100m
+              cpu: 500m
               memory: 512Mi
 
           env:
