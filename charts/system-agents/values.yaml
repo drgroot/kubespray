@@ -33,3 +33,5 @@ litellm:
       - name: qwen-embedding-4b
         upstream: Qwen3-Embedding-4B
         mode: embedding
+        allowedOpenAIParams:
+          - dimensions

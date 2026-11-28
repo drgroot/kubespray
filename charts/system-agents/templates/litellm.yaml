@@ -72,6 +72,9 @@ data:
           model: {{ printf "openai/%s" .upstream | quote }}
           api_base: {{ $.Values.litellm.omlx.apiBase | quote }}
           api_key: os.environ/OMLX_API_KEY
+          {{- with .allowedOpenAIParams }}
+          allowed_openai_params: {{ . | toJson }}
+          {{- end }}
         model_info:
           mode: {{ .mode | quote }}
       {{- end }}
