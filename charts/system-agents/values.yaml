@@ -27,6 +27,9 @@ litellm:
       - name: qwen3.8-27b
         upstream: Qwen3.8-27B
         mode: chat
+      - name: gpt-6-luna
+        upstream: Qwen3.8-27B
+        mode: chat
       - name: openjev-4b
         upstream: APUS-OpenJev-v1-4B-MLX-8bit
         mode: decisions
