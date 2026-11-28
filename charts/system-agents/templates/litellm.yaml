@@ -16,10 +16,10 @@ spec:
       remoteRef:
         key: vendor/llm
         property: api-key
-    - secretKey: LITELLM_MASTER_KEY
+    - secretKey: LITELLM_SALT_KEY
       remoteRef:
         key: vendor/llm
-        property: secret-key
+        property: litellm-salt-key
     - secretKey: GENERIC_CLIENT_SECRET
       remoteRef:
         key: dynamic/authelia-client-creds
@@ -28,6 +28,35 @@ spec:
       remoteRef:
         key: dynamic/postgres-app-litellm
         property: url
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: litellm-master-key
+spec:
+  length: 48
+  digits: 8
+  symbols: 0
+  allowRepeat: true
+  prefix: sk-
+  secretKeys:
+    - LITELLM_MASTER_KEY
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: litellm-master-key
+spec:
+  refreshPolicy: Periodic
+  refreshInterval: 168h
+  target:
+    name: litellm-master-key
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: litellm-master-key
 ---
 apiVersion: external-secrets.io/v1alpha1
 kind: PushSecret
@@ -42,7 +71,7 @@ spec:
       kind: ClusterSecretStore
   selector:
     secret:
-      name: litellm-secrets
+      name: litellm-master-key
   template:
     engineVersion: v2
     data:
@@ -89,7 +118,7 @@ metadata:
   name: litellm
   annotations:
     configmap.reloader.stakater.com/reload: litellm-config
-    secret.reloader.stakater.com/reload: litellm-secrets
+    secret.reloader.stakater.com/reload: litellm-secrets,litellm-master-key
 spec:
   replicas: 1
   selector:
@@ -111,6 +140,8 @@ spec:
           envFrom:
             - secretRef:
                 name: litellm-secrets
+            - secretRef:
+                name: litellm-master-key
           env:
             - name: PROXY_BASE_URL
               value: {{ $baseURL | quote }}
